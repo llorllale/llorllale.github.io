@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Why I stopped caring and learned to hate XPath</title>
+  <meta name="description" content="Yesterday I came across another one of XPath&#39;s little quirks that cost me up to an hour of painstaking step-by-step troubleshooting to narrow down: comparing...">
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/2012/03/06/why-i-stopped-caring-and-learned-to.html">
+  <link rel="alternate" type="application/rss+xml" title="George Aristy" href="/feed.xml">
+  
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">George Aristy</a>
+
+    <nav class="site-nav">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Why I stopped caring and learned to hate XPath</h1>
+    <p class="post-meta"><time datetime="2012-03-06T10:42:00-04:00" itemprop="datePublished">Mar 6, 2012</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">George Aristy</span></span></p>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <div class="tr_bq">Yesterday I came across another one of XPath's little quirks that cost me up to an hour of painstaking step-by-step troubleshooting to narrow down: comparing the value of a boolean element to one of the boolean functions (either true() or false()), also known as a subset of <a href="http://www.w3.org/TR/xpath/#booleans">boolean expressions</a>.</div><br />I had an element of type boolean buried in an XML document and my initial expression to test its value was like this:<br /><br /><blockquote class="tr_bq">/path/to/boolean/element = true()</blockquote>The expression is so simple and innocent-looking that (gasp!) there just couldn't be anything <i>wrong</i> with it. The path was expressed correctly, I was using the right operator and I wanted to see if the <u>boolean</u> element had a <u>boolean</u> value of true. Except, of course, it just didn't work as expected and the code just kept taking a wrong turn.<br /><br />I admit that I had previously seen this tested another way, namely like:<br /><blockquote class="tr_bq">&nbsp;/path/to/boolean/element = 'true'</blockquote>Notice how the comparison is now done against a <i>string</i> and not a boolean type. And it <i>works</i>. I thought it was just the engine or the specification trying to make life easier for programmers, some sort of condescending <i>you're doing it wrong but we understand what you're trying to accomplish here so we'll just run along with it</i> thing going on here. And why not believe that since, after all, at least some features of XPath were <a href="http://mukulgandhi.blogspot.com/2008/05/blog-post.html">catered to non-programmers</a>? So, me being me, I wanted to do it how I believed was the true, correctly <u>typed</u> way of course.<br /><br />And like I said, it doesn't work.<br /><br />If you go back to the link on boolean expressions you'll notice this line:<br /><br /><blockquote class="tr_bq">If one object to be compared is a node-set and the other is a boolean, then the comparison will be true if and only if the result of performing the comparison on the boolean and on the result of converting the node-set to a boolean using the <b><a href="http://www.w3.org/TR/xpath/#function-boolean">boolean</a></b> function is true.</blockquote>&nbsp;This is the scenario I'm talking about. Let's follow through the link to the <a href="http://www.w3.org/TR/xpath/#function-boolean">boolean</a> function:<br /><blockquote class="tr_bq">&nbsp;The <b><a href="http://www.w3.org/TR/xpath/#function-boolean">boolean</a></b> function converts its argument to a boolean as follows:<br /><blockquote class="tr_bq"><ul><li>a node-set is true if and only if it is non-empty </li></ul></blockquote></blockquote>Mother of god... My expression wasn't testing the value of my boolean element - it was checking to see if the result of my xpath returned any nodes at all! Gasp! Going back to the section on boolean expressions reveals this:<br /><br /><blockquote> If one object to be compared is a node-set and the other is a string, then the comparison will be true if and only if there is a node in the node-set such that the result of performing the comparison on the <a href="http://www.w3.org/TR/xpath/#dt-string-value">string-value</a> of the node and the other string is true.</blockquote>So hold on a minute.... work with me here. If I compare my xpath that selects a boolean element against a string then the actual <i>value</i> of said element is considered, but when I compare that same xpath against a boolean type then the actual value of the element is irrelevant?<br /><br />What insane world are we living in? What was the genius behind this design decision?
+  </div>
+
+  
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">George Aristy</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>
+            
+              George Aristy
+            
+            </li>
+            
+            <li><a href="mailto:george.aristy@gmail.com">george.aristy@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/llorllale"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">llorllale</span></a>
+
+          </li>
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

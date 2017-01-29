@@ -1,0 +1,15 @@
+---
+layout: post
+title: A note on Weblogic JMS Queue pending + current messages count
+date: '2013-11-02T11:03:00.001-04:00'
+author: George Aristy
+tags:
+- jms
+- weblogic
+modified_time: '2013-11-02T11:07:08.215-04:00'
+thumbnail: http://2.bp.blogspot.com/-9NoC6SLgCH8/UnUSVo1jhSI/AAAAAAAAAQo/GBW1kC7WF5M/s72-c/image001.png
+blogger_id: tag:blogger.com,1999:blog-5903491164319093451.post-7230135332284478882
+blogger_orig_url: http://llorllale.blogspot.com/2013/11/a-note-on-weblogic-jms-queue-pending.html
+---
+
+Recently I had to perform some load tests on an application that received its input via a Weblogic JMS queue, hence making the rate of message consumption one of the key metrics to keep track of and compare to a known standard.<br /><br />Developing the WLST script proved a bit challenging only for the fact that all documentation of what constitutes "total pending messages" in the queue is a bit ambiguous (Oracle Weblogic's own documentation being the worst of all). So I did a little digging around and some experimenting and present to you here a graph which I think illustrates quite succinctly what it's all about:<br /><br /><div class="separator" style="clear: both; text-align: center;"></div><div class="separator" style="clear: both; text-align: center;"></div><div class="separator" style="clear: both; text-align: center;"><a href="http://2.bp.blogspot.com/-9NoC6SLgCH8/UnUSVo1jhSI/AAAAAAAAAQo/GBW1kC7WF5M/s1600/image001.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" src="http://2.bp.blogspot.com/-9NoC6SLgCH8/UnUSVo1jhSI/AAAAAAAAAQo/GBW1kC7WF5M/s400/image001.png" /></a></div><br />"Messages pending" seem to be the working buffer (tier 1) from where the MDBs consume the messages. "Messages current" seem to be a secondary buffer (tier 2, probably serialized to disk) which are fed into "messages pending" whenever there's available capacity in the latter.<br /><br />For proof, notice how "messages current" starts climbing only after "messages pending" has reached a certain level, and notice how "messages current" is the first to drop to zero, after which "messages pending" falls to zero as well.<br /><br />By the way, "messages processed" in the graph was calculated using the simple formula: msgs_received - (msgs_current + msgs_pending).
