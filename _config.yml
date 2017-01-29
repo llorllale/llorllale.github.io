@@ -26,7 +26,7 @@ github_username:  llorllale
 
 # Build settings
 markdown: kramdown
-theme: jekyll-theme-hacker
+theme: jekyll-theme-midnight
 gems:
   - jekyll-feed
 exclude:
