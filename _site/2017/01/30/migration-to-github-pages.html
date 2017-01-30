@@ -6,11 +6,11 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Writing prose in two languages (or how I coded some bits in application code, other bits in database code)</title>
-  <meta name="description" content="I didn&#39;t code it. But I&#39;m part of the team in charge of completing the project and maintaining it.Oh yeah. The project consists of an integration layer betwe...">
+  <title>Migration to Github Pages</title>
+  <meta name="description" content="Welcome to the new blog!">
 
   <link rel="stylesheet" href="/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/2012/03/19/writing-prose-in-two-languages-or-how-i.html">
+  <link rel="canonical" href="http://localhost:4000/2017/01/30/migration-to-github-pages.html">
   <link rel="alternate" type="application/rss+xml" title="cat llorllale | grep -v &#39;BS&#39;" href="/feed.xml">
   
   
@@ -61,12 +61,31 @@
         <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
-    <h1 class="post-title" itemprop="name headline">Writing prose in two languages (or how I coded some bits in application code, other bits in database code)</h1>
-    <p class="post-meta"><time datetime="2012-03-19T23:39:00-04:00" itemprop="datePublished">Mar 19, 2012</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">George Aristy</span></span></p>
+    <h1 class="post-title" itemprop="name headline">Migration to Github Pages</h1>
+    <p class="post-meta"><time datetime="2017-01-30T10:17:00-04:00" itemprop="datePublished">Jan 30, 2017</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">George Aristy</span></span></p>
   </header>
 
   <div class="post-content" itemprop="articleBody">
-    I didn't code it. But I'm part of the team in charge of completing the project and maintaining it.<br /><br />Oh yeah. The project consists of an integration layer between different systems; it is implemented on top of Oracle's SOA Suite. There are many BPEL processes, ESBs, web services, etc. <br /><br />Since it's <i>Oracle's</i> SOA Suite, we use JDeveloper (dear <i>god</i>, don't get me started) and Oracle Database. We color-coordinated everything - we're cool like that. The only other caveat is that there are a few stored procedures here and there, as well as some triggers. <i>Triggers</i>. Containing business logic. Like, <i>if this new row in table X has the "status" column set to 123, then update tables A, B, C, D and E with status 456</i>.<br /><br />It's pretty much guaranteed that <b>you will fail to pin point this mechanism in a reasonable amount of time the first time you come across such a scenario</b>. It's a pretty big context switch and will surely be the last thing that you will check.<br /><br />This <a href="http://programmers.stackexchange.com/questions/75487/how-to-suggest-using-an-orm-instead-of-stored-procedures" target="_blank">post</a> on StackExchange reminded me of all this while I lay cool sipping on a cold beer at my home.
+    <p><strong>Welcome to the new blog!</strong></p>
+
+<p>I’m sunsetting the old <a href="http://llorllale.blogspot.com/">blog</a> and migrating all posts here, closer to my public code.</p>
+
+<p>The move also allows version control (always welcome) and better automation (via ‘git push’ to master branch).</p>
+
+<p>I’m using <a href="https://jekyllrb.com/">jekyll</a> to build this blog. Things I’ve yet to properly figure out:</p>
+
+<ol>
+  <li>Preferred comment system. Apparently, minima only supports disqus out-of-the-box and I’m afraid of ads introduced through it.</li>
+  <li>A decent theme for this blog. I’ve enabled jekyll’s default <a href="https://github.com/jekyll/minima">theme</a> for now since the one I liked best doesn’t work on jekyll 3.3.1 (the version that github <a href="https://pages.github.com/versions/">currently supports</a>).</li>
+  <li>How to properly link to my <a href="https://www.linkedin.com/in/georgearisty">linkedin profile</a>. The minima theme doesn’t seem to support it.</li>
+</ol>
+
+<p><strong>What I’ll be posting about</strong></p>
+
+<p>I’ve always had a passion for programming, and I’m a strong believer in the open-source movement, so I’ll definitely be writing related to that. Checkout my code at <a href="http://github.com/llorllale">github</a>.</p>
+
+<p>On the personal level, I’ve been passionate about powerlifting for around 18 months or so, so look out for a few posts here and there on that. And, perhaps - <em>drum roll</em> - if I ever get serious again about guitar playing, I’ll be posting some of that as well!</p>
+
   </div>
 
   
