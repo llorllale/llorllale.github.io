@@ -1,0 +1,23 @@
+---
+layout: default
+comments: true
+---
+
+  <h2 class="post-title">{{ page.title | escape }}</h2>
+  <p class="post-meta">
+    <time datetime="{{ page.date | date_to_xmlschema }}">
+      {% assign date_format = "%b %-d, %Y" %}
+      {{ page.date | date: date_format }}
+    </time>
+    {% if page.author %}
+      • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ page.author }}</span></span>
+    {% endif %}
+	</p>
+
+  {{ content }}
+
+  {% if site.disqus.shortname %}
+    {% include disqus_comments.html %}
+  {% endif %}
+
+	{% include disqus_comments.html %}
