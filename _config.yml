@@ -16,10 +16,16 @@ repository: llorllale/llorllale.github.io
 
 # Build settings
 markdown: kramdown
-theme: jekyll-theme-hacker
-gems:
-  - jekyll-feed
+# theme: minima
+theme: jekyll-theme-cayman
+
+show_downloads: true
+
 exclude:
   - Gemfile
   - Gemfile.lock
   - README.md
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-feed
