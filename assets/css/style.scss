@@ -1,4 +1,18 @@
 ---
 ---
 
-@import 'jekyll-theme-hacker';
+@import "{{ site.theme }}";
+
+.main-content h2 {
+	margin-top: 0;
+	margin-bottom: 0
+}
+
+.post-meta {
+  font-size: 15px;
+	color: #00000080;
+}
+
+.post-excerpt {
+	font-size: 16px;
+}

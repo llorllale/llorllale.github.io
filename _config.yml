@@ -14,12 +14,22 @@ github_username:  llorllale
 linkedin_username: georgearisty
 repository: llorllale/llorllale.github.io
 
+paginate: 10
+paginate_path: "/blog/page:num/"
+
+
 # Build settings
 markdown: kramdown
-theme: jekyll-theme-hacker
-gems:
-  - jekyll-feed
+theme: jekyll-theme-cayman
+
+show_downloads: true
+
 exclude:
   - Gemfile
   - Gemfile.lock
   - README.md
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-paginate
