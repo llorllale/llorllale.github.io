@@ -23,12 +23,10 @@ group :jekyll_plugins do
    gem 'jekyll-feed'
 	 gem 'jekyll-compose'
 	 gem 'github-pages'
+	 gem 'jekyll-paginate'
+	 gem 'jekyll-sitemap'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
-
-gem 'jekyll-sitemap', '1.1.1'
-
-gem 'jekyll-paginate', '1.1.0'
 
