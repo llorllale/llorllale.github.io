@@ -73,3 +73,29 @@ public interface Map<K extends Equality<K> & HashCode, V> {
   public V get(K key);
 }
 {% endhighlight %}
+
+**[EDIT 2017-11-05]**
+
+Reading back on this as I prepare my post on the new 'data class' proposal in project amber, I realized that the above interface proposals can be improved a bit:
+
+Analyzing the [equals()](https://docs.oracle.com/javase/9/docs/api/java/lang/Object.html#equals-java.lang.Object-) vs. the [hashCode()](https://docs.oracle.com/javase/9/docs/api/java/lang/Object.html#hashCode--) contracts, it becomes obvious that despite mention of `hashCode()` in the `equals()` javadoc, the latter's implementation *does not depend on the former's*. However, `hashCode()` **does** make demands of `equals()`. Therefore, I amend my interface proposal to:
+
+{% highlight java %}
+public interface Equality<T> {
+  public boolean equals(T other);
+}
+
+/**
+ * Specifications for the requisites on Equality#equals
+ */
+public interface HashCode<T> extends Equality<T> {
+  public int code();
+}
+
+//and Map's declaration would clear up a bit
+public interface Map<K extends HashCode<K>, V> {
+  public V get(K key);
+}
+{% endhighlight %}
+
+It is now clear that a) `equality` does not require an object to be *hashable*, and b) `hashCode` is a separate concern intended to improve performance of *some* collections that require `Equality#equals` to behave a certain way in order for those collections to behave properly.
