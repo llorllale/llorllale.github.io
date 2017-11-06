@@ -7,9 +7,8 @@ timezone: America/Santo_Domingo
 locale: en-US
 description: > # this means to ignore newlines until "baseurl:"
   Ops support, programmer, budding enterprise architect, powerlifter, guitar player (maybe).
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: 
+baseurl: ""
+url: ""
 github_username:  llorllale
 linkedin_username: georgearisty
 repository: llorllale/llorllale.github.io
@@ -24,6 +23,16 @@ theme: jekyll-theme-cayman
 
 show_downloads: true
 
+twitter:
+  username: llorllale
+
+social:
+  name: George Aristy
+  lnks:
+    - https://twitter.com/llorllale
+    - https://www.linkedin.com/in/georgearisty
+    - https://github.com/llorllale
+
 exclude:
   - Gemfile
   - Gemfile.lock
@@ -33,3 +42,4 @@ plugins:
   - jekyll-sitemap
   - jekyll-feed
   - jekyll-paginate
+  - jekyll-seo-tag
