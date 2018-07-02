@@ -10,6 +10,7 @@ tags:
 - java
 - maven
 - generics
+comments: true
 ---
 
 I was recently confounded by a something unexpected in Java's type-erasure. Consider the following snippets:

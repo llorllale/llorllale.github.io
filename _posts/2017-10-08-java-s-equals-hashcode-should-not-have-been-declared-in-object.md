@@ -9,6 +9,7 @@ tags:
 - OOP
 - equals
 - hashcode
+comments: true
 ---
 
 One of my pet peeves of the `Object.equals()` and `Object.hashCode()` implementations that every class inherits in Java is the fact that, in principle, these are *really intimate* concerns of the class implementation, and that `Object`, a class that can be far removed from a user-defined type, should not be dictating what *equality* means to a descendant.
@@ -20,9 +21,9 @@ It turns out that since generics were first introduced in Java, [union of types]
 
 {% highlight java %}
 public interface Intersection<T extends Number & Comparable<T>> {
-  public default int doSomething(T t1, T t2) {
-    return t1.compareTo(t2) + t1.byteValue();
-  }
+    public default int doSomething(T t1, T t2) {
+        return t1.compareTo(t2) + t1.byteValue();
+    }
 }
 {% endhighlight %}
 
