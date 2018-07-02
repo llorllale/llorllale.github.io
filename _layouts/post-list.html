@@ -29,6 +29,15 @@ layout: compress
                             <a class="zoombtn" href="{{ site.url }}{{ post.url }}">{{ post.title }}</a>
                             <p>{{ post.excerpt }}</p>
                             <a href="{{ site.url }}{{ post.url }}" class="btn zoombtn">Read More</a>
+                            {% if site.reading_time %}
+                              <small>
+                                <span class="reading-time">
+                                  <i class="fa fa-clock-o"></i>
+                                  {% capture body %}{{ post.content }}{% endcapture %}
+                                  {% include read-time.html text=body %}
+                                </span>
+                              </small>
+                            {% endif %}
                         </li>
                     </ul>
                         {% endif %}

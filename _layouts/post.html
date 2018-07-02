@@ -21,7 +21,8 @@ layout: compress
                     {% if site.reading_time %}
                     <p class="reading-time">
                       <i class="fa fa-clock-o"></i>
-                      {% include read-time.html %}
+                      {% capture body %}{{ content }}{% endcapture %}
+                      {% include read-time.html text=body %}
                     </p><!-- /.entry-reading-time -->
                     {% endif %}
                     {% if page.project %}
