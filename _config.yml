@@ -5,7 +5,7 @@ description:        "My thoughts on things involving software craftsmanship."
 reading_time:       true
 words_per_minute:   200
 logo:               'assets/img/portrait.jpg'
-background:         'assets/img/background4.jpg'
+background:         'assets/img/keyboard.jpeg'
 tiled_bg:           false   # Set this true if you want to tile your background image, otherwise it will be covered
 locale:             en_US
 url:                http://localhost:4000
