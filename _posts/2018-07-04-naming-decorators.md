@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Smart Names for Extended Types and Decorators
+title: Nominalized Adjectives as Names for Decorators
 excerpt: Use nominalized adjectives as names for your decorators for terser code.
 date: '2018-07-05T10:17:00.001-04:00'
 author: George Aristy
