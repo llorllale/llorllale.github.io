@@ -16,7 +16,7 @@ My name is **<big>George Aristy</big>**. I am a programmer and an open-source en
   <img src="http://www.oracle.com/us/technologies/java/gimmejava/i-code-java-100x117-1705302.png" alt="I Code Java" border="0" width="100" height="117" align="left"/>
 </a>
 
-**<big>As a programmer</big>**, I specialize in Java backends, whether these are on a standard JEE stack, on Oracle's SOA Suite, or on OpenShift.  I am an [Oracle Certified Java SE 8 Programmer](https://www.youracclaim.com/badges/c54f640a-f752-4f83-aed9-8294739f532b) and have close to a decade's [experience](https://github.com/llorllale/cv) providing service-oriented solutions within the telecom domain. I have led the way forward with standards and best-practices for SOA development, and have evangelized SOA's benefits for its successful adoption across an IT enterprise.
+**<big>As a programmer</big>**, I specialize in Java backends, whether these are on a standard JEE stack or on Oracle's SOA Suite.  I am an [Oracle Certified Java SE 8 Programmer](https://www.youracclaim.com/badges/c54f640a-f752-4f83-aed9-8294739f532b) and have close to a decade's [experience](https://github.com/llorllale/cv) providing service-oriented solutions within the telecom domain. I have led the way forward with standards and best-practices for SOA development, and have evangelized SOA's benefits for its successful adoption across an IT enterprise.
 
 <br/>
 
