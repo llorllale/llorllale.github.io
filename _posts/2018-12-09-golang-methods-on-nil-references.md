@@ -10,6 +10,7 @@ tags:
 - golang
 - null-object-pattern
 - nil
+- learning-go
 ---
 
 *This is the first post in a series in which I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of [Elegant Objects](https://www.elegantobjects.org/).*
