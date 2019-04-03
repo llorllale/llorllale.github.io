@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Golang - The database/sql package
-excerpt: TLDR - Accept interfaces, return interfaces (unless there aren't any).
+excerpt: TLDR - database/sql eases the learning curve for users by providing a simple API that nevertheless breaks the single responsibility principle and incorporates orthogonal yet useful functionality into this package.
 date: 2019-04-03
 author: George Aristy
 feature: assets/images/gopher_peek.png
