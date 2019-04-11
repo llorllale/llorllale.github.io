@@ -90,7 +90,19 @@ If `B` is a subtype of `A`, then `GenericType<B>` is a subtype of `GenericType<?
 
 ### Arrays in Java have always been covariant
 
-Before generics were introduced in Java `1.5`, arrays were the only generic containers available. They have always been covariant, eg. `Integer[]` is a subtype of `Object[]`. The danger has always been that if you pass your `Integer[]` to a method that accepts `Object[]`, that method can literally put *anything* in there. It's a risk you take - not matter how small - when using third party code.
+Before generics were introduced in Java `1.5`, arrays were the only generic containers available. They have always been covariant, eg. `Integer[]` is a subtype of `Object[]`. The compiler allows you to pass your `Integer[]` to a method that accepts `Object[]`. If the method inserts a supertype of `Integer`, an [ArrayStoreException](https://docs.oracle.com/javase/8/docs/api/java/lang/ArrayStoreException.html) is thrown at *runtime*. Covariant generic type rules implement this check at *compile time*, disallowing the mistake to ever happen in the first place.
+
+{% highlight java %}
+public static void main(String... args) {
+  Number[] numbers = new Number[]{1, 2, 3, 4, 5};
+  trick(numbers);
+}
+
+private static void trick(Object[] objects) {
+  objects[0] = new Float(123);  // ok
+  objects[1] = new Object();  // ArrayStoreException thrown at runtime
+}
+{% endhighlight %}
 
 ### Covariant containers
 
