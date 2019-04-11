@@ -1,0 +1,19 @@
+@startuml
+
+start
+if (Do I control implementation?) then (no)
+  :define interface in consumer package;
+else (yes)
+  if (Are there existing implementations?) then (no)
+    if (Am I adding new implementations now?) then (no)
+      :define interface in consumer package;
+    else (yes)
+      :define interface in parent pkg of implementations;
+    endif
+  else (yes)
+    :define interface in parent pkg of implementations;
+  endif
+endif
+stop
+
+@enduml
