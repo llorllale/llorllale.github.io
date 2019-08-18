@@ -1,10 +1,9 @@
 ---
 layout: post
 title: Golang - Optional Arguments for APIs
-excerpt: 
+excerpt: Functional arguments are cool but add unnecessary complexity.
 date: 2019-08-18
 author: George Aristy
-feature: 
 tags:
 - go
 - golang
