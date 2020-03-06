@@ -1,0 +1,18 @@
+---
+layout: post
+title: 'JDeveloper 11g: SOA composite referencing 2-way-SSL-enabled webservice at
+  design+deployment time'
+excerpt: You're designing your composite and you need to integrate it with some external web service over SSL. 
+date: 2015-12-30
+author: George Aristy
+tags:
+- 11g
+- jdeveloper
+- ssl
+- bad_certificate
+modified_time: '2015-12-30T17:25:55.193-04:00'
+blogger_id: tag:blogger.com,1999:blog-5903491164319093451.post-3455793532517466560
+blogger_orig_url: http://llorllale.blogspot.com/2015/12/jdeveloper-11g-soa-composite.html
+---
+
+I just spent an embarrassingly long time figuring this out.<br /><br /><b>Design Time</b><br />You're designing your composite and you need to integrate it with some external web service over SSL. You attempt to add the partner link and it may fail right away (cannot read WSDL) OR it may read it BUT JDeveloper's schema validator may fail to parse the service' schema.<br /><b> </b><br />Review your HTTPS Credentials (Tools -&gt; Preferences -&gt; Credentials -&gt; HTTPS Credential) settings and also <u><b>make sure you've set up your keystores and truststores correctly</b></u>. There is plenty of documentation regarding SSL, keystores and keytool (albeit all a bit confusing, at least for me) out there.<br /><br />Easy.<br /><br /><b>Deployment Time</b><br />This is where you will get the dreaded "<span style="color: red;"><b>received fatal_alert: bad_certificate</b></span>". This part vexed me. If the above was done right, why is compilation/deployment failing?<br /><br /><b>The issue is that the HTTPS Credential settings are applied only on the process that performs the schema validation, and not the one that does the final compilation/deployment.</b><br /><br />Add these entries to your jdev.conf ($MWHOME/jdeveloper/jdev/bin/jdev.conf):<br /><br /><ul><li>AddVMOption -Dweblogic.security.SSL.enableJSSE=true (this one might not be required)</li><li>AddVMOption -Djavax.net.ssl.trustStore=PATH_TO_HTTPSCREDENTIAL_TRUSTSTORE<path_to_httpscredential_truststore></path_to_httpscredential_truststore></li><li>AddVMOption -Djavax.net.ssl.trustStorePassword=TRUSTSTORE_PWD<truststore_pwd></truststore_pwd></li><li>AddVMOption -Djavax.net.ssl.keyStore=PATH_TO_HTTPSCREDENTIAL_KEYSTORE<path_to_httpscredential_keystore></path_to_httpscredential_keystore></li><li>AddVMOption -Djavax.net.ssl.keyStorePassword=KEYSTORE_PWD<keystore_pwd></keystore_pwd></li></ul><br />Restart JDeveloper. You're welcome. 

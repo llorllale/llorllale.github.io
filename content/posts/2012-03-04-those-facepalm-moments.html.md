@@ -1,0 +1,13 @@
+---
+layout: post
+title: Those facepalm moments...
+excerpt: The likelihood of a given event contributing  to your code failure is inversely proportional to your initial index of  suspicion of it's relation.
+date: 2012-03-04
+author: George Aristy
+tags: 
+modified_time: '2012-03-04T23:31:48.918-04:00'
+blogger_id: tag:blogger.com,1999:blog-5903491164319093451.post-8182541528986506661
+blogger_orig_url: http://llorllale.blogspot.com/2012/03/those-facepalm-moments.html
+---
+
+<blockquote class="tr_bq">[...] by now you should know that the likelihood of a given event contributing  to your code failure is inversely proportional to your initial index of  suspicion of it's relation.</blockquote>&nbsp;Source: <a href="http://blog.ethanvizitei.com/2010/11/json-pure-ruins-my-morning.html">Ethan's Software Blog</a>.

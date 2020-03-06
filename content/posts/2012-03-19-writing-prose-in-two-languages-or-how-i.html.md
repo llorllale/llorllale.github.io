@@ -1,0 +1,14 @@
+---
+layout: post
+title: Writing prose in two languages (or how I coded some bits in application code,
+  other bits in database code)
+excerpt: The project consists of an integration layer between different systems; it is implemented on top of Oracle's SOA Suite.
+date: 2012-03-19
+author: George Aristy
+tags: 
+modified_time: '2012-03-19T23:39:06.492-04:00'
+blogger_id: tag:blogger.com,1999:blog-5903491164319093451.post-2622626564741851129
+blogger_orig_url: http://llorllale.blogspot.com/2012/03/writing-prose-in-two-languages-or-how-i.html
+---
+
+I didn't code it. But I'm part of the team in charge of completing the project and maintaining it.<br /><br />Oh yeah. The project consists of an integration layer between different systems; it is implemented on top of Oracle's SOA Suite. There are many BPEL processes, ESBs, web services, etc. <br /><br />Since it's <i>Oracle's</i> SOA Suite, we use JDeveloper (dear <i>god</i>, don't get me started) and Oracle Database. We color-coordinated everything - we're cool like that. The only other caveat is that there are a few stored procedures here and there, as well as some triggers. <i>Triggers</i>. Containing business logic. Like, <i>if this new row in table X has the "status" column set to 123, then update tables A, B, C, D and E with status 456</i>.<br /><br />It's pretty much guaranteed that <b>you will fail to pin point this mechanism in a reasonable amount of time the first time you come across such a scenario</b>. It's a pretty big context switch and will surely be the last thing that you will check.<br /><br />This <a href="http://programmers.stackexchange.com/questions/75487/how-to-suggest-using-an-orm-instead-of-stored-procedures" target="_blank">post</a> on StackExchange reminded me of all this while I lay cool sipping on a cold beer at my home.

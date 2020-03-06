@@ -1,0 +1,15 @@
+---
+layout: post
+title: Vim Tip of the Day
+date: 2009-07-23
+author: George Aristy
+tags:
+- copy search hits
+- vi
+- vim
+modified_time: '2009-07-23T15:18:43.581-04:00'
+blogger_id: tag:blogger.com,1999:blog-5903491164319093451.post-8069782337333770436
+blogger_orig_url: http://llorllale.blogspot.com/2009/07/vim-tip-of-day.html
+---
+
+<span style="font-weight: bold;">Copying lines containing search hits</span> (<a href="http://vim.wikia.com/wiki/Copy_the_search_results_into_clipboard">source</a>):<br /><br />1.- Clear a register (eg 'a'): qaq<br />2.- Append all matching lines to that register: g/pattern/y A<br />3.- Copy contents of register a to clipboard (register '+'): let @+ = @a<br /><br /><br />Enjoy.

@@ -1,0 +1,17 @@
+---
+layout: post
+title: Vim column mode
+excerpt: Today I found myself in the need of Vim's column mode (using regex for what I wanted to do would have been hard).
+date: 2009-07-17
+author: George Aristy
+tags:
+- vi
+- column mode
+- vim
+modified_time: '2009-07-17T23:04:31.924-04:00'
+thumbnail: http://4.bp.blogspot.com/_XBtuK4Rec6Y/SmE3DBWsg7I/AAAAAAAAAEo/-qOt2Dg1Jko/s72-c/vim_col_mode.PNG
+blogger_id: tag:blogger.com,1999:blog-5903491164319093451.post-4218709634257929585
+blogger_orig_url: http://llorllale.blogspot.com/2009/07/vim-column-mode.html
+---
+
+Today I found myself in the need of Vim's column mode (using regex for what I wanted to do would have been hard).<br /><br />I googled real quick but the first few hits weren't of much use/very clear and and so after figuring out how it works I think it's worthy of posting here as a) a reminder for myself :) and b) so others who google this may get to see this - faster, hopefully.<br /><br />Let's say you have sql statements like in the 1st screenshot. Look closely - they are missing a cast of the date fields with <span style="font-weight: bold;">to_date</span>. If you are stuck at 10PM at the office on a friday night, like me, and need to perform this, I really think substitution with regular expressions is the least preferable option at this point.<br /><br />Enter column mode.<br /><br />Move the cursor to the position where you would like to insert text:<br /><a onblur="try {parent.deselectBloggerImageGracefully();} catch(e) {}" href="http://4.bp.blogspot.com/_XBtuK4Rec6Y/SmE3DBWsg7I/AAAAAAAAAEo/-qOt2Dg1Jko/s1600-h/vim_col_mode.PNG"><img style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer; width: 200px; height: 125px;" src="http://4.bp.blogspot.com/_XBtuK4Rec6Y/SmE3DBWsg7I/AAAAAAAAAEo/-qOt2Dg1Jko/s200/vim_col_mode.PNG" alt="" id="BLOGGER_PHOTO_ID_5359625556590363570" border="0" /></a><br />Hit <span style="font-weight: bold;">Ctrl+q</span>. This will make Vim go into 'visual block' mode. Select the intersection of columns and rows where you would like to insert your text. In my case, I wanted to insert some text right before the single quote selected:<br /><a onblur="try {parent.deselectBloggerImageGracefully();} catch(e) {}" href="http://3.bp.blogspot.com/_XBtuK4Rec6Y/SmE4DiA5iYI/AAAAAAAAAEw/faGQZpG5CZ4/s1600-h/vim_col_mode2.PNG"><img style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer; width: 200px; height: 125px;" src="http://3.bp.blogspot.com/_XBtuK4Rec6Y/SmE4DiA5iYI/AAAAAAAAAEw/faGQZpG5CZ4/s200/vim_col_mode2.PNG" alt="" id="BLOGGER_PHOTO_ID_5359626664868940162" border="0" /></a><br />Now hit <span style="font-weight: bold;">Shift+I</span>. This will bring the cursor to the first coordinate selected before in  mode. Type in the text you want to enter. Don't fret when you see that you're only updating that line. Once you finish, press <span style="font-weight: bold;">ESC</span> - this is where the magic happens:<br /><a onblur="try {parent.deselectBloggerImageGracefully();} catch(e) {}" href="http://2.bp.blogspot.com/_XBtuK4Rec6Y/SmE4_I82UJI/AAAAAAAAAE4/hOuXzWUoG_s/s1600-h/vim_col_mode4.PNG"><img style="margin: 0px auto 10px; display: block; text-align: center; cursor: pointer; width: 200px; height: 125px;" src="http://2.bp.blogspot.com/_XBtuK4Rec6Y/SmE4_I82UJI/AAAAAAAAAE4/hOuXzWUoG_s/s200/vim_col_mode4.PNG" alt="" id="BLOGGER_PHOTO_ID_5359627688933216402" border="0" /></a><br />Isn't vim the greatest text editor in the world? :)<br /><br />Enjoy!
