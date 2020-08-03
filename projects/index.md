@@ -6,6 +6,7 @@ date: 2019-03-13
 comments: false
 ---
 
+* **[go-gitlint](https://github.com/llorllale/go-gitlint)**: CLI written in Go that lints your commit messages.
 * **[youtrack-api](https://llorllale.github.io/youtrack-api)**: an object-oriented, Java API for [YouTrack](https://www.jetbrains.com/youtrack/).
 * **[releasecat-maven-plugin](https://llorllale.github.io/releasecat-maven-plugin):**  a maven plugin that creates GitHub releases for your project. 
 * **[loggit-maven-plugin](https://llorllale.github.io/loggit-maven-plugin):** a maven plugin that generates changelog and release notes for projects using git
