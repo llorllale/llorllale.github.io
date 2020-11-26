@@ -93,11 +93,27 @@ Decreased number of unit tests: reducing the set of options to a [value object](
 
 ### In terms of usage
 
-Nothing as far as I can see.
+~~Nothing as far as I can see.~~
 
 The symbol `Default` clearly signals the possibility of custom `Term`s such that a developer
 consuming this API would seek out alternatives if required. This means this design has no added
 confusing aspects.
+
+Edit: as pointed out by [@rhcarvalho](https://github.com/rhcarvalho), there is a downside when it comes to default values.
+The proposed design here cannot have a default value for an option that differs from Go's zero value for the given type.
+For example, see the ambiguity in:
+
+```go
+// Let's say we want the default Baud value to be 57600, not 0.
+term, err := term.Custom(
+    "/dev/ttyUSB0",
+    term.Options{
+        CBreakMode: true,
+    }
+)
+
+// Should term have Baud=57600 (the default), or Baud=0 (implicit value from the Options argument)?
+```
 
 ### In terms of maintenance
 
