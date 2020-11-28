@@ -115,6 +115,7 @@ term, err := term.Custom(
 // Should term have Baud=57600 (the default), or Baud=0 (implicit value from the Options argument)?
 ```
 
+In my experience, Go's default values are normally enough. And when they aren't, you may want to delay initialization of the default value if it's expensive enough.
 ### In terms of maintenance
 
 N/A. We *improve* maintainability by reducing the number of artifacts we need to test.
