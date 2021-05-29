@@ -1,2 +1,0 @@
-I"~<p>TL;DR for JDK 1.5, watch your Full GC frequency with sun.rmi.dgc.server.gcInterval/sun.rmi.dgc.client.gcInterval.</p>
-:ET

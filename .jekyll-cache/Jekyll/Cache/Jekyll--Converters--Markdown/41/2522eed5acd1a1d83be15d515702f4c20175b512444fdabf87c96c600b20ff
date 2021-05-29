@@ -1,2 +1,0 @@
-I"ë<p>Recently I had to perform some load tests on an application that received its input via a Weblogic JMS queue, hence making the rate of message consumption one of the key metrics to keep track of and compare to a known standard.</p>
-:ET

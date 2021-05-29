@@ -1,6 +1,6 @@
 ---
 layout: post
-title: On the proposal for "Data Classes"
+title: On the proposal for Data Classes
 excerpt: The proposed "data class" semantics for Java will just promote bad design!
 author: George Aristy
 date: '2017-11-05T11:40:00.000-04:00'
@@ -42,7 +42,7 @@ In essence, you must avoid [anemic domain models](https://www.martinfowler.com/b
 
 If you accept the previous argument, then the getter/setter "boilerplate" becomes a *non-issue*: tools will automatically create them *only where you absolutely need them*. In regards to the proposal, that leaves us with just the other `Object` methods of interest: `equals()` and `hashCode()`. Here's what I think:
 
-They should be taken out of `Object` and [made into their own interfaces](/java-s-equals-hashcode-should-not-have-been-declared-in-object).
+They should be taken out of `Object` and [made into their own interfaces](/posts/java-s-equals-hashcode-should-not-have-been-declared-in-object).
 
 Not all APIs want or even need all their DTOs to implement `equals()`, much less `hashCode()`.
 

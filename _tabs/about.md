@@ -11,7 +11,6 @@ My name is **<big>George Aristy</big>**. I am a programmer and an open-source en
 <br/>
 
 <a href="https://www.oracle.com/java/">
-  <img _fcksavedurl="https://www.oracle.com/java/">
   <img src="https://www.oracle.com/a/ocom/img/i-code-java-100x117-3854594.png" alt="I Code Java" border="0" width="100" height="117" align="left"/>
 </a>
 **<big>As a programmer</big>**, I specialize in backends, whether these are on a standard JEE stack, on Oracle's SOA Suite,

@@ -9,7 +9,7 @@ on:
       - LICENSE
 
 jobs:
-  continuous-delivery:
+  publish:
 
     runs-on: ubuntu-20.04
 

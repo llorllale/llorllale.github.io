@@ -13,7 +13,7 @@ tags:
 
 *This post is part of a [series](https://llorllale.github.io/tags/#learning-go) where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of [Elegant Objects](https://www.elegantobjects.org/).*
 
-In a [previous post](/golang-elegant-containers) I attempted to implement Elegant container-like idioms in *Go*. My approach was straightforward: follow the same train of thoughts I do in Java. I failed miserably.
+In a [previous post](/posts/golang-elegant-containers) I attempted to implement Elegant container-like idioms in *Go*. My approach was straightforward: follow the same train of thoughts I do in Java. I failed miserably.
 
 Following is an approach I find interesting.
 

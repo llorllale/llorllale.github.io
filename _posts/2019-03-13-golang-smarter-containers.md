@@ -13,7 +13,7 @@ tags:
 
 *This post is part of a [series](https://llorllale.github.io/tags/#learning-go) where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of [Elegant Objects](https://www.elegantobjects.org/).*
 
-I wish to make a correction in [this](/golang-elegant-containers) post. I want to focus on this statement:
+I wish to make a correction in [this](/posts/golang-elegant-containers) post. I want to focus on this statement:
 
 > `Products` is not a “smart” container - see point #3 in the Java proposal. You would have to manually append the newly-created `Product` to `Products`
 
