@@ -1,0 +1,2 @@
+I"e<p>Yesterday I came across another one of XPath’s little quirks that cost me up to an hour of painstaking step-by-step troubleshooting to narrow down - comparing the value of a boolean element to one of the boolean functions (either true() or false()), also known as a subset of <a href="http://www.w3.org/TR/xpath/#booleans">boolean expressions</a>.</p>
+:ET

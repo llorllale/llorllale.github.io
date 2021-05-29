@@ -17,7 +17,7 @@ widespread naming scheme reduces readability and adds no value to the code's con
 time we retire this needless naming redundancy.
 
 <div style="text-align:center">
-  <img src="/assets/images/office-space-milton.jpg" alt="Milton"/><br/>
+  <img src="/assets/img/office-space-milton.jpg" alt="Milton"/><br/>
   <small>Milton, from <a href="https://www.imdb.com/title/tt0151804/">Office Space</a></small>
 </div>
 

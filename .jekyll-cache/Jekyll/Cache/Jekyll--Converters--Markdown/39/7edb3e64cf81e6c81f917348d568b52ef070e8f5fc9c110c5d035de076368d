@@ -1,0 +1,72 @@
+I"d
+<p><em>This post is part of a <a href="https://llorllale.github.io/tags/#learning-go">series</a> where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of <a href="https://www.elegantobjects.org/">Elegant Objects</a>.</em></p>
+
+<p>In a <a href="/golang-elegant-containers">previous post</a> I attempted to implement Elegant container-like idioms in <em>Go</em>. My approach was straightforward: follow the same train of thoughts I do in Java. I failed miserably.</p>
+
+<p>Following is an approach I find interesting.</p>
+
+<h2 id="lets-use-functions">Let’s use Functions</h2>
+
+<p>Let’s ditch interfaces altogether and define our <code class="language-plaintext highlighter-rouge">Products</code> type as a function. I’ve managed to earn back two features of the Java counterpart:</p>
+
+<ol>
+  <li>Actual decorators</li>
+  <li>Deferred execution</li>
+</ol>
+
+<p><strong>However</strong>, I’ve only managed to work it out for <em>query</em> capabilities. Our <code class="language-plaintext highlighter-rouge">Products</code> is still a <em>castrated object</em> because it lacks smart capabilities as per point #3 in the previous post.</p>
+
+<p>{% highlight go %}
+package products</p>
+
+<p>type Product interface {
+	Id() int
+	Price() float64
+}</p>
+
+<p>type Products func() []Product</p>
+
+<p>// function with a function as receiver!
+func (p Products) Fetch(id int) Product {
+	for _, prod := range p() {
+		if prod.Id() == id {
+			return prod
+		}
+	}
+	return nil
+}</p>
+
+<p>// all products
+func All() Products {
+	// read from a database, etc.
+	return nil
+}</p>
+
+<p>// premium products filtered by <code class="language-plaintext highlighter-rouge">minimum</code> price
+func Premium(minimum float64, all Products) Products {
+	return func() []Product {
+		filtered := make([]Product, 0)
+		for _, p := range all() {
+			if p.Price() &gt;= minimum {
+				filtered = append(filtered, p)
+			}
+		}
+		return filtered
+	}
+}</p>
+
+<p>// USAGE
+func main() {
+	premium := products.Premium(1000, products.All())
+	prod := premium.Fetch(123) // fetch one premium product
+	fmt.Printf(“%+v”, prod)
+	for _, p := range premium() { // iterate through all premium products
+		fmt.Printf(“%+v”, p)
+	}
+}
+{% endhighlight %}</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>A bit early to actually reach a conclusion but this design further encourages me to believe that <em>Go</em> is a lot more oriented towards functional programming than object-oriented programming. Almost to the pointing of making me question what net value do interfaces in this language provide?</p>
+:ET

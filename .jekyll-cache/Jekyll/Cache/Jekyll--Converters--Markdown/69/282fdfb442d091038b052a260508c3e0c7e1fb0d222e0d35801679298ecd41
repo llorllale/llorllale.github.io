@@ -1,0 +1,48 @@
+I"L<p><em>This post is part of a <a href="https://llorllale.github.io/tags/#learning-go">series</a> where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of <a href="https://www.elegantobjects.org/">Elegant Objects</a>.</em></p>
+
+<p>I wish to make a correction in <a href="/golang-elegant-containers">this</a> post. I want to focus on this statement:</p>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">Products</code> is not a “smart” container - see point #3 in the Java proposal. You would have to manually append the newly-created <code class="language-plaintext highlighter-rouge">Product</code> to <code class="language-plaintext highlighter-rouge">Products</code></p>
+</blockquote>
+
+<p>What I meant is that clients would have to use it like this:</p>
+
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="n">prods</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="n">Products</span><span class="p">,</span> <span class="m">0</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">:=</span> <span class="n">prods</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="m">10</span><span class="p">)</span>
+<span class="n">prods</span> <span class="o">=</span> <span class="nb">append</span><span class="p">(</span><span class="n">prods</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>	<span class="c">// extra imperative code forced on the client to add the product to the container</span></code></pre></figure>
+
+<p>Let’s pay attention to this snippet:</p>
+
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">Products</span><span class="p">)</span> <span class="n">Create</span><span class="p">(</span><span class="n">price</span> <span class="kt">float64</span><span class="p">)</span> <span class="n">Product</span> <span class="p">{</span>
+	<span class="n">prod</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="n">product</span><span class="p">{</span><span class="n">id</span><span class="o">:</span> <span class="m">123</span><span class="p">,</span> <span class="n">price</span><span class="o">:</span> <span class="n">price</span><span class="p">}</span>
+	<span class="n">tmp</span> <span class="o">:=</span> <span class="nb">append</span><span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="n">prod</span><span class="p">)</span> <span class="c">// compiler would not allow p = &amp;(append(*p, prod))</span>
+	<span class="n">p</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">tmp</span>                <span class="c">// the problem here is that the caller still retains the original handle to `p`</span>
+	<span class="k">return</span> <span class="n">prod</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>I was <em>really</em> close to solving that riddle. The trick is to <em>assign a new value to the pointer variable</em>. The pointer variable itself is passed by value, so callers would also see the side effects. Here’s what I mean:</p>
+
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">func</span> <span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">Products</span><span class="p">)</span> <span class="n">Create</span><span class="p">(</span><span class="n">price</span> <span class="kt">float64</span><span class="p">)</span> <span class="o">*</span><span class="n">Product</span> <span class="p">{</span>
+	<span class="n">prod</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="n">product</span><span class="p">{</span><span class="n">price</span><span class="o">:</span> <span class="n">Price</span><span class="p">}</span>
+	<span class="o">*</span><span class="n">p</span> <span class="o">:=</span> <span class="nb">append</span><span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="n">prod</span><span class="p">)</span> <span class="c">// done in one line for brevity</span>
+	<span class="k">return</span> <span class="n">prod</span>
+<span class="p">}</span>
+
+<span class="c">// A test like this would pass</span>
+<span class="k">func</span> <span class="n">TestCreate</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span><span class="n">testing</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="p">{</span>
+	<span class="n">prods</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="n">Products</span><span class="p">,</span> <span class="m">0</span><span class="p">)</span>
+	<span class="n">prod</span> <span class="o">:=</span> <span class="n">prods</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="m">10</span><span class="p">)</span>
+	<span class="n">assert</span><span class="o">.</span><span class="n">Len</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">prods</span><span class="p">,</span> <span class="m">1</span><span class="p">)</span>
+	<span class="n">assert</span><span class="o">.</span><span class="n">Contains</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">prods</span><span class="p">,</span> <span class="n">prod</span><span class="p">)</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>With this I’ve proved that <code class="language-plaintext highlighter-rouge">Products</code> can be made smarter: create products and dynamically append them to itself.</p>
+
+<p>Several problems remain:</p>
+<ul>
+  <li>Slices don’t know how to iterate themselves - only <code class="language-plaintext highlighter-rouge">range</code> knows that. Since this power is taken away from developers, iteration of <code class="language-plaintext highlighter-rouge">Products</code> is only possible with objects in memory. You cannot implement a custom iterable - like in Java - that can dynamically fetch results from a datasource.</li>
+  <li>Since iteration is only done in memory space, deferred execution is harder to pull off. You’d basically need an abstraction for a function that returns the actual slice (think <code class="language-plaintext highlighter-rouge">type Products func() []Product</code>)</li>
+  <li>Cannot be decorated. Cannot implement <code class="language-plaintext highlighter-rouge">Premium</code> as a slice of products because the type will have no usable attribute for this. Unless… we go back the function abstraction idea…</li>
+</ul>
+:ET

@@ -1,58 +1,74 @@
-    <meta charset="UTF-8">
-    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
-    <meta http-equiv=X-UA-Compatible content="IE=edge,chrome=1">
-    <title>{% if page.title %}{{ page.title }} &#8211; {% endif %}{{ site.title }}</title>
-    <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
-    {% if page.tags %}<meta name="keywords" content="{{ page.tags | join: ', ' }}">{% endif %}
-    <!-- Twitter Cards -->
-    {% if page.feature %}{% capture feature %}{{ page.feature }}{% endcapture %}{% unless feature contains 'http://' or feature contains 'https://' %}{% capture feature %}{{ site.url }}/{{ feature }}{% endcapture %}{% endunless %}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="{{ feature }}">
-    {% else %}<meta name="twitter:card" content="summary">
-    <meta name="twitter:image" content="{{ site.url }}/{{ site.logo }}">{% endif %}
-    <meta name="twitter:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}">
-    {% if page.excerpt %}<meta name="twitter:description" content="{{ page.excerpt | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
-    {% if site.twitter %}<meta name="twitter:site" content="@{{ site.twitter }}">
-    <meta name="twitter:creator" content="@{{ site.twitter }}">{% endif %}
-    <!-- Open Graph -->
-    <meta property="og:locale" content="{{ site.locale }}">
-    <meta property="og:type" content="article">
-    <meta property="og:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}">
-    {% if page.excerpt %}<meta property="og:description" content="{{ page.excerpt | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
-    <meta property="og:url" content="{{ page.url | replace:'index.html','' | prepend: site.url }}">
-    <meta property="og:site_name" content="{{ site.title }}">
-    <meta property="og:image" content="{{ site.url }}/{{ site.logo }}">
-    {% if site.google.verify %}
-    <!-- Webmaster Tools verfication -->
-    <meta name="google-site-verification" content="{{ site.google.verify }}">{% endif %}
-    {% if site.bing-verify %}    <meta name="msvalidate.01" content="{{ site.bing-verify }}">{% endif %}
-    {% capture canonical %}{{ site.url }}{% if site.permalink contains '.html' %}{{ page.url }}{% else %}{{ page.url | remove:'index.html' | strip_slash }}{% endif %}{% endcapture %}
-    <link rel="canonical" href="{{ canonical }}">
-    <link href="{{ site.url }}/feed.xml" type="application/atom+xml" rel="alternate" title="{{ site.title }} Feed">
-    <!-- Handheld -->
-    <meta name="HandheldFriendly" content="True">
-    <meta name="MobileOptimized" content="320">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- CSS -->
-    <link rel="stylesheet" href="{{ site.url }}/assets/css/main.css">
-    <!-- JS -->
-    <script src="{{ site.url }}/assets/js/modernizr-3.3.1.custom.min.js"></script>
-    <!-- Favicons -->
-    <link rel="apple-touch-icon" href="{{ site.url }}/assets/img/favicons/apple-icon-precomposed.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="{{ site.url }}/assets/img/favicons/apple-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="{{ site.url }}/assets/img/favicons/apple-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="{{ site.url }}/assets/img/favicons/apple-icon-144x144.png">
-    <link rel="shortcut icon" type="image/png" href="{{ site.url }}/favicon.png" />
-    <link rel="shortcut icon" href="{{ site.url }}/favicon.ico" />
-    <!-- Background Image -->
-    {% if site.background %}
-    {% capture background %}{{ site.background }}{% endcapture %}
-    {% unless background contains 'http://' or background contains 'https://' %}{% capture background %}{{ site.url }}/{{ background }}{% endcapture %}{% endunless %}
-    <style type="text/css">body {background-image:url({{ background }}); {% unless site.tiled_bg %} background-repeat: no-repeat; background-size: cover; {% endunless %}}</style>
+<!--
+  The Head
+-->
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  {% if page.layout == 'home' or page.layout == 'post' %}
+
+    {% if site.google_analytics.pv.proxy_endpoint %}
+      <meta name="pv-proxy-endpoint" content="{{ site.google_analytics.pv.proxy_endpoint }}">
     {% endif %}
-    <!-- Post Feature Image -->
-    {% if page.feature %}
-    {% capture feature %}{{ page.feature }}{% endcapture %}
-    {% unless feature contains 'http://' or feature contains 'https://' %}{% capture feature %}{{ site.url }}/{{ feature }}{% endcapture %}{% endunless %}
-    <style type="text/css">.feature {background-image:url({{ feature }});}</style>
+
+    {% if site.google_analytics.pv.cache_path %}
+      <meta name="pv-cache-path" content="{{ site.google_analytics.pv.cache_path | relative_url }}">
     {% endif %}
+
+  {% endif %}
+
+  {% seo title=false %}
+
+  <title>
+  {%- unless page.layout == "home" -%}
+    {{ page.title | append: " | "}}
+  {%- endunless -%}
+    {{ site.title }}
+  </title>
+
+  {% include favicons.html %}
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+
+  <!-- GA -->
+  {% if jekyll.environment == 'production' %}
+    <link rel="preconnect" href="https://www.google-analytics.com" crossorigin="use-credentials">
+    <link rel="dns-prefetch" href="https://www.google-analytics.com">
+
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin="anonymous">
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+
+    {% if site.google_analytics.pv.proxy_endpoint %}
+      {% assign proxy_url = site.google_analytics.pv.proxy_endpoint
+        | replace: "https://", "" | split: "/" | first | prepend: "https://" %}
+
+      <link rel="preconnect" href="{{ proxy_url }}" crossorigin="use-credentials">
+      <link rel="dns-prefetch" href="{{ proxy_url }}">
+    {% endif %}
+  {% endif %}
+
+  <!-- jsDelivr CDN -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.11.2/css/all.min.css">
+
+  {% include css-selector.html %}
+
+  <!-- JavaScripts -->
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+
+  <script defer
+    src="https://cdn.jsdelivr.net/combine/npm/popper.js@1.15.0,npm/bootstrap@4/dist/js/bootstrap.min.js"></script>
+
+  {% include js-selector.html %}
+
+</head>

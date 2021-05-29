@@ -1,0 +1,91 @@
+I"�<p>I was recently directed towards Dave Cheney’s article <a href="https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis"><em>Functional options for friendly
+APIs</em></a> where he shares his
+thoughts on designs for optional parameters in APIs. Dave ends with a proposal for <em>functional</em>
+arguments that are optionally passed to a type constructor. There is no question this design is
+superior to having a single constructor with lots of arguments.</p>
+
+<p>However:</p>
+
+<p class="notice">Dave’s design is overkill for 99% of use cases and imposes an unnecessary tax on both the maintainer
+and the consumer of these APIs.</p>
+
+<p>Developers integrating with these APIs are <em>consumers</em>, so are readers (aka. code reviewers).</p>
+
+<h2 id="my-proposal">My proposal</h2>
+
+<p>A <em>simpler</em> alternative: two constructors, one is default, the other accepts a <em>config</em> struct.</p>
+
+<p>Here is my proposed design for Dave’s constructors in <a href="https://github.com/pkg/term">term</a>:</p>
+
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">package</span> <span class="n">term</span>
+
+<span class="c">// I identified just three options after a quick scan of the README:</span>
+<span class="c">// Baud rate, and either CBreakMode or RawMode.</span>
+<span class="k">type</span> <span class="n">Options</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">CBreakMode</span> <span class="kt">bool</span>  <span class="c">// Defaults to RawMode if false</span>
+    <span class="n">Baud</span>               <span class="kt">int</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">Default</span><span class="p">(</span><span class="n">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="n">Term</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
+
+<span class="k">func</span> <span class="n">Custom</span><span class="p">(</span><span class="n">name</span> <span class="kt">string</span><span class="p">,</span> <span class="n">options</span> <span class="n">Options</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="n">Term</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span></code></pre></figure>
+
+<h2 id="what-we-gain">What we gain…</h2>
+
+<h3 id="in-terms-of-usage">In terms of usage</h3>
+
+<p>Decreased verbosity: occurrences of the symbol <code class="language-plaintext highlighter-rouge">term</code> is decreased. The magnitude of this benefit
+increases linearly with the number of optional parameters:</p>
+
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">package</span> <span class="n">consumer</span>
+
+<span class="k">import</span> <span class="s">"github.com/pkg/term"</span>
+
+<span class="k">func</span> <span class="n">DaveDesign</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// default</span>
+    <span class="n">term</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">term</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="s">"/dev/ttyUSB0"</span><span class="p">)</span>
+
+    <span class="c">// custom</span>
+    <span class="n">term</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">term</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span>
+        <span class="s">"/dev/ttyUSB0"</span><span class="p">,</span>
+        <span class="n">term</span><span class="o">.</span><span class="n">Speed</span><span class="p">(</span><span class="m">57600</span><span class="p">),</span>
+        <span class="n">term</span><span class="o">.</span><span class="n">CBreakMode</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">MyDesign</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// A ctor named 'Default' immediately conveys the possibility of</span>
+    <span class="c">// customization to a consumer</span>
+    <span class="n">term</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">term</span><span class="o">.</span><span class="n">Default</span><span class="p">(</span><span class="s">"/dev/ttyUSB0"</span><span class="p">)</span>
+
+    <span class="c">// custom</span>
+    <span class="n">term</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">term</span><span class="o">.</span><span class="n">Custom</span><span class="p">(</span>
+        <span class="s">"/dev/ttyUSB0"</span><span class="p">,</span>
+        <span class="n">term</span><span class="o">.</span><span class="n">Options</span><span class="p">{</span>
+            <span class="n">Baud</span><span class="o">:</span>               <span class="m">57600</span><span class="p">,</span>
+            <span class="n">CBreakMode</span><span class="o">:</span> <span class="no">true</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">}</span></code></pre></figure>
+
+<h3 id="in-terms-of-maintenance">In terms of maintenance</h3>
+
+<p>Decreased number of unit tests: reducing the set of options to a <a href="https://en.wikipedia.org/wiki/Value_object">value object</a> renders tests for them <em>needless</em>.</p>
+
+<h2 id="what-we-lose">What we lose…</h2>
+
+<h3 id="in-terms-of-usage-1">In terms of usage</h3>
+
+<p>Nothing as far as I can see.</p>
+
+<p>The symbol <code class="language-plaintext highlighter-rouge">Default</code> clearly signals the possibility of custom <code class="language-plaintext highlighter-rouge">Term</code>s such that a developer
+consuming this API would seek out alternatives if required. This means this design has no added
+confusing aspects.</p>
+
+<h3 id="in-terms-of-maintenance-1">In terms of maintenance</h3>
+
+<p>N/A. We <em>improve</em> maintainability by reducing the number of artifacts we need to test.</p>
+
+<p>Any validations and/or computations can be extracted unto their own functions (whether static or
+member functions) of the constructor’s type.</p>
+:ET

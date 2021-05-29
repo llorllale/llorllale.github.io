@@ -1,0 +1,4 @@
+I"m<p>If you are a performance freak who makes sure every collection is initialized with the “right” size then don’t be: http://java.dzone.com/articles/java-collection-waste. In all fairness, notice the caveat at the end, though I also suspect that won’t be an issue. :)</p>
+
+<p><em>Edit 18 Aug 2019:</em> See the <a href="https://examples.javacodegeeks.com/java-collections-tutorial/">Java Collections Tutorial</a> on <a href="https://www.javacodegeeks.com/">Java Code Geeks</a> for a nice introduction to Java’s <a href="https://docs.oracle.com/javase/tutorial/collections/intro/index.html">Collections</a>.</p>
+:ET
