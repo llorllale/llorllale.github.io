@@ -1,0 +1,88 @@
+I"�!<p><em>This post is part of a <a href="https://llorllale.github.io/tags/#learning-go">series</a> where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of <a href="https://www.elegantobjects.org/">Elegant Objects</a>.</em></p>
+
+<p>I am studying the Go Code Review mantra <a href="https://github.com/golang/go/wiki/CodeReviewComments#interfaces"><em>Accept Interfaces, Return Structs</em></a> and was inspired to write this post after coming across Eli Bendersky’s post <a href="https://eli.thegreenplace.net/2019/design-patterns-in-gos-databasesql-package/">Design patterns in Go’s database/sql package</a>. This is the first instance where I feel I can endorse the mantra with confidence. Eli does a good job analysing the architecture of <code class="language-plaintext highlighter-rouge">database/sql</code> - I’m just here to provide a little nuance and some of my own notes.</p>
+
+<h2 id="problem-statement">Problem statement</h2>
+
+<p class="notice">Application programmers need a <a href="https://en.wikipedia.org/wiki/Database_abstraction_layer">Database abstraction layer</a> over a variety of SQL or SQL-like datasources for the most common use cases.</p>
+
+<p>Designing DALs is hard for two primary reasons:</p>
+
+<ul>
+  <li>The large variety of database implementations and drivers</li>
+  <li>The large variety of common use cases
+    <ul>
+      <li>CRUD</li>
+      <li>Transactions</li>
+      <li>Connection pooling</li>
+      <li>Prepared Statements</li>
+      <li>Mapping of data types</li>
+      <li>Stored procedures and functions</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Any solution is bound to end up as fat APIs ala <a href="https://golang.org/pkg/database/sql/#DB"><code class="language-plaintext highlighter-rouge">sql.DB</code></a> or <a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.sql/java/sql/package-summary.html"><code class="language-plaintext highlighter-rouge">JDBC</code></a>.</p>
+
+<h2 id="databasesqldb">database/sql.DB</h2>
+
+<p>Interestingly, <a href="https://golang.org/pkg/database/sql/#DB"><code class="language-plaintext highlighter-rouge">sql.DB</code></a> is a concrete type, not an interface. <em>Why?</em></p>
+
+<p><code class="language-plaintext highlighter-rouge">sql.DB</code> exposes a fat interface for the reasons laid out in <a href="#problem-statement">Problem statement</a>. There are several strategies to limit an API’s <em>obesity</em><a href="#note1"><sup>1</sup></a> - both <code class="language-plaintext highlighter-rouge">database/sql</code> and <code class="language-plaintext highlighter-rouge">JDBC</code> opt for the <a href="https://en.wikipedia.org/wiki/Interface_segregation_principle">Interface Segregation Principle</a>. <code class="language-plaintext highlighter-rouge">database/sql</code> muddles the waters a bit by doing <a href="https://en.wikipedia.org/wiki/Single_responsibility_principle">More Than One Thing</a>, while <code class="language-plaintext highlighter-rouge">JDBC</code> offers a cleaner separation of concerns.</p>
+
+<p><strong>Because <code class="language-plaintext highlighter-rouge">sql.DB</code> is <em>necessarily</em> fat<a href="#note2"><sup>2</sup></a><sup>,</sup><a href="#note3"><sup>3</sup></a>, making it an interface will only hinder code that depends on it</strong>: it’s painful and wasteful to have to implement all those methods in your production code and in your mocks when you only need 3 or 4. For these reasons, programmers in general prefer to design <a href="https://en.wikipedia.org/wiki/Facade_pattern"><em>facades</em></a> or <a href="https://en.wikipedia.org/wiki/Adapter_pattern"><em>adapters</em></a> and place them in front<a href="#note3"><sup>4</sup></a> of fat APIs. Both in Java and in Go this extra component can be either a concrete type or an abstract type.</p>
+
+<p class="notice"><a href="https://en.wikipedia.org/wiki/You_aren%27t_gonna_need_it">YAGNI</a>: whether you use a concrete or an abstract type depends on whether you’ll actually need the extra level of abstraction.</p>
+
+<h2 id="decoupling-the-user-interface-from-driver-interface">Decoupling the user interface from driver interface</h2>
+
+<p>Regarding <em>why</em> <code class="language-plaintext highlighter-rouge">database/sql</code> split the user interface <code class="language-plaintext highlighter-rouge">sql.DB</code> from <code class="language-plaintext highlighter-rouge">driver.Driver</code>, Eli notes:</p>
+
+<blockquote>
+  <ol>
+    <li>Adding user-facing capabilities is difficult because they may require adding methods to the interface. This breaks all the interface implementations and requires multiple standalone projects to update their code.</li>
+    <li>Encapsulating functionality that is common to all database backends is difficult, because there is no natural place to add it if the user interacts directly with the DB interface. It has to be implemented separately for each backend, which is wasteful and logistically complicated.</li>
+    <li>If backends want to add optional capabilities, this is challenging with a single interface without resorting to type-casts for specific backends.</li>
+  </ol>
+</blockquote>
+
+<p>These points are true, but I think the overarching theme behind this design decision is <em>simplicity and ease of use</em>. Proper interface segregation and separation of concerns<a href="#note5"><sup>5</sup></a> took the back seat and it all led to a mix of several orthogonal requirements in a single interface:</p>
+
+<ul>
+  <li>Execute queries</li>
+  <li>Connection pooling</li>
+  <li>Thread safety</li>
+</ul>
+
+<p>They decided to implement Connection Pooling and Thread Safety themselves while drivers need only provide connections (and statements, and everything else derived from connections).</p>
+
+<p>The upside of this clear violation of SRP<a href="#note6"><sup>6</sup></a> is a simpler learning curve for the user (they are exposed to a single, simple interface) and a simpler driver interface for vendors to implement.</p>
+
+<p>The downside is that the maintainers are burdened with the maintenance of code that doesn’t necessarily meet all user’s needs and may be stifling innovation in this area for Golang<a href="#note7"><sup>7</sup></a>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p><code class="language-plaintext highlighter-rouge">database/sql</code> eases the learning curve for users by providing a simple API that nevertheless breaks the single responsibility principle and incorporates orthogonal yet useful functionality into this package, potentially discouraging innovation.</p>
+
+<p><code class="language-plaintext highlighter-rouge">sql.DB</code> is presented best as a concrete type and not an interface because its requirements <em>necessarily</em> inflate it into a fat API, greatly diminishing any returns an interface has in a structurally-typed language like Go.</p>
+
+<p><br /><br /><br /></p>
+
+<hr />
+
+<p><span id="note1"><sup>1</sup></span> aka “surface area”, but hey - since we’re talking about “Fat APIs” we might as well run with it :)</p>
+
+<p><span id="note2"><sup>2</sup></span> justifiably breaking the <a href="https://go-proverbs.github.io/">Go Proverb</a> <em>The bigger the interface, the weaker the abstraction</em></p>
+
+<p><span id="note3"><sup>3</sup></span> see section 2.9 of <a href="https://www.amazon.ca/Elegant-Objects-Yegor-Bugayenko/dp/1519166915">Elegant Objects vol 1</a> <em>Keep interfaces short; use smarts</em></p>
+
+<p><span id="note4"><sup>4</sup></span> aka “wrap”, but I dislike the term because its meaning has been diluted and may refer to any one of several distinct patterns</p>
+
+<p><span id="note5"><sup>5</sup></span> see design parameters for <code class="language-plaintext highlighter-rouge">database/sql</code><a href="https://raw.githubusercontent.com/golang/go/master/src/database/sql/doc.txt">here</a></p>
+
+<p><span id="note6"><sup>6</sup></span> <a href="https://en.wikipedia.org/wiki/Single_responsibility_principle">Single Responsibility Principle</a></p>
+
+<p><span id="note7"><sup>7</sup></span> consider the wide variety of database-connection-pooling libraries in the Java ecosystem and how they each emphasize different aspects like ease of use, performance, features, etc.</p>
+
+<p><span id="note8"><sup>8</sup></span> see “slow builds” and “uncontrolled dependencies” in section 4 <em>Pain Points</em> of Rob Pike’s <a href="https://talks.golang.org/2012/splash.article">Go at Google: Language Design in the Service of Software Engineering</a></p>
+:ET

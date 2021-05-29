@@ -1,0 +1,67 @@
+I"<p>There is a strong tendency among Java and C# programmers to prefix or suffix their extended types,
+such as naming a “smart” <code class="language-plaintext highlighter-rouge">View</code> as <a href="https://github.com/spring-projects/spring-framework/blob/master/spring-webmvc/src/main/java/org/springframework/web/servlet/SmartView.java"><code class="language-plaintext highlighter-rouge">SmartView</code></a>,
+or a <code class="language-plaintext highlighter-rouge">Work</code> that is “delegated” as <a href="https://github.com/spring-projects/spring-framework/blob/master/spring-context-support/src/main/java/org/springframework/scheduling/commonj/DelegatingWork.java"><code class="language-plaintext highlighter-rouge">DelegatingWork</code></a>.
+In this post I will focus on <a href="https://en.wikipedia.org/wiki/Decorator_pattern">decorators</a> and how this
+widespread naming scheme reduces readability and adds no value to the code’s context. I think it’s
+time we retire this needless naming redundancy.</p>
+
+<div style="text-align:center">
+  <img src="/assets/img/office-space-milton.jpg" alt="Milton" /><br />
+  <small>Milton, from <a href="https://www.imdb.com/title/tt0151804/">Office Space</a></small>
+</div>
+
+<p><a href="https://www.yegor256.com/2015/02/26/composable-decorators.html">Composable decorators</a> are small,
+highly cohesive objects that work off of another instance of their same type and thus are unable to
+function on their own. You can think of decorators as <strong>adjectives</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java">  <span class="kd">final</span> <span class="nc">Collection</span><span class="o">&lt;</span><span class="nc">Product</span><span class="o">&gt;</span> <span class="n">products</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FilteredCollection</span><span class="o">&lt;&gt;(</span>
+      <span class="nl">Product:</span><span class="o">:</span><span class="n">active</span><span class="o">,</span>
+      <span class="k">new</span> <span class="nc">MappedCollection</span><span class="o">&lt;&gt;(</span>
+          <span class="nl">Subscription:</span><span class="o">:</span><span class="n">product</span><span class="o">,</span>
+          <span class="k">new</span> <span class="nc">JoinedCollection</span><span class="o">&lt;&gt;(</span>
+              <span class="n">subscriptions1</span><span class="o">,</span>
+              <span class="n">subscriptions2</span><span class="o">,</span>
+              <span class="o">...</span>
+          <span class="o">)</span>
+      <span class="o">)</span>
+  <span class="o">);</span></code></pre></figure>
+
+<p>The problem with the traditional naming scheme is the needless repetition: we know from the outset
+that <code class="language-plaintext highlighter-rouge">products</code> is a <code class="language-plaintext highlighter-rouge">Collection</code> but the code keeps hammering this point home over and over again
+as we read on. This code is tedious to write, but more importantly, it is tedious to <em>read</em>,
+because of how the <strong>words</strong> are composed:</p>
+
+<blockquote>
+  <p>‘product’ is a filtered collection, a mapped collection, a joined collection, collection</p>
+</blockquote>
+
+<p>Normal, every day speech is not encumbered like this; nouns are routinely omitted when sufficient
+meaning can be extracted from the context. You don’t normally say <code class="language-plaintext highlighter-rouge">The rich people and the poor
+people</code>, you just say <code class="language-plaintext highlighter-rouge">the rich and the poor</code>. <strong>Nouns</strong> are <em>omitted</em> and <strong>adjectives</strong> are
+<em><a href="https://en.wikipedia.org/wiki/Nominalized_adjective">nominalized</a></em>.</p>
+
+<p>Following this same principle, to make the code above read like this:</p>
+
+<blockquote>
+  <p>‘product’ is a filtered, mapped, joined collection</p>
+</blockquote>
+
+<p>It would have to look like this:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java">  <span class="kd">final</span> <span class="nc">Collection</span><span class="o">&lt;</span><span class="nc">Product</span><span class="o">&gt;</span> <span class="n">products</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Filtered</span><span class="o">&lt;&gt;(</span>
+      <span class="nl">Product:</span><span class="o">:</span><span class="n">active</span><span class="o">,</span>
+      <span class="k">new</span> <span class="nc">Mapped</span><span class="o">&lt;&gt;(</span>
+          <span class="nl">Subscription:</span><span class="o">:</span><span class="n">product</span><span class="o">,</span>
+          <span class="k">new</span> <span class="nc">Joined</span><span class="o">&lt;&gt;(</span>
+              <span class="n">subscriptions1</span><span class="o">,</span>
+              <span class="n">subscriptions2</span><span class="o">,</span>
+              <span class="o">...</span>
+          <span class="o">)</span>
+      <span class="o">)</span>
+  <span class="o">);</span></code></pre></figure>
+
+<p>I recommend we make our code terser by removing redundancy and allowing the code’s context to work
+in our favor for readability’s sake. For example, let’s use nominalized adjectives as names for our
+decorators.</p>
+
+:ET

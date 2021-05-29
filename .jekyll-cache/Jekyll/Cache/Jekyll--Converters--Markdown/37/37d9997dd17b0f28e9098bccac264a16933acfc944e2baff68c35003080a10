@@ -1,0 +1,69 @@
+I"<p><em>This post is part of a <a href="https://llorllale.github.io/tags/#learning-go">series</a> where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of <a href="https://www.elegantobjects.org/">Elegant Objects</a>.</em></p>
+
+<p>In a <a href="/golang-elegant-containers">previous post</a> I attempted to implement Elegant container-like idioms in <em>Go</em>. My approach was straightforward: follow the same train of thoughts I do in Java. I failed miserably.</p>
+
+<p>Following is an approach I find interesting.</p>
+
+<h2 id="lets-use-functions">Let’s use Functions</h2>
+
+<p>Let’s ditch interfaces altogether and define our <code class="language-plaintext highlighter-rouge">Products</code> type as a function. I’ve managed to earn back two features of the Java counterpart:</p>
+
+<ol>
+  <li>Actual decorators</li>
+  <li>Deferred execution</li>
+</ol>
+
+<p><strong>However</strong>, I’ve only managed to work it out for <em>query</em> capabilities. Our <code class="language-plaintext highlighter-rouge">Products</code> is still a <em>castrated object</em> because it lacks smart capabilities as per point #3 in the previous post.</p>
+
+<figure class="highlight"><pre><code class="language-go" data-lang="go"><span class="k">package</span> <span class="n">products</span>
+
+<span class="k">type</span> <span class="n">Product</span> <span class="k">interface</span> <span class="p">{</span>
+	<span class="n">Id</span><span class="p">()</span> <span class="kt">int</span>
+	<span class="n">Price</span><span class="p">()</span> <span class="kt">float64</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Products</span> <span class="k">func</span><span class="p">()</span> <span class="p">[]</span><span class="n">Product</span>
+
+<span class="c">// function with a function as receiver!</span>
+<span class="k">func</span> <span class="p">(</span><span class="n">p</span> <span class="n">Products</span><span class="p">)</span> <span class="n">Fetch</span><span class="p">(</span><span class="n">id</span> <span class="kt">int</span><span class="p">)</span> <span class="n">Product</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">prod</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">p</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="n">prod</span><span class="o">.</span><span class="n">Id</span><span class="p">()</span> <span class="o">==</span> <span class="n">id</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="n">prod</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="no">nil</span>
+<span class="p">}</span>
+
+<span class="c">// all products</span>
+<span class="k">func</span> <span class="n">All</span><span class="p">()</span> <span class="n">Products</span> <span class="p">{</span>
+	<span class="c">// read from a database, etc.</span>
+	<span class="k">return</span> <span class="no">nil</span>
+<span class="p">}</span>
+
+<span class="c">// premium products filtered by `minimum` price</span>
+<span class="k">func</span> <span class="n">Premium</span><span class="p">(</span><span class="n">minimum</span> <span class="kt">float64</span><span class="p">,</span> <span class="n">all</span> <span class="n">Products</span><span class="p">)</span> <span class="n">Products</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="k">func</span><span class="p">()</span> <span class="p">[]</span><span class="n">Product</span> <span class="p">{</span>
+		<span class="n">filtered</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">([]</span><span class="n">Product</span><span class="p">,</span> <span class="m">0</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">p</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">all</span><span class="p">()</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">Price</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">minimum</span> <span class="p">{</span>
+				<span class="n">filtered</span> <span class="o">=</span> <span class="nb">append</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="n">filtered</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c">// USAGE</span>
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">premium</span> <span class="o">:=</span> <span class="n">products</span><span class="o">.</span><span class="n">Premium</span><span class="p">(</span><span class="m">1000</span><span class="p">,</span> <span class="n">products</span><span class="o">.</span><span class="n">All</span><span class="p">())</span>
+	<span class="n">prod</span> <span class="o">:=</span> <span class="n">premium</span><span class="o">.</span><span class="n">Fetch</span><span class="p">(</span><span class="m">123</span><span class="p">)</span> <span class="c">// fetch one premium product</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%+v"</span><span class="p">,</span> <span class="n">prod</span><span class="p">)</span>
+	<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">p</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">premium</span><span class="p">()</span> <span class="p">{</span> <span class="c">// iterate through all premium products</span>
+		<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%+v"</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>A bit early to actually reach a conclusion but this design further encourages me to believe that <em>Go</em> is a lot more oriented towards functional programming than object-oriented programming. Almost to the pointing of making me question what net value do interfaces in this language provide?</p>
+:ET

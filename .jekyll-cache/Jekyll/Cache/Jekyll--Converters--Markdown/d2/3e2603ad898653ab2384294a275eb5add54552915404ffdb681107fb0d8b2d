@@ -1,0 +1,44 @@
+I"�<p>My name is <strong><big>George Aristy</big></strong>. I am a programmer and an open-source enthusiast.</p>
+
+<p><br /></p>
+
+<p><a href="https://www.oracle.com/java/">
+  <img _fcksavedurl="https://www.oracle.com/java/" />
+  <img src="https://www.oracle.com/a/ocom/img/i-code-java-100x117-3854594.png" alt="I Code Java" border="0" width="100" height="117" align="left" />
+</a>
+<strong><big>As a programmer</big></strong>, I specialize in backends, whether these are on a standard JEE stack, on Oracle’s SOA Suite,
+or written in <a href="https://github.com/golang/go">Go</a>. I am an
+<a href="https://www.youracclaim.com/badges/c54f640a-f752-4f83-aed9-8294739f532b">Oracle Certified Java SE 8 Programmer</a> and have
+close to a decade’s <a href="https://github.com/llorllale/cv">experience</a> providing service-oriented solutions within the telecom domain.
+<img src="/assets/img/Go-Logo_Blue.svg" alt="golang" class="right" width="100px" height="auto" />
+In my latest adventure I have immersed myself in the exciting world of digital identity and authorization, bridging the old
+world of OAuth2/OIDC with new emerging standards centered around <a href="https://en.wikipedia.org/wiki/Self-sovereign_identity">Self-sovereign identity</a>
+and <a href="https://www.ipc.on.ca/wp-content/uploads/resources/7foundationalprinciples.pdf">Privacy by Design</a> by leveraging
+<a href="https://www.w3.org/TR/vc-data-model/">Verifiable Credentials</a>, <a href="https://w3c.github.io/did-core/">Decentralized Identifiers</a>,
+and <a href="https://identity.foundation/didcomm-messaging/spec/">DIDComm</a>.</p>
+
+<p><br /></p>
+
+<p><img src="/assets/img/GitHub-Mark-64px.png" alt="github" class="right" padding-left="20px" padding-top="10px" />
+<strong><big>As an open-source enthusiast</big></strong>, I am very active on GitHub and have opened up a few of my projects - some
+are listed <a href="/projects/">here</a>. I am also actively involved in a number of other OSS projects - you can keep up with my
+latest OSS activity on <a href="https://github.com/llorllale">GitHub</a>. I am an honored participant in the
+<a href="https://github.com/hyperledger/aries/blob/master/README.md">Hyperledger Aries Working Group</a>, and both the
+<a href="https://github.com/decentralized-identity/didcomm/blob/main/README.md">DIDComm</a> and the
+<a href="https://github.com/decentralized-identity/confidential-storage/blob/master/README.md">Confidential Storage</a> working groups
+under the <a href="https://identity.foundation/">Decentralized Identity Foundation</a>.</p>
+
+<p><br /></p>
+
+<p><img src="/assets/img/evolution.jpg" alt="evolution" class="left" width="240px" height="120px" />
+<strong><big>My career</big></strong> started in the telecommunications industry by monitoring and maintaining critical IT systems
+with high-availability. I had the pleasure of working with a skilled, proactive, and highly motivated team. Over time I
+realized my passion was in software development, and thus embarked on a journey that took me from writing simple programs
+in Java and Unix scripts to enterprise JEE development, service-oriented architectures, and microservices.</p>
+
+<p><br /></p>
+
+<p><strong><big>In my spare time</big></strong> I am a <a href="https://en.wikipedia.org/wiki/Powerlifting">powerlifter</a>, currently with a Wilk’s
+score of <a href="https://symmetricstrength.com/lifter/georgearisty">326</a>. I am also a guitar player and proud owner of a
+<a href="https://www.jacksonguitars.com/gear/shape/warrior/x-series-warrior-wrxmg/2916500503">Jackson Warrior WRXMG</a>.</p>
+:ET

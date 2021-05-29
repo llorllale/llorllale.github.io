@@ -1,0 +1,54 @@
+I")<p><em>This post is part of a <a href="https://llorllale.github.io/tags/#learning-go">series</a> where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of <a href="https://www.elegantobjects.org/">Elegant Objects</a>.</em></p>
+
+<p>I wish to make a correction in <a href="/golang-elegant-containers">this</a> post. I want to focus on this statement:</p>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">Products</code> is not a “smart” container - see point #3 in the Java proposal. You would have to manually append the newly-created <code class="language-plaintext highlighter-rouge">Product</code> to <code class="language-plaintext highlighter-rouge">Products</code></p>
+</blockquote>
+
+<p>What I meant is that clients would have to use it like this:</p>
+
+<p>{% highlight go %}
+prods := make(Products, 0)
+p := prods.Create(10)
+prods = append(prods, p)	// extra imperative code forced on the client to add the product to the container
+{% endhighlight %}</p>
+
+<p>Let’s pay attention to this snippet:</p>
+
+<p>{% highlight go %}
+func (p <em>Products) Create(price float64) Product {
+	prod := &amp;product{id: 123, price: price}
+	tmp := append(</em>p, prod) // compiler would not allow p = &amp;(append(*p, prod))
+	p = &amp;tmp                // the problem here is that the caller still retains the original handle to <code class="language-plaintext highlighter-rouge">p</code>
+	return prod
+}
+{% endhighlight %}</p>
+
+<p>I was <em>really</em> close to solving that riddle. The trick is to <em>assign a new value to the pointer variable</em>. The pointer variable itself is passed by value, so callers would also see the side effects. Here’s what I mean:</p>
+
+<p>{% highlight go %}
+func (p <em>Products) Create(price float64) *Product {
+	prod := &amp;product{price: Price}
+	*p := append(</em>p, prod) // done in one line for brevity
+	return prod
+}</p>
+
+<p>// A test like this would pass
+func TestCreate(t *testing.T) {
+	prods := make(Products, 0)
+	prod := prods.Create(10)
+	assert.Len(t, prods, 1)
+	assert.Contains(t, prods, prod)
+}
+{% endhighlight %}</p>
+
+<p>With this I’ve proved that <code class="language-plaintext highlighter-rouge">Products</code> can be made smarter: create products and dynamically append them to itself.</p>
+
+<p>Several problems remain:</p>
+<ul>
+  <li>Slices don’t know how to iterate themselves - only <code class="language-plaintext highlighter-rouge">range</code> knows that. Since this power is taken away from developers, iteration of <code class="language-plaintext highlighter-rouge">Products</code> is only possible with objects in memory. You cannot implement a custom iterable - like in Java - that can dynamically fetch results from a datasource.</li>
+  <li>Since iteration is only done in memory space, deferred execution is harder to pull off. You’d basically need an abstraction for a function that returns the actual slice (think <code class="language-plaintext highlighter-rouge">type Products func() []Product</code>)</li>
+  <li>Cannot be decorated. Cannot implement <code class="language-plaintext highlighter-rouge">Premium</code> as a slice of products because the type will have no usable attribute for this. Unless… we go back the function abstraction idea…</li>
+</ul>
+:ET

@@ -1,0 +1,277 @@
+I"�B<p>The other day I came across <a href="http://onoffswitch.net/8-months/">this</a> post describing what the author sees as pros and cons of Go after 8 months of experience. I mostly agree after working full time with Go for a comparable duration.</p>
+
+<p>Despite that preamble, this is a post about Variance in <strong>Java</strong>, where my goal is to refresh my understanding of what Variance is and some of the nuances of its implementation in Java.</p>
+
+<p>(<em>ProTip: You’ll need to know this for your <a href="https://education.oracle.com/oracle-certified-professional-java-se-8-programmer/trackp_357">OCJP</a> certificate exam.</em>)</p>
+
+<p>I will write down my thoughts on this subject for Go in a later post.</p>
+
+<h2 id="what-is-variance">What is Variance?</h2>
+
+<p>The Wikipedia article on <a href="https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)"><em>variance</em></a> says:</p>
+
+<blockquote>
+  <p><strong>Variance</strong> refers to how subtyping between more complex types relates to subtyping between their components.</p>
+</blockquote>
+
+<p>“More complex types” here refers to higher level structures like containers and functions. So, variance is about the <em>assignment compatibility</em> between containers and functions composed of parameters that are connected via a <a href="https://en.wikipedia.org/wiki/Class_hierarchy">Type Hierarchy</a>. It allows the safe integration of parametric and subtype polymorphism<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup>. Eg. can I assign the result of a function that returns a list of cats to a variable of type “list of animals”? Can I pass in a list of Audi cars to a method that accepts a list of cars? Can I insert a wolf in this list of animals?</p>
+
+<p class="notice">In Java, variance is defined at the <strong>use-site</strong><sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">2</a></sup>.</p>
+
+<h2 id="4-kinds-of-variance">4 Kinds of Variance</h2>
+
+<p>Paraphrasing the wiki article, a type constructor is:</p>
+
+<ul>
+  <li><strong>Covariant</strong> if it accepts subtypes but not supertypes</li>
+  <li><strong>Contravariant</strong> if it accepts supertypes but not subtypes</li>
+  <li><strong>Bivariant</strong> if it accepts both supertypes and subtypes</li>
+  <li><strong>Invariant</strong> if does not accept neither supertypes nor subtypes</li>
+</ul>
+
+<p>(Obviously the declared type parameter is accepted in all cases.)</p>
+
+<h2 id="invariance-in-java">Invariance in Java</h2>
+
+<p>The use-site must have no open bounds on the type parameter.</p>
+
+<p class="notice">If <code class="language-plaintext highlighter-rouge">A</code> is a supertype of <code class="language-plaintext highlighter-rouge">B</code>, then <code class="language-plaintext highlighter-rouge">GenericType&lt;A&gt;</code> is <strong>not</strong> a supertype of <code class="language-plaintext highlighter-rouge">GenericType&lt;B&gt;</code> and vice versa.</p>
+
+<p>This means these two types have no relation to each other and neither can be exchanged for the other under any circumstance.</p>
+
+<h3 id="invariant-containers">Invariant containers</h3>
+
+<p>In Java, invariants are likely the first examples of generics you’ll encounter and are the most intuitive. The methods of the type parameter are useable as one would expect. All methods of the type parameter are accessible.</p>
+
+<p>They cannot be exchanged:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person :&gt; Joe :&gt; JoeJr
+List<Person> p = new ArrayList<Joe>(); // COMPILE ERROR (a bit counterintuitive, but remember List<Person> is invariant)
+List<Joe> j = new ArrayList<Person>(); // COMPILE ERROR
+{% endhighlight %}</Person></Joe></Person></Joe></Person></p>
+
+<p>You can add objects to them:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person :&gt; Joe :&gt; JoeJr
+List<Person> p = new ArrayList&lt;&gt;();
+p.add(new Person()); // ok
+p.add(new Joe()); // ok
+p.add(new JoeJr()); // ok
+{% endhighlight %}</Person></p>
+
+<p>You can read objects from them:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person :&gt; Joe :&gt; JoeJr
+List<Joe> joes = new ArrayList&lt;&gt;();
+Joe j = joes.get(0); // ok
+Person p = joes.get(0); // ok
+{% endhighlight %}</Joe></p>
+
+<h2 id="covariance-in-java">Covariance in Java</h2>
+
+<p>The use-site must have an <em>open lower bound</em> on the type parameter.</p>
+
+<p class="notice">If <code class="language-plaintext highlighter-rouge">B</code> is a subtype of <code class="language-plaintext highlighter-rouge">A</code>, then <code class="language-plaintext highlighter-rouge">GenericType&lt;B&gt;</code> is a subtype of <code class="language-plaintext highlighter-rouge">GenericType&lt;? extends A&gt;</code>.</p>
+
+<h3 id="arrays-in-java-have-always-been-covariant">Arrays in Java have always been covariant</h3>
+
+<p>Before generics were introduced in Java <code class="language-plaintext highlighter-rouge">1.5</code>, arrays were the only generic containers available. They have always been covariant, eg. <code class="language-plaintext highlighter-rouge">Integer[]</code> is a subtype of <code class="language-plaintext highlighter-rouge">Object[]</code>. The compiler allows you to pass your <code class="language-plaintext highlighter-rouge">Integer[]</code> to a method that accepts <code class="language-plaintext highlighter-rouge">Object[]</code>. If the method inserts a supertype of <code class="language-plaintext highlighter-rouge">Integer</code>, an <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/ArrayStoreException.html">ArrayStoreException</a> is thrown at <em>runtime</em>. Covariant generic type rules implement this check at <em>compile time</em>, disallowing the mistake to ever happen in the first place.</p>
+
+<p>{% highlight java %}
+public static void main(String… args) {
+  Number[] numbers = new Number[]{1, 2, 3, 4, 5};
+  trick(numbers);
+}</p>
+
+<p>private static void trick(Object[] objects) {
+  objects[0] = new Float(123);  // ok
+  objects[1] = new Object();  // ArrayStoreException thrown at runtime
+}
+{% endhighlight %}</p>
+
+<h3 id="covariant-containers">Covariant containers</h3>
+
+<p>Java allows subtyping (covariant) generic types but it places restrictions on what can “flow into and out of” these generic types in accordance with the Principle of Least Astonishment<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">3</a></sup>. In other words, methods with return values of the type parameter are accessible, while methods with input arguments of the type parameter are inaccessible.</p>
+
+<p>You can exchange the supertype for the subtype:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person :&gt; Joe :&gt; JoeJr
+List&lt;? extends Joe&gt; = new ArrayList<Joe>(); // ok
+List&lt;? extends Joe&gt; = new ArrayList<JoeJr>(); // ok
+List&lt;? extends Joe&gt; = new ArrayList<Person>(); // COMPILE ERROR
+{% endhighlight %}</Person></JoeJr></Joe></p>
+
+<p><em>Reading</em> from them is intuitive:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person :&gt; Joe :&gt; JoeJr
+List&lt;? extends Joe&gt; joes = new ArrayList&lt;&gt;();
+Joe j = joes.get(0); // ok
+Person p = joes.get(0); // ok
+JoeJr jr = joes.get(0); // compile error (you don’t know what subtype of Joe is in the list)
+{% endhighlight %}</p>
+
+<p><em>Writing</em> to them is prohibited (counterintuitive) to guard against the pitfalls with arrays described <a href="#arrays-in-java-have-always-been-covariant">above</a>. Eg. in the example code below, the caller/owner of a <code class="language-plaintext highlighter-rouge">List&lt;Joe&gt;</code> would be <em>astonished</em> if someone else’s method with covariant arg <code class="language-plaintext highlighter-rouge">List&lt;? extends Person&gt;</code> added a <code class="language-plaintext highlighter-rouge">Jill</code>.</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person &gt; Joe &gt; JoeJr
+List&lt;? extends Joe&gt; joes = new ArrayList&lt;&gt;();
+joes.add(new Joe());  // compile error (you don’t know what subtype of Joe is in the list)
+joes.add(new JoeJr()); // compile error (ditto)
+joes.add(new Person()); // compile error (intuitive)
+joes.add(new Object()); // compile error (intuitive)
+{% endhighlight %}</p>
+
+<h2 id="contravariance-in-java">Contravariance in Java</h2>
+
+<p>The use-site must have an open <strong>upper</strong> bound on the type parameter.</p>
+
+<p class="notice">If <code class="language-plaintext highlighter-rouge">A</code> is a supertype of <code class="language-plaintext highlighter-rouge">B</code>, then <code class="language-plaintext highlighter-rouge">GenericType&lt;A&gt;</code> is a supertype of <code class="language-plaintext highlighter-rouge">GenericType&lt;? super B&gt;</code>.</p>
+
+<h3 id="contravariant-containers">Contravariant containers</h3>
+
+<p>Contravariant containers behave counterintuitively: contrary to covariant containers, access to methods with return values of the type parameter are <em>inaccessible</em> while methods with input arguments of the type parameter <em>are</em> accessible:</p>
+
+<p>You can exchange the subtype for the supertype:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person &gt; Joe &gt; JoeJr
+List&lt;? super Joe&gt; joes = new ArrayList<Joe>();  // ok
+List&lt;? super Joe&gt; joes = new ArrayList<Person>(); // ok
+List&lt;? super Joe&gt; joes = new ArrayList<JoeJr>(); // COMPILE ERROR
+{% endhighlight %}</JoeJr></Person></Joe></p>
+
+<p>Cannot capture a specific type when reading from them:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person &gt; Joe &gt; JoeJr
+List&lt;? super Joe&gt; joes = new ArrayList&lt;&gt;();
+Joe j = joes.get(0); // compile error (could be Object or Person)
+Person p = joes.get(0); // compile error (ditto)
+Object o = joes.get(0); // allowed because everything IS-A Object in Java
+{% endhighlight %}</p>
+
+<p>You <em>can</em> add subtypes of the “lower bound”:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person &gt; Joe &gt; JoeJr
+List&lt;? super Joe&gt; joes = new ArrayList&lt;&gt;();
+joes.add(new JoeJr()); // allowed
+{% endhighlight %}</p>
+
+<p>But you <em>cannot</em> add supertypes:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person &gt; Joe &gt; JoeJr
+List&lt;? super Joe&gt; joes = new ArrayList&lt;&gt;();
+joes.add(new Person()); // compile error (again, could be a list of Object or Person or Joe)
+joes.add(new Object()); // compile error (ditto)
+{% endhighlight %}</p>
+
+<h2 id="bivariance-in-java">Bivariance in Java</h2>
+
+<p>The use-site must declare an <strong>unbounded wildcard</strong> on the type parameter.</p>
+
+<p>A generic type with an unbounded wildcard is a supertype of all bounded variations of the same generic type. Eg. <code class="language-plaintext highlighter-rouge">GenericType&lt;?&gt;</code> is a supertype of <code class="language-plaintext highlighter-rouge">GenericType&lt;String&gt;</code>. Since the unbounded type is the root of the type hierarchy, it follows that of its parametric types it can only access methods inherited from <code class="language-plaintext highlighter-rouge">java.lang.Object</code>.</p>
+
+<p class="notice">Think of <code class="language-plaintext highlighter-rouge">GenericType&lt;?&gt;</code> as <code class="language-plaintext highlighter-rouge">GenericType&lt;Object&gt;</code>.</p>
+
+<h2 id="variance-of-structures-with-n-type-parameters">Variance of structures with N type parameters</h2>
+
+<p>What about more complex types such as Functions? Same principles apply, you just have more type parameters to consider:</p>
+
+<p>{% highlight java %}
+// Type hierarchy: Person &gt; Joe &gt; JoeJr</p>
+
+<p>// Invariance
+Function&lt;Person, Joe&gt; personToJoe = null;
+Function&lt;Joe, JoeJr&gt; joeToJoeJr = null;
+personToJoe = joeToJoeJr; // COMPILE ERROR (personToJoe is invariant)</p>
+
+<p>// Covariance
+Function&lt;? extends Person, ? extends Joe&gt; personToJoe = null; // covariant
+Function&lt;Joe, JoeJr&gt; joeToJoeJr = null;
+personToJoe = joeToJoeJr;  // ok</p>
+
+<p>// Contravariance
+Function&lt;? super Joe, ? super JoeJr&gt; joeToJoeJr = null; // contravariant
+Function&lt;? super Person, ? super Joe&gt; personToJoe = null;
+joeToJoeJr = personToJoe; // ok
+{% endhighlight %}</p>
+
+<h2 id="variance-and-inheritance">Variance and Inheritance</h2>
+
+<p>Java allows overriding methods with covariant return types and exception types:</p>
+
+<p>{% highlight java %}
+interface Person {
+  Person get();
+  void fail() throws Exception;
+}</p>
+
+<p>interface Joe extends Person {
+  JoeJr get();
+  void fail() throws IOException;
+}</p>
+
+<p>class JoeImpl implements Joe {
+  public JoeJr get() {} // overridden
+  public void fail() throws IOException {} // overridden
+}
+{% endhighlight %}</p>
+
+<p>But attempting to override methods with covariant <em>arguments</em> results in merely an overload:</p>
+
+<p>{% highlight java %}
+interface Person {
+  void add(Person p);
+}</p>
+
+<p>interface Joe extends Person {
+  void add(Joe j);
+}</p>
+
+<p>class JoeImpl implements Joe {
+  public void add(Person p) {}  // overloaded
+  public void add(Joe j) {} // overloaded
+ }
+{% endhighlight %}</p>
+
+<h2 id="final-thoughts">Final thoughts</h2>
+
+<p>Variance introduces additional complexity to Java. While the typing rules around variance are easy to understand, the rules regarding accessibility of methods of the type parameter are counterintuitive. Understanding them isn’t just “obvious” - it requires pausing to think through the logical consequences.</p>
+
+<p>However, my daily experience has been that the nuances generally stay out of the way:</p>
+
+<ul>
+  <li>I cannot recall an instance where I had to declare a contravariant argument, and I rarely encounter them (although they <em>do</em> <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html#binarySearch-T:A-T-java.util.Comparator-">exist</a>).</li>
+  <li>Covariant arguments seem slightly more common (<a href="https://github.com/yegor256/cactoos/blob/dc9c4b4f7c995fa7d328a130ea3e8611f589bb59/src/main/java/org/cactoos/text/Joined.java#L76">example</a><sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">4</a></sup>), but they’re easier to reason about (fortunately).</li>
+</ul>
+
+<p>Covariance is its strongest virtue considering that <a href="https://en.wikipedia.org/wiki/Subtyping">subtyping</a> is a fundamental technique of object-oriented programming (case in point: see note <sup id="fnref:4:1" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">4</a></sup>).</p>
+
+<p><strong>Conclusion:</strong> variance provides moderate net benefits in my daily programming, particularly when compatibility with subtypes is required (which is a regular occurrence in OOP).</p>
+
+<hr />
+
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p><a href="https://yanniss.github.io/variance-pldi11.pdf">Taming the Wildcards: Combining Definition- and Use-Site Variance</a> by John Altidor, et. al. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>As I understand it, the difference between use-site and definition-site variance is that the latter <em>requires</em> the variance be encoded into the generic type itself (think of having to declare <code class="language-plaintext highlighter-rouge">MyGenericType&lt;? extends Number&gt;</code>), forcing the API developer to preempt all use cases. C# defines variance at the definition-site. On the other hand, use-site variance doesn’t have this restriction - the API developer can simply declare his API as generic and let the user determine variance for his use cases. The downside of use-site invariance are the “hidden” surprises described above, all derived from “conceptual complexity, […] anticipation of generality at allusage points” (see <em>Taming the Wildcards</em> paper above). <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p><a href="https://en.wikipedia.org/wiki/Principle_of_least_astonishment">Principle of least astonishment</a> - Wikipedia. I vaguely remember a reference somewhere about the designers of Java following this principle but I can’t seem to find it now. <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:4" role="doc-endnote">
+      <p><code class="language-plaintext highlighter-rouge">Joined</code> concatenates several <code class="language-plaintext highlighter-rouge">Text</code>s. Declaring an invariant iterable of <code class="language-plaintext highlighter-rouge">Text</code> would make this constructor unusable to subtypes of <code class="language-plaintext highlighter-rouge">Text</code>. <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a> <a href="#fnref:4:1" class="reversefootnote" role="doc-backlink">&#8617;<sup>2</sup></a></p>
+    </li>
+  </ol>
+</div>
+:ET

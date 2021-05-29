@@ -1,3 +1,4 @@
-My blog, based on the [Moon Jekyll Theme](https://github.com/TaylanTatli/Moon).
+My blog, based on the [Chirpy Theme](https://github.com/cotes2020/jekyll-theme-chirpy).
+ 
+https://georgearisty.dev/
 
-https://llorllale.github.io/

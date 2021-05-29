@@ -1,0 +1,10 @@
+I"ö<ul>
+  <li><strong><a href="https://github.com/llorllale/go-gitlint">go-gitlint</a></strong>: CLI written in Go that lints your commit messages.</li>
+  <li><strong><a href="https://llorllale.github.io/youtrack-api">youtrack-api</a></strong>: an object-oriented, Java API for <a href="https://www.jetbrains.com/youtrack/">YouTrack</a>.</li>
+  <li><strong><a href="https://llorllale.github.io/releasecat-maven-plugin">releasecat-maven-plugin</a>:</strong>  a maven plugin that creates GitHub releases for your project.</li>
+  <li><strong><a href="https://llorllale.github.io/loggit-maven-plugin">loggit-maven-plugin</a>:</strong> a maven plugin that generates changelog and release notes for projects using git</li>
+  <li><strong><a href="http://llorllale.github.io/jconfigurations">jconfigurations</a>:</strong> a Java library that provides simple and intuitive injection of configurations into object attributes</li>
+  <li><strong><a href="https://github.com/yegor256/cactoos">cactoos</a>:</strong> showcase of clean, reusable and composable object-oriented primitives written in Java and designed according to the principles of <a href="https://www.elegantobjects.org/#principles">Elegant Objects</a>. I donâ€™t own this project, but I <del>currently</del> used to manage it and am a huge fan.</li>
+  <li><strong><a href="https://github.com/llorllale/cactoos-matchers">cactoos-matchers</a>:</strong> <a href="http://hamcrest.org/JavaHamcrest/">JavaHamcrest</a> extensions also designed according to EO principles.</li>
+</ul>
+:ET

@@ -4,7 +4,9 @@ title: Golang - The database/sql package
 excerpt: TLDR - database/sql eases the learning curve for users by providing a simple API that nevertheless breaks the single responsibility principle and incorporates orthogonal yet useful functionality into this package.
 date: 2019-04-03
 author: George Aristy
-feature: assets/images/gopher_peek.png
+image:
+  src: /assets/img/gopher_peek.png
+  alt: gopher
 tags:
 - go
 - golang
