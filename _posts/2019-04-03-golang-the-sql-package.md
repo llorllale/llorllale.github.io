@@ -14,7 +14,7 @@ tags:
 - go-proverbs
 ---
 
-*This post is part of a [series](https://llorllale.github.io/tags/#learning-go) where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of [Elegant Objects](https://www.elegantobjects.org/).*
+*This post is part of a [series](/tags/learning-go) where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of [Elegant Objects](https://www.elegantobjects.org/).*
 
 I am studying the Go Code Review mantra [*Accept Interfaces, Return Structs*](https://github.com/golang/go/wiki/CodeReviewComments#interfaces) and was inspired to write this post after coming across Eli Bendersky's post [Design patterns in Go's database/sql package](https://eli.thegreenplace.net/2019/design-patterns-in-gos-databasesql-package/). This is the first instance where I feel I can endorse the mantra with confidence. Eli does a good job analysing the architecture of `database/sql` - I'm just here to provide a little nuance and some of my own notes.
 

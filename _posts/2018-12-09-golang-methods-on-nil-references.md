@@ -13,7 +13,7 @@ tags:
 - learning-go
 ---
 
-*This is the first in a [series](https://llorllale.github.io/tags/#learning-go) of posts where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of [Elegant Objects](https://www.elegantobjects.org/).*
+*This is the first in a [series](/tags/learning-go) of posts where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the principles of [Elegant Objects](https://www.elegantobjects.org/).*
 
 [Go](https://golang.org/) has structs - which are essentially [DTOs](https://en.wikipedia.org/wiki/Data_transfer_object) - and the ability to implement methods on these structs by specifying [receivers](https://tour.golang.org/methods/1) on functions.
 
