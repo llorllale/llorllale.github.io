@@ -4,7 +4,6 @@ title: Variance in Java
 excerpt: Complicated if required learning for an exam, but generally intuitive and useful in daily practice.
 date: 2019-04-10
 author: George Aristy
-feature: http://www.oracle.com/us/technologies/java/gimmejava/i-code-java-300x352-1705306.png
 tags:
 - java
 - variance

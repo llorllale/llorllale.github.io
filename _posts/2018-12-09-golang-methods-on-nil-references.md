@@ -4,7 +4,6 @@ title: Golang - methods on nil references
 excerpt: I don't know what good methods on nil references are for.
 date: '2018-12-09T15:00:00.000-05:00'
 author: George Aristy
-feature: assets/images/all-animals-are-equal.jpg
 tags:
 - go
 - golang
