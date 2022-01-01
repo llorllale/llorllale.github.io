@@ -15,4 +15,5 @@ A collection of books I've read over time.
 
 ### Q4
 
-[Clean Architecture: A Craftsman's Guide to Software Structure and Design](/posts/clean-architecture)
+* [Clean Architecture: A Craftsman's Guide to Software Structure and Design](/posts/clean-architecture)
+* [Escaping the Build Trap: How Effective Product Management Creates Real Value](/posts/build-trap)

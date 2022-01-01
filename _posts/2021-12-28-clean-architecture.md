@@ -23,7 +23,7 @@ system".
 Following are some notes I took after reading the book. Rather than be the end all, be all, this is intended to be a 
 living document with notes and annotations added as my understanding grows.
 
-<br/><br/>
+_Check out some other books I've read on the [bookshelf](/bookshelf/)._
 
 # Summary
 
