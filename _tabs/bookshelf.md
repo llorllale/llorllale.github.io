@@ -11,6 +11,12 @@ _<a href='https://www.freepik.com/photos/book'>Book photo created by ikaika - ww
 
 A collection of books I've read over time.
 
+## 2022
+
+### Q1
+
+* [Getting to Yes: Negotiating Agreement Without Giving In](/posts/getting-to-yes)
+
 ## 2021
 
 ### Q4
