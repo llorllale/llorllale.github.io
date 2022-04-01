@@ -10,8 +10,8 @@ categories:
 
 Slide deck for my presentation on Golang panics on the _Golang Guild Session_ @ VerticalScope.
 
-<iframe width="800" height="400" src="/assets/reveal.js/index.html">
+<iframe width="800" height="400" src="/talks/2022-04-06-golang-panics.html">
   <p>Your browser does not support iframes.</p>
 </iframe>
 
-Click on the slide deck then press F to expand to full screen.
+Click on the slide deck then press `F` to expand to full screen.
