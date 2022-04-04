@@ -356,6 +356,22 @@ Exception in thread "main" java.lang.RuntimeException: oh no!
             </pre>
         </section>
         <section>
+            <h2>Panics vs. Errors</h2>
+            <ul>
+                <li><strong>Errors</strong> are regular values that flow through ordinary control flow (eg. return)</li>
+                <li><strong>Panics</strong> halt ordinary control flow and begin <em>panicking</em></li>
+            </ul>
+            <br/>
+            <br/>
+            <br/>
+            <footer>
+                Go Proverb: Don't panic.
+                <br/>
+                <br/>
+                https://go-proverbs.github.io/
+            </footer>
+        </section>
+        <section>
             <h2>Can we recover from a panic?</h2>
             Other languages offer facilities. Eg.: Java:
             <pre>
@@ -577,14 +593,21 @@ exit main
         </section>
         <section>
             <h2>Unhandled panics <em>exit the program</em></h2>
+            Recall that panics are handled per goroutine:
             <pre><code>
 func main() {
+	go func() {
+		if err := recover(); err != nil { // ineffective
+			fmt.Println("phew! Managed to recover.")
+		}
+	}()
+
 	fmt.Println("enter main")
 
 	done := make(chan struct{})
 
 	go func() {
-		funcThatPanics()
+		funcThatPanics() // unhandled panic in goroutine
 	}()
 
 	<-done
@@ -604,13 +627,13 @@ enter main
 enter funcThatPanics
 panic: oh no!
 
-goroutine 18 [running]:
+goroutine 7 [running]:
 main.funcThatPanics()
-        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:101 +0x65
-main.main.func1()
-        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:79 +0x17
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:95 +0x65
+main.main.func2()
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:85 +0x17
 created by main.main
-        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:78 +0x78
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:84 +0x86
             </code></pre>
         </section>
         <section>
@@ -645,7 +668,6 @@ Exception in thread "Thread-0" java.lang.Error: oh no!
             <h2>TODO</h2>
             <ul>
                 <li>Best practices panic/recover in APIs (include examples)</li>
-                <li>panics vs errors</li>
                 <li>add python recovery example</li>
                 <li>panic accepts interface{}</li>
                 <li>what's up with that hex value at bottom of stack trace?</li>
