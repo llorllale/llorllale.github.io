@@ -285,13 +285,9 @@
             <h2>Example: <code class="highlight">nil</code> pointer dereference</h2>
             <pre>
                 <code>
-package main
-
-import "fmt"
-
 func main() {
-	var s *string
-	_ = *s // nil pointer dereference; program exits immediately
+    var s *string
+    _ = *s // nil pointer dereference; program exits immediately
     fmt.Println("Go is awesome!")
 }
                 </code>
@@ -313,12 +309,8 @@ main.main()
             <h2>Example: Invoking <code class="highlight">panic()</code></h2>
             <pre>
                 <code>
-package main
-
-import "fmt"
-
 func main() {
-	panic("oh no!") // invoking panic(); program exits immediately
+    panic("oh no!") // invoking panic(); program exits immediately
     fmt.Println("Go is awesome!")
 }
                 </code>
@@ -351,7 +343,7 @@ public class Main {
             <pre>
                 <code data-trim data-noescape>
 Exception in thread "main" java.lang.RuntimeException: oh no!
-	at Main.main(Main.java:6)
+    at Main.main(Main.java:6)
                 </code>
             </pre>
         </section>
@@ -361,15 +353,7 @@ Exception in thread "main" java.lang.RuntimeException: oh no!
                 <li><strong>Errors</strong> are regular values that flow through ordinary control flow (eg. return)</li>
                 <li><strong>Panics</strong> halt ordinary control flow and begin <em>panicking</em></li>
             </ul>
-            <br/>
-            <br/>
-            <br/>
-            <footer>
-                Go Proverb: Don't panic.
-                <br/>
-                <br/>
-                https://go-proverbs.github.io/
-            </footer>
+
         </section>
         <section>
             <h2>Can we recover from a panic?</h2>
@@ -398,7 +382,7 @@ Java is awesome!
             </pre>
         </section>
         <section>
-            <h2>Enter: <code class="highlight">recover()</code></h2>
+            <h2>Recover</h2>
             <q><code class="highlight">recover()</code> is a built-in function that regains control of a panicking goroutine.</q>
             <br/>
             <br/>
@@ -411,18 +395,14 @@ Java is awesome!
             <h2>recover(): Cool! Let's try it out!</h2>
             <pre>
                 <code>
-package main
-
-import "fmt"
-
 func main() {
-	panic("oh no!")
-	recover()
-	fmt.Println("Go is awesome!")
+    panic("oh no!")
+    recover()
+    fmt.Println("Go is awesome!")
 }
                 </code>
             </pre>
-            Output:
+            Output (not what we want):
             <pre>
                 <code>
 panic: oh no!
@@ -434,34 +414,18 @@ main.main()
             </pre>
         </section>
         <section>
-            <h2>Oh no! How does <code class="highlight">recover()</code> work!?</h2>
-        </section>
-        <section>
-            <h2>A working definition of <code class="highlight">panic</code></h2>
-            <q>
-                While executing a function F, an explicit call to <code class="highlight">panic()</code> or a run-time panic terminates the execution of F.
-                Any functions deferred by F are then executed as usual. Next, any <u>deferred</u> functions run by F's caller are
-                run, and so on up to any deferred by the top-level function in the executing goroutine. At that point,
-                the program is terminated and the error condition is reported, including the value of the argument to panic.
-                This termination sequence is called panicking.
-            </q>
-
-            <footer>
-                <small>https://go.dev/ref/spec#Handling_panics</small>
-            </footer>
-        </section>
-        <section>
-            <h2>Enter: <code class="highlight">defer</code></h2>
-            <q>
-                A "defer" statement invokes a function whose execution is deferred to the moment the surrounding function
-                returns, either because the surrounding function executed a return statement, reached the end of its
-                function body, or because the corresponding goroutine is panicking.
-            </q>
+            <h2>How does <code class="highlight">recover()</code> work?</h2>
+            TLDR: only deferred functions are run during a panic, so <code class="highlight">defer</code> your <code class="highlight">recover()</code>
             <br/>
             <br/>
             <br/>
             <footer>
-                <small>https://go.dev/ref/spec#Defer_statements</small>
+                <small>More info:
+                    <ul>
+                        <li>https://go.dev/ref/spec#Handling_panics</li>
+                        <li>https://go.dev/ref/spec#Defer_statements</li>
+                    </ul>
+                </small>
             </footer>
         </section>
         <section>
@@ -469,8 +433,8 @@ main.main()
             <pre>
                 <code>
 func main() {
-	defer fmt.Println("deferred function!")
-	fmt.Println("Go is awesome!")
+    defer fmt.Println("deferred function!")
+    fmt.Println("Go is awesome!")
 }
                 </code>
             </pre>
@@ -487,13 +451,13 @@ deferred function!
             <pre>
                 <code>
 func main() {
-	defer func() { // defer recover()
-		if err := recover(); err != nil {
-			fmt.Printf("err: %s\n", err)  // handle panic
-			fmt.Println("phew! Managed to recover.")
-		}
-	}()
-	panic("oh no!") // code that panics
+    defer func() { // defer recover()
+        if err := recover(); err != nil {
+            fmt.Printf("err: %s\n", err)  // handle panic
+            fmt.Println("phew! Managed to recover.")
+        }
+    }()
+    panic("oh no!") // code that panics
 }
                 </code>
             </pre>
@@ -510,19 +474,19 @@ phew! Managed to recover.
             <pre>
                 <code>
 func main() {
-	foo()
+    foo()
 }
 
 func foo() {
-	bar()
+    bar()
 }
 
 func bar() {
-	funcThatPanics()
+    funcThatPanics()
 }
 
 func funcThatPanics() {
-	panic("oh no!")
+    panic("oh no!")
 }
                 </code>
             </pre>
@@ -544,37 +508,37 @@ main.main()
             </pre>
         </section>
         <section>
-            <h2>Recover at any point in the call stack</h2>
+            <h2>Recover at any point in a goroutine's call stack</h2>
             <pre>
                 <code>
 func main() {
-	fmt.Println("entering main")
-	foo()
-	fmt.Println("exit main")
+    fmt.Println("entering main")
+    foo()
+    fmt.Println("exit main")
 }
 
 func foo() {
-	fmt.Println("entering foo")
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println(err)
-			fmt.Println("phew! Managed to recover.")
-		}
-	}()
-	bar()
-	fmt.Println("exit foo")
+    fmt.Println("entering foo")
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(err)
+            fmt.Println("phew! Managed to recover.")
+        }
+    }()
+    bar()
+    fmt.Println("exit foo")
 }
 
 func bar() {
-	fmt.Println("entering bar")
-	funcThatPanics()
-	fmt.Println("exit bar")
+    fmt.Println("entering bar")
+    funcThatPanics()
+    fmt.Println("exit bar")
 }
 
 func funcThatPanics() {
-	fmt.Println("entering funcThatPanics")
-	panic("oh no!")
-	fmt.Println("exit funcThatPanics")
+    fmt.Println("entering funcThatPanics")
+    panic("oh no!")
+    fmt.Println("exit funcThatPanics")
 }
                 </code>
             </pre>
@@ -596,29 +560,29 @@ exit main
             Recall that panics are handled per goroutine:
             <pre><code>
 func main() {
-	go func() {
-		if err := recover(); err != nil { // ineffective
-			fmt.Println("phew! Managed to recover.")
-		}
-	}()
+    go func() {
+        if err := recover(); err != nil { // ineffective
+            fmt.Println("phew! Managed to recover.")
+        }
+    }()
 
-	fmt.Println("enter main")
+    fmt.Println("enter main")
 
-	done := make(chan struct{})
+    done := make(chan struct{})
 
-	go func() {
-		funcThatPanics() // unhandled panic in goroutine
-	}()
+    go func() {
+        funcThatPanics() // unhandled panic in goroutine
+    }()
 
-	<-done
+    <-done
 
-	fmt.Println("exit main")
+    fmt.Println("exit main")
 }
 
 func funcThatPanics() {
-	fmt.Println("enter funcThatPanics")
-	panic("oh no!")
-	fmt.Println("exit funcThatPanics")
+    fmt.Println("enter funcThatPanics")
+    panic("oh no!")
+    fmt.Println("exit funcThatPanics")
 }
             </code></pre>
             Output:
@@ -637,8 +601,8 @@ created by main.main
             </code></pre>
         </section>
         <section>
-            <h2>Similar constructs in other languages only exit the affected thread</h2>
-            Java:
+            <h2>Other languages panic a bit differently</h2>
+            Eg. Java:
             <pre><code>
 public class Main {
   public static void main(String... args) throws InterruptedException {
@@ -654,22 +618,134 @@ public class Main {
   }
 }
             </code></pre>
-            Output:
+            Output (program still running):
             <pre><code>
 enter main
 Exception in thread "Thread-0" java.lang.Error: oh no!
-	at Main.funcThatErrors(Main.java:39)
-	at java.base/java.lang.Thread.run(Thread.java:833)
+    at Main.funcThatErrors(Main.java:39)
+    at java.base/java.lang.Thread.run(Thread.java:833)
             </code></pre>
         </section>
+        <section>
+            <h2>Throw anything at <em>panic</em> and <em>recover</em> it</h2>
+            <pre><code>
+type aThing struct {
+	This string
+	That int
+}
 
+func main() {
+	defer func() {
+		if err := recover(); err != nil {
+			switch err.(type) {
+			case aThing:
+				fmt.Printf("I caught a thing: %+v\n", err)
+			default:
+				fmt.Println("oops - I don't know what I caught")
+			}
+		}
+	}()
+
+	a := aThing{
+		This: "this is a thing!",
+		That: 42,
+	}
+
+	panic(a)
+}
+            </code></pre>
+            Output:
+            <pre><code>
+I caught a thing: {This:this is a thing! That:42}
+            </code></pre>
+        </section>
+        <section>
+            <h1>Best Practices</h1>
+        </section>
+        <section>
+            <h2><strong>Don't panic.</strong></h2>
+            <br/>
+            <br/>
+            <br/>
+            <footer>
+                <small>Go Proverb: https://go-proverbs.github.io/</small>
+            </footer>
+        </section>
+        <section>
+            <h2>But if you do...</h2>
+            Don't expose panics to clients. Thing hard before you do this:
+            <pre><code>
+func doSomething() (err error) {
+	defer func() {
+		err = recover()
+	}()
+
+	doStep1()
+	doStep2()
+	doStep3()
+	doStep4()
+	doStep5()
+
+	return
+}
+
+// In reality, the prototypes of the doStepN functions
+// might be different. For each of them,
+// * panic with nil for success and no needs to continue.
+// * panic with error for failure and no needs to continue.
+// * not panic for continuing.
+func doStepN() {
+	...
+	if err != nil {
+		panic(err)
+	}
+	...
+	if done {
+		panic(nil)
+	}
+}
+            </code></pre>
+            <br/>
+            <br/>
+            <br/>
+            <footer>
+                <small>https://go.dev/doc/effective_go#recover</small>
+            </footer>
+        </section>
+        <section>
+            <h2>Avoid GOTO with panics</h2>
+            Don't do this &#128557;:
+            <pre><code>
+func main() {
+	n := func () (result int)  {
+		defer func() {
+			if v := recover(); v != nil {
+				if n, ok := v.(int); ok {
+					result = n
+				}
+			}
+		}()
+
+		func () {
+			func () {
+				func () {
+					// ...
+					panic(123) // panic on succeeded
+				}()
+				// ...
+			}()
+		}()
+		// ...
+		return 0
+	}()
+	fmt.Println(n) // 123
+}
+            </code></pre>
+        </section>
 
         <section>
             <h2>TODO</h2>
             <ul>
-                <li>Best practices panic/recover in APIs (include examples)</li>
-                <li>add python recovery example</li>
-                <li>panic accepts interface{}</li>
                 <li>what's up with that hex value at bottom of stack trace?</li>
                 <li>panic stacktraces (and wrapping errors)</li>
             </ul>
