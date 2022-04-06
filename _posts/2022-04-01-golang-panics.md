@@ -1,10 +1,10 @@
 ---
 layout: post
 title: "Golang Guild Session: Panics"
-date: 2022-02-16 22:43:00 -0500
+date: 2022-04-06 16:00:00 -0500
 author: George Aristy
 categories:
-- presentations
+- talks
 - golang
 ---
 
