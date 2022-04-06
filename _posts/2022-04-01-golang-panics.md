@@ -10,7 +10,7 @@ categories:
 
 Slide deck for my presentation on Golang panics on the _Golang Guild Session_ @ VerticalScope.
 
-<iframe id="talk" width="800" height="400" src="/talks/2022-04-06-golang-panics.html">
+<iframe id="talk" width="800" height="400" src="/talks/golang-panics.html">
   <p>Your browser does not support iframes.</p>
 </iframe>
 
