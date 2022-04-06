@@ -415,7 +415,8 @@ main.main()
         </section>
         <section>
             <h2>How does <code class="highlight">recover()</code> work?</h2>
-            TLDR: only deferred functions are run during a panic, so <code class="highlight">defer</code> your <code class="highlight">recover()</code>
+            <br/>
+            TLDR: only deferred functions are run during a panic, so <em>defer</em> your <em>recover()</em>
             <br/>
             <br/>
             <br/>
@@ -431,7 +432,7 @@ main.main()
         <section>
             <h2><code class="highlight">defer</code> by example</h2>
             <pre>
-                <code data-trim data-noescape>
+                <code data-trim data-noescape data-line-numbers="2">
 func main() {
     defer fmt.Println("deferred function!")
     fmt.Println("Go is awesome!")
@@ -449,7 +450,7 @@ deferred function!
         <section>
             <h2>Deferred Recovery: the pattern</h2>
             <pre>
-                <code data-trim data-noescape>
+                <code data-trim data-noescape data-line-numbers="2-7|8">
 func main() {
     defer func() { // defer recover()
         if err := recover(); err != nil {
@@ -472,7 +473,7 @@ phew! Managed to recover.
         <section>
             <h2>Panics unwind the call stack</h2>
             <pre>
-                <code data-trim data-noescape>
+                <code data-trim data-noescape data-line-numbers="1-3|5-7|9-11|13-15|9-11|5-7|1-3">
 func main() {
     foo()
 }
@@ -510,7 +511,7 @@ main.main()
         <section>
             <h2>Recover at any point in a goroutine's call stack</h2>
             <pre>
-                <code data-trim data-noescape>
+                <code data-trim data-noescape data-line-numbers="2-3|7-9,15|19-21|25-27|21|10-13|4">
 func main() {
     fmt.Println("entering main")
     foo()
@@ -558,9 +559,9 @@ exit main
         <section>
             <h2>Unhandled panics <em>exit the program</em></h2>
             Recall that panics are handled per goroutine:
-            <pre><code data-trim data-noescape>
+            <pre><code data-trim data-noescape data-line-numbers="3-5|12-14">
 func main() {
-    go func() {
+    defer func() {
         if err := recover(); err != nil { // ineffective
             fmt.Println("phew! Managed to recover.")
         }
@@ -628,30 +629,28 @@ Exception in thread "Thread-0" java.lang.Error: oh no!
         </section>
         <section>
             <h2>Throw anything at <em>panic</em> and <em>recover</em> it</h2>
-            <pre><code data-trim data-noescape>
-type aThing struct {
-	This string
-	That int
-}
-
+            <pre><code data-trim data-noescape data-line-numbers="2-5|18-21|9-11">
 func main() {
-	defer func() {
-		if err := recover(); err != nil {
-			switch err.(type) {
-			case aThing:
-				fmt.Printf("I caught a thing: %+v\n", err)
-			default:
-				fmt.Println("oops - I don't know what I caught")
-			}
-		}
-	}()
+    type aThing struct {
+        This string
+        That int
+    }
 
-	a := aThing{
-		This: "this is a thing!",
-		That: 42,
-	}
+    defer func() {
+        if err := recover(); err != nil {
+            switch err.(type) {
+            case aThing:
+                fmt.Printf("I caught a thing: %+v\n", err)
+            default:
+                fmt.Println("oops - I don't know what I caught")
+            }
+        }
+    }()
 
-	panic(a)
+    panic(aThing{
+        This: "this is a thing!",
+        That: 42,
+    })
 }
             </code></pre>
             Output:
@@ -676,33 +675,28 @@ I caught a thing: {This:this is a thing! That:42}
             Don't expose panics to clients. Thing hard before you do this:
             <pre><code data-trim data-noescape>
 func doSomething() (err error) {
-	defer func() {
-		err = recover()
-	}()
+    defer func() {
+        err = recover()
+    }()
 
-	doStep1()
-	doStep2()
-	doStep3()
-	doStep4()
-	doStep5()
+    doStep1()
+    doStep2()
+    doStep3()
+    doStep4()
+    doStep5()
 
-	return
+    return
 }
 
-// In reality, the prototypes of the doStepN functions
-// might be different. For each of them,
-// * panic with nil for success and no needs to continue.
-// * panic with error for failure and no needs to continue.
-// * not panic for continuing.
 func doStepN() {
-	...
-	if err != nil {
-		panic(err)
-	}
-	...
-	if done {
-		panic(nil)
-	}
+    ...
+    if err != nil {
+        panic(err)
+    }
+    ...
+    if done {
+        panic(nil)
+    }
 }
             </code></pre>
             <br/>
@@ -717,28 +711,28 @@ func doStepN() {
             Don't do this &#128557;:
             <pre><code data-trim data-noescape>
 func main() {
-	n := func () (result int)  {
-		defer func() {
-			if v := recover(); v != nil {
-				if n, ok := v.(int); ok {
-					result = n
-				}
-			}
-		}()
+    n := func () (result int)  {
+        defer func() {
+            if v := recover(); v != nil {
+                if n, ok := v.(int); ok {
+                    result = n
+                }
+            }
+        }()
 
-		func () {
-			func () {
-				func () {
-					// ...
-					panic(123) // panic on succeeded
-				}()
-				// ...
-			}()
-		}()
-		// ...
-		return 0
-	}()
-	fmt.Println(n) // 123
+        func () {
+            func () {
+                func () {
+                    // ...
+                    panic(123) // panic on succeeded
+                }()
+                // ...
+            }()
+        }()
+        // ...
+        return 0
+    }()
+    fmt.Println(n) // 123
 }
             </code></pre>
         </section>
