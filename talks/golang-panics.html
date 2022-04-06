@@ -284,7 +284,7 @@
         <section>
             <h2>Example: <code class="highlight">nil</code> pointer dereference</h2>
             <pre>
-                <code>
+                <code data-trim data-noescape>
 func main() {
     var s *string
     _ = *s // nil pointer dereference; program exits immediately
@@ -294,7 +294,7 @@ func main() {
             </pre>
             Output:
             <pre>
-                <code>
+                <code data-trim data-noescape>
 panic: runtime error: invalid memory address or nil pointer dereference
 [signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x4553e2]
 
@@ -308,7 +308,7 @@ main.main()
         <section>
             <h2>Example: Invoking <code class="highlight">panic()</code></h2>
             <pre>
-                <code>
+                <code data-trim data-noescape>
 func main() {
     panic("oh no!") // invoking panic(); program exits immediately
     fmt.Println("Go is awesome!")
@@ -317,7 +317,7 @@ func main() {
             </pre>
             Output:
             <pre>
-                <code>
+                <code data-trim data-noescape>
 panic: oh no!
 
 goroutine 1 [running]:
@@ -359,7 +359,7 @@ Exception in thread "main" java.lang.RuntimeException: oh no!
             <h2>Can we recover from a panic?</h2>
             Other languages offer facilities. Eg.: Java:
             <pre>
-                <code>
+                <code data-trim data-noescape>
 public class Main {
     public static void main(String... args) {
         try {
@@ -375,7 +375,7 @@ public class Main {
             </pre>
             Output:
             <pre>
-                <code>
+                <code data-trim data-noescape>
 phew! Managed to recover.
 Java is awesome!
                 </code>
@@ -394,7 +394,7 @@ Java is awesome!
         <section>
             <h2>recover(): Cool! Let's try it out!</h2>
             <pre>
-                <code>
+                <code data-trim data-noescape>
 func main() {
     panic("oh no!")
     recover()
@@ -404,7 +404,7 @@ func main() {
             </pre>
             Output (not what we want):
             <pre>
-                <code>
+                <code data-trim data-noescape>
 panic: oh no!
 
 goroutine 1 [running]:
@@ -431,7 +431,7 @@ main.main()
         <section>
             <h2><code class="highlight">defer</code> by example</h2>
             <pre>
-                <code>
+                <code data-trim data-noescape>
 func main() {
     defer fmt.Println("deferred function!")
     fmt.Println("Go is awesome!")
@@ -440,7 +440,7 @@ func main() {
             </pre>
             Output:
             <pre>
-                <code>
+                <code data-trim data-noescape>
 Go is awesome!
 deferred function!
                 </code>
@@ -449,7 +449,7 @@ deferred function!
         <section>
             <h2>Deferred Recovery: the pattern</h2>
             <pre>
-                <code>
+                <code data-trim data-noescape>
 func main() {
     defer func() { // defer recover()
         if err := recover(); err != nil {
@@ -463,7 +463,7 @@ func main() {
             </pre>
             Output:
             <pre>
-                <code>
+                <code data-trim data-noescape>
 err: oh no!
 phew! Managed to recover.
                 </code>
@@ -472,7 +472,7 @@ phew! Managed to recover.
         <section>
             <h2>Panics unwind the call stack</h2>
             <pre>
-                <code>
+                <code data-trim data-noescape>
 func main() {
     foo()
 }
@@ -492,7 +492,7 @@ func funcThatPanics() {
             </pre>
             Output:
             <pre>
-                <code>
+                <code data-trim data-noescape>
 panic: oh no!
 
 goroutine 1 [running]:
@@ -510,7 +510,7 @@ main.main()
         <section>
             <h2>Recover at any point in a goroutine's call stack</h2>
             <pre>
-                <code>
+                <code data-trim data-noescape>
 func main() {
     fmt.Println("entering main")
     foo()
@@ -544,7 +544,7 @@ func funcThatPanics() {
             </pre>
             Output:
             <pre>
-                <code>
+                <code data-trim data-noescape>
 entering main
 entering foo
 entering bar
@@ -558,7 +558,7 @@ exit main
         <section>
             <h2>Unhandled panics <em>exit the program</em></h2>
             Recall that panics are handled per goroutine:
-            <pre><code>
+            <pre><code data-trim data-noescape>
 func main() {
     go func() {
         if err := recover(); err != nil { // ineffective
@@ -586,7 +586,7 @@ func funcThatPanics() {
 }
             </code></pre>
             Output:
-            <pre><code>
+            <pre><code data-trim data-noescape>
 enter main
 enter funcThatPanics
 panic: oh no!
@@ -603,7 +603,7 @@ created by main.main
         <section>
             <h2>Other languages panic a bit differently</h2>
             Eg. Java:
-            <pre><code>
+            <pre><code data-trim data-noescape>
 public class Main {
   public static void main(String... args) throws InterruptedException {
     System.out.println("enter main");
@@ -619,7 +619,7 @@ public class Main {
 }
             </code></pre>
             Output (program still running):
-            <pre><code>
+            <pre><code data-trim data-noescape>
 enter main
 Exception in thread "Thread-0" java.lang.Error: oh no!
     at Main.funcThatErrors(Main.java:39)
@@ -628,7 +628,7 @@ Exception in thread "Thread-0" java.lang.Error: oh no!
         </section>
         <section>
             <h2>Throw anything at <em>panic</em> and <em>recover</em> it</h2>
-            <pre><code>
+            <pre><code data-trim data-noescape>
 type aThing struct {
 	This string
 	That int
@@ -655,7 +655,7 @@ func main() {
 }
             </code></pre>
             Output:
-            <pre><code>
+            <pre><code data-trim data-noescape>
 I caught a thing: {This:this is a thing! That:42}
             </code></pre>
         </section>
@@ -674,7 +674,7 @@ I caught a thing: {This:this is a thing! That:42}
         <section>
             <h2>But if you do...</h2>
             Don't expose panics to clients. Thing hard before you do this:
-            <pre><code>
+            <pre><code data-trim data-noescape>
 func doSomething() (err error) {
 	defer func() {
 		err = recover()
@@ -715,7 +715,7 @@ func doStepN() {
         <section>
             <h2>Avoid GOTO with panics</h2>
             Don't do this &#128557;:
-            <pre><code>
+            <pre><code data-trim data-noescape>
 func main() {
 	n := func () (result int)  {
 		defer func() {
