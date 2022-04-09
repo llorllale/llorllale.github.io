@@ -1,0 +1,808 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Golang: Panic & Recover</title>
+
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/theme/black.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="../assets/reveal.js/plugin/highlight/monokai.css">
+
+    <style>
+        /* Aside */
+        .left {
+            float: left;
+        }
+
+        img.left {
+            margin: 0;
+            padding: 0;
+            width: 25%;
+        }
+
+        img.left + ul {
+            margin: 0;
+            width: 60%;
+        }
+
+        /* Figures with captions */
+        .reveal section figure {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 600px;
+            height: 400px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .reveal section figure > img {
+            width: 100%;
+            max-height: none;
+            border-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section figure > figcaption {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            width: 100%;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section figure > figcaption {
+            line-height: 1.5em;
+            vertical-align: middle;
+        }
+
+        .reveal section figure > figcaption a {
+            line-height: 1.5em !important;
+        }
+
+        /* Cover */
+        .reveal section.cover footer {
+            line-height: 33px;
+            clear: both;
+        }
+
+        .reveal section.cover > footer {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section.cover footer img {
+            float: left;
+            margin: 0 1em 0 0;
+            padding: 0;
+            cursor: pointer;
+            border-style: none;
+        }
+
+        .reveal section.cover footer a,
+        .reveal section.cover footer span {
+            margin: 0;
+            padding: 0;
+            vertical-align: baseline;
+            line-height: 33px;
+        }
+
+        /* Separata */
+        .reveal section.separata hgroup {
+            margin-top: 0.5em;
+        }
+
+        .reveal section.separata hgroup h2,
+        .reveal section.separata hgroup h3,
+        .reveal section.separata hgroup h4 {
+            color: #F0F1EB;
+            text-shadow: #111150 0px 0px 0.2em;
+        }
+
+        .reveal section.separata figure {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section.separata figure > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            z-index: -1;
+        }
+
+        /* Animation */
+        div.animation-container {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 809px;
+            height: 399px;
+            background-color: transparent;
+            -moz-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            overflow: hidden;
+        }
+
+        .animation-container .frame,
+        .animation-container .frame > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            min-width: 100%;
+            max-width: none;
+            max-height: none;
+            box-shadow: none
+        }
+
+        .animation-container .frame > img.loader {
+            position: absolute;
+            top: 140px;
+            left: 180px;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            width: 126px;
+            min-width: 126px;
+            box-shadow: none;
+        }
+
+        .snippet {
+            font-family: monospace !important;
+        }
+
+        .reveal table.matrix {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reveal table.matrix th.pivot {
+            border-style: none;
+        }
+
+        .reveal table.matrix th, .reveal table.matrix td {
+            border-style: solid;
+            border-width: 1px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .reveal table.matrix td li {
+            list-style: none;
+        }
+
+        .reveal pre {
+            width:100%;
+        }
+
+        .reveal .bad {
+            color: red;
+            font-style: italic;
+        }
+
+        .reveal .small {
+            font-size: 0.6em;
+        }
+
+        .reveal .highlight {
+            background-color: #606000; /*#222230;*/
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section class="cover">
+            <h1>Go: Panic & Recover</h1>
+            <img src="/assets/img/gopher_peek.png"/>
+            <p>
+                <small>By <a href="https://georgearisty.dev/">George Aristy</a> /
+                    <a href="https://github.com/llorllale">llorllale</a></small>
+            </p>
+            <footer>
+                <a rel="license"
+                   href="http://creativecommons.org/licenses/by-nc-sa/2.0/">
+                    <img alt="Creative Commons License"
+                         src="http://i.creativecommons.org/l/by-nc-sa/2.0/88x31.png"/>
+                </a>
+                <span>This work is licensed under a </span>
+                <a rel="license"
+                   href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+                    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 Generic
+                    License
+                </a>
+            </footer>
+        </section>
+        <section>
+            <h2>What are panics?</h2>
+            A secondary flow of control in which the enclosing function stops execution and control is immediately*
+            transferred back to the caller.
+
+            <br/>
+            <br/>
+            <br/>
+
+            <footer>
+                <small>* we'll <em>defer</em> details til later &#128578;</small>
+            </footer>
+        </section>
+        <section>
+            <h2>When does Go panic?</h2>
+            <ul>
+                <li>Runtime errors: out-of-bounds array accesses, nil pointer dereferences, etc.</li>
+                <li>Invoking <code class="highlight">panic()</code>: built-in function that starts <em>panicking</em></li>
+            </ul>
+
+            <br/>
+            <br/>
+            <br/>
+
+            <footer>
+                <small>https://go.dev/blog/defer-panic-and-recover</small>
+            </footer>
+        </section>
+        <section>
+            <h2>Example: <code class="highlight">nil</code> pointer dereference</h2>
+            <div class="r-stack">
+                <pre>
+                    <code data-trim data-noescape>
+func main() {
+    var s *string
+    _ = *s // nil pointer dereference; program exits immediately
+    fmt.Println("Go is awesome!")
+}
+                    </code>
+                </pre>
+                <pre class="fragment">
+                Output:
+                    <code data-trim data-noescape>
+panic: runtime error: invalid memory address or nil pointer dereference
+[signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x4553e2]
+
+goroutine 1 [running]:
+main.main()
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:5 +0x2
+
+                    </code>
+                </pre>
+            </div>
+        </section>
+        <section>
+            <h2>Example: Invoking <code class="highlight">panic()</code></h2>
+            <div class="r-stack">
+                <pre>
+                    <code data-trim data-noescape>
+func main() {
+    panic("oh no!") // invoking panic(); program exits immediately
+    fmt.Println("Go is awesome!")
+}
+                    </code>
+                </pre>
+                <pre class="fragment">
+                Output:
+                    <code data-trim data-noescape>
+panic: oh no!
+
+goroutine 1 [running]:
+main.main()
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:11 +0x27
+                    </code>
+                </pre>
+            </div>
+        </section>
+        <section>
+            <h2>Have we seen this before?</h2>
+            Yes! Eg.: Java:
+<!--            <div class="r-stack">-->
+                <pre>
+                    <code data-trim data-noescape>
+public class Main {
+    public static void main(String... args) {
+        throw new RuntimeException("oh no!"); // program exits immediately
+        System.out.println("Java is awesome!");
+    }
+}
+                    </code>
+                </pre>
+                <pre class="fragment">
+                Output:
+                    <code data-trim data-noescape>
+Exception in thread "main" java.lang.RuntimeException: oh no!
+    at Main.main(Main.java:6)
+                    </code>
+                </pre>
+<!--            </div>-->
+        </section>
+        <section>
+            <h2>Panics vs. Errors</h2>
+            <ul>
+                <li><strong>Errors</strong> are regular values that flow through ordinary control flow (eg. return)</li>
+                <li><strong>Panics</strong> halt ordinary control flow and begin <em>panicking</em></li>
+            </ul>
+
+        </section>
+        <section>
+            <h2>Can we recover from a panic?</h2>
+            Other languages offer facilities. Eg.: Java:
+            <div class="r-stack">
+            <pre class="fragment fade-out" data-fragment-index="0">
+                <code data-trim data-noescape>
+public class Main {
+    public static void main(String... args) {
+        try {
+            throw new RuntimeException("oh no!");
+        } catch(RuntimeException e) {
+            System.out.println("phew! Managed to recover.");
+        }
+
+        System.out.println("Java is awesome!");
+    }
+}
+                </code>
+            </pre>
+            <pre class="fragment current-visible" data-fragment-index="0">
+            Output:
+                <code data-trim data-noescape>
+phew! Managed to recover.
+Java is awesome!
+                </code>
+            </pre>
+            </div>
+        </section>
+        <section>
+            <h2>Recover</h2>
+            <q><code class="highlight">recover()</code> is a built-in function that regains control of a panicking goroutine.</q>
+            <br/>
+            <br/>
+            <br/>
+            <footer>
+                <small>https://go.dev/blog/defer-panic-and-recover</small>
+            </footer>
+        </section>
+        <section>
+            <h2>recover(): Cool! Let's try it out!</h2>
+            <pre>
+                <code data-trim data-noescape>
+func main() {
+    panic("oh no!")
+    recover()
+    fmt.Println("Go is awesome!")
+}
+                </code>
+            </pre>
+            <pre class="fragment">
+            Output (not what we want):
+                <code data-trim data-noescape>
+panic: oh no!
+
+goroutine 1 [running]:
+main.main()
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:19 +0x27
+                </code>
+            </pre>
+        </section>
+        <section>
+            <h2>How does <code class="highlight">recover()</code> work?</h2>
+            <br/>
+            TLDR: only deferred functions are run during a panic, so <em>defer</em> your <em>recover()</em>
+            <br/>
+            <br/>
+            <br/>
+            <footer>
+                <small>More info:
+                    <ul>
+                        <li>https://go.dev/ref/spec#Handling_panics</li>
+                        <li>https://go.dev/ref/spec#Defer_statements</li>
+                    </ul>
+                </small>
+            </footer>
+        </section>
+        <section>
+            <h2><code class="highlight">defer</code> by example</h2>
+            <pre>
+                <code data-trim data-noescape data-line-numbers="2">
+func main() {
+    defer fmt.Println("deferred function!")
+    fmt.Println("Go is awesome!")
+}
+                </code>
+            </pre>
+            <pre class="fragment">
+            Output:
+                <code data-trim data-noescape>
+Go is awesome!
+deferred function!
+                </code>
+            </pre>
+        </section>
+        <section>
+            <h2>Deferred Recovery: the pattern</h2>
+            <pre>
+                <code data-trim data-noescape data-line-numbers="2-7|8">
+func main() {
+    defer func() { // defer recover()
+        if err := recover(); err != nil {
+            fmt.Printf("err: %s\n", err)  // handle panic
+            fmt.Println("phew! Managed to recover.")
+        }
+    }()
+    panic("oh no!") // code that panics
+}
+                </code>
+            </pre>
+            <pre class="fragment">
+            Output:
+                <code data-trim data-noescape>
+err: oh no!
+phew! Managed to recover.
+                </code>
+            </pre>
+        </section>
+        <section>
+            <h2>Panics unwind the call stack</h2>
+            <pre>
+                <code data-trim data-noescape data-line-numbers="1-3|5-7|9-11|13-15|9-11|5-7|1-3">
+func main() {
+    foo()
+}
+
+func foo() {
+    bar()
+}
+
+func bar() {
+    funcThatPanics()
+}
+
+func funcThatPanics() {
+    panic("oh no!")
+}
+                </code>
+            </pre>
+        </section>
+        <section>
+            <h2>Panics unwind the call stack</h2>
+            <pre>
+            Output:
+                <code data-trim data-noescape>
+panic: oh no!
+
+goroutine 1 [running]:
+main.funcThatPanics(...)
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:52
+main.bar(...)
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:48
+main.foo(...)
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:44
+main.main()
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:40 +0x29
+                </code>
+            </pre>
+        </section>
+        <section>
+            <h2>Recover at any point in a goroutine's call stack</h2>
+            <pre>
+                <code data-trim data-noescape data-line-numbers="2-3|7-9,15|19-21|25-27|21|10-13|4">
+func main() {
+    fmt.Println("entering main")
+    foo()
+    fmt.Println("exit main")
+}
+
+func foo() {
+    fmt.Println("entering foo")
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(err)
+            fmt.Println("phew! Managed to recover.")
+        }
+    }()
+    bar()
+    fmt.Println("exit foo")
+}
+
+func bar() {
+    fmt.Println("entering bar")
+    funcThatPanics()
+    fmt.Println("exit bar")
+}
+
+func funcThatPanics() {
+    fmt.Println("entering funcThatPanics")
+    panic("oh no!")
+    fmt.Println("exit funcThatPanics")
+}
+                </code>
+            </pre>
+        </section>
+        <section>
+            <h2>Recover at any point in a goroutine's call stack</h2>
+            <pre>
+            Output:
+                <code data-trim data-noescape>
+entering main
+entering foo
+entering bar
+entering funcThatPanics
+oh no!
+phew! Managed to recover.
+exit main
+                </code>
+            </pre>
+        </section>
+        <section>
+            <h2>Unhandled panics <em>exit the program</em></h2>
+            Recall that panics are handled per goroutine:
+            <pre><code data-trim data-noescape data-line-numbers="3-5|12-14">
+func main() {
+    defer func() {
+        if err := recover(); err != nil { // ineffective
+            fmt.Println("phew! Managed to recover.")
+        }
+    }()
+
+    fmt.Println("enter main")
+
+    done := make(chan struct{})
+
+    go func() {
+        funcThatPanics() // unhandled panic in goroutine
+    }()
+
+    <-done
+
+    fmt.Println("exit main")
+}
+
+func funcThatPanics() {
+    fmt.Println("enter funcThatPanics")
+    panic("oh no!")
+    fmt.Println("exit funcThatPanics")
+}
+            </code></pre>
+        </section>
+        <section>
+            <h2>Unhandled panics <em>exit the program</em></h2>
+            Output:
+            <pre><code data-trim data-noescape>
+enter main
+enter funcThatPanics
+panic: oh no!
+
+goroutine 7 [running]:
+main.funcThatPanics()
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:95 +0x65
+main.main.func2()
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:85 +0x17
+created by main.main
+        /home/llorllale/dev/llorllale/demo/talks/golang-panics/go/main.go:84 +0x86
+            </code></pre>
+        </section>
+        <section>
+            <h2>Other languages panic a bit differently</h2>
+            Eg. Java:
+            <pre><code data-trim data-noescape>
+public class Main {
+  public static void main(String... args) throws InterruptedException {
+    System.out.println("enter main");
+    var done = new ArrayBlockingQueue(1);
+    new Thread(Main::funcThatErrors).start();
+    done.take(); // program hangs here
+    System.out.println("exit main");
+  }
+
+  private static void funcThatErrors() {
+    throw new Error("oh no!");
+  }
+}
+            </code></pre>
+        </section>
+        <section>
+            <h2>Other languages panic a bit differently</h2>
+            Output (program still running):
+            <pre><code data-trim data-noescape>
+enter main
+Exception in thread "Thread-0" java.lang.Error: oh no!
+    at Main.funcThatErrors(Main.java:39)
+    at java.base/java.lang.Thread.run(Thread.java:833)
+            </code></pre>
+        </section>
+        <section>
+            <h2>Throw anything at <em>panic</em> and <em>recover</em> it</h2>
+            <pre><code data-trim data-noescape data-line-numbers="2-5|18-21|9-11">
+func main() {
+    type aThing struct {
+        This string
+        That int
+    }
+
+    defer func() {
+        if err := recover(); err != nil {
+            switch err.(type) {
+            case aThing:
+                fmt.Printf("I caught a thing: %+v\n", err)
+            default:
+                fmt.Println("oops - I don't know what I caught")
+            }
+        }
+    }()
+
+    panic(aThing{
+        This: "this is a thing!",
+        That: 42,
+    })
+}
+            </code></pre>
+        </section>
+        <section>
+            <h2>Throw anything at <em>panic</em> and <em>recover</em> it</h2>
+            Output:
+            <pre><code data-trim data-noescape>
+I caught a thing: {This:this is a thing! That:42}
+            </code></pre>
+        </section>
+        <section>
+            <h1>Best Practices</h1>
+        </section>
+        <section>
+            <h2><strong>Don't panic.</strong></h2>
+            <br/>
+            <br/>
+            <br/>
+            <footer>
+                <small>Go Proverb: https://go-proverbs.github.io/</small>
+            </footer>
+        </section>
+        <section>
+            <h2>But if you do...</h2>
+            Don't expose panics to clients. Think hard before you do this:
+            <pre><code data-trim data-noescape>
+func doSomething() (err error) {
+    defer func() {
+        err = recover()
+    }()
+
+    doStep1()
+    doStep2()
+    doStep3()
+    doStep4()
+    doStep5()
+
+    return
+}
+
+func doStepN() {
+    ...
+    if err != nil {
+        panic(err)
+    }
+    ...
+    if done {
+        panic(nil)
+    }
+}
+            </code></pre>
+            <br/>
+            <br/>
+            <br/>
+            <footer>
+                <small>https://go.dev/doc/effective_go#recover</small>
+            </footer>
+        </section>
+        <section>
+            <h2>Avoid GOTO with panics</h2>
+            Don't do this &#128557;:
+            <pre><code data-trim data-noescape>
+func main() {
+    n := func () (result int)  {
+        defer func() {
+            if v := recover(); v != nil {
+                if n, ok := v.(int); ok {
+                    result = n
+                }
+            }
+        }()
+
+        func () {
+            func () {
+                func () {
+                    // ...
+                    panic(123) // panic on succeeded
+                }()
+                // ...
+            }()
+        }()
+        // ...
+        return 0
+    }()
+    fmt.Println(n) // 123
+}
+            </code></pre>
+        </section>
+        <section>
+            <h2>Recover from goroutines</h2>
+            Use defer/recover for goroutines to guard against panics:
+            <pre><code data-trim data-noescape data-line-numbers="">
+func main() {
+    done := make(chan struct{})
+
+    for range []int{1, 2, 3} {
+        go func() {
+            defer func() {
+                if err := recover(); err != nil {
+                    fmt.Println("phew! Managed to recover.")
+                }
+            }()
+            funcThatMayPanic()
+        }()
+    }
+
+    <-done
+}
+
+func funcThatMayPanic() {
+    panic("oh no!")
+}
+            </code></pre>
+        </section>
+
+    </div>
+</div>
+
+<script src="../assets/reveal.js/dist/reveal.js"></script>
+<script src="../assets/reveal.js/plugin/notes/notes.js"></script>
+<script src="../assets/reveal.js/plugin/markdown/markdown.js"></script>
+<script src="../assets/reveal.js/plugin/highlight/highlight.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+    });
+</script>
+</body>
+</html>
