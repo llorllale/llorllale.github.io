@@ -1,0 +1,365 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Golang: Concurrency Primitives</title>
+
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/theme/black.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="../assets/reveal.js/plugin/highlight/monokai.css">
+
+    <style>
+        /* Aside */
+        .left {
+            float: left;
+        }
+
+        img.left {
+            margin: 0;
+            padding: 0;
+            width: 25%;
+        }
+
+        img.left + ul {
+            margin: 0;
+            width: 60%;
+        }
+
+        /* Figures with captions */
+        .reveal section figure {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 600px;
+            height: 400px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .reveal section figure > img {
+            width: 100%;
+            max-height: none;
+            border-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section figure > figcaption {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            width: 100%;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section figure > figcaption {
+            line-height: 1.5em;
+            vertical-align: middle;
+        }
+
+        .reveal section figure > figcaption a {
+            line-height: 1.5em !important;
+        }
+
+        /* Cover */
+        .reveal section.cover footer {
+            line-height: 33px;
+            clear: both;
+        }
+
+        .reveal section.cover > footer {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section.cover footer img {
+            float: left;
+            margin: 0 1em 0 0;
+            padding: 0;
+            cursor: pointer;
+            border-style: none;
+        }
+
+        .reveal section.cover footer a,
+        .reveal section.cover footer span {
+            margin: 0;
+            padding: 0;
+            vertical-align: baseline;
+            line-height: 33px;
+        }
+
+        /* Separata */
+        .reveal section.separata hgroup {
+            margin-top: 0.5em;
+        }
+
+        .reveal section.separata hgroup h2,
+        .reveal section.separata hgroup h3,
+        .reveal section.separata hgroup h4 {
+            color: #F0F1EB;
+            text-shadow: #111150 0px 0px 0.2em;
+        }
+
+        .reveal section.separata figure {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section.separata figure > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            z-index: -1;
+        }
+
+        /* Animation */
+        div.animation-container {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 809px;
+            height: 399px;
+            background-color: transparent;
+            -moz-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            overflow: hidden;
+        }
+
+        .animation-container .frame,
+        .animation-container .frame > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            min-width: 100%;
+            max-width: none;
+            max-height: none;
+            box-shadow: none
+        }
+
+        .animation-container .frame > img.loader {
+            position: absolute;
+            top: 140px;
+            left: 180px;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            width: 126px;
+            min-width: 126px;
+            box-shadow: none;
+        }
+
+        .snippet {
+            font-family: monospace !important;
+        }
+
+        .reveal table.matrix {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reveal table.matrix th.pivot {
+            border-style: none;
+        }
+
+        .reveal table.matrix th, .reveal table.matrix td {
+            border-style: solid;
+            border-width: 1px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .reveal table.matrix td li {
+            list-style: none;
+        }
+
+        .reveal pre {
+            width:100%;
+        }
+
+        .reveal .bad {
+            color: red;
+            font-style: italic;
+        }
+
+        .reveal .small {
+            font-size: 0.6em;
+        }
+
+        .reveal .highlight {
+            background-color: #606000; /*#222230;*/
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section class="cover">
+            <h1>Go: Concurrency Primitives</h1>
+            <img src="/assets/img/gopher_peek.png"/>
+            <p>
+                <small>By <a href="https://georgearisty.dev/">George Aristy</a> /
+                    <a href="https://github.com/llorllale">llorllale</a></small>
+            </p>
+            <footer>
+                <a rel="license"
+                   href="http://creativecommons.org/licenses/by-nc-sa/2.0/">
+                    <img alt="Creative Commons License"
+                         src="http://i.creativecommons.org/l/by-nc-sa/2.0/88x31.png"/>
+                </a>
+                <span>This work is licensed under a </span>
+                <a rel="license"
+                   href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+                    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 Generic
+                    License
+                </a>
+            </footer>
+        </section>
+        <section>
+            <h2>Core: Goroutines</h2>
+            <h3>Model</h3>
+            <ul>
+                <li>Core concept in Go's concurrency model.</li>
+                <li>Builtin with <code class="highlight">go</code> keyword.</li>
+            </ul>
+        </section>
+        <section>
+            <h2>Goroutines</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <h3>Simplified Visual Model</h3>
+                    <div style="float: left">
+                        <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.model.drawio.svg" height="400"/>
+                    </div>
+                    <div style="float: right; text-align: left">
+                        <div style="font-size: large">
+                            <br/>
+                            <br/>
+                            <br/>
+                            <br/>
+                            Schedulers<br/>
+                            <ul>
+                                <li><strong>Go runtime: </strong> schedules goroutines unto threads.</li>
+                                <li><strong>OS: </strong> schedules threads unto CPU cores.</li>
+                            </ul>
+                        </div>
+                        <br/>
+                        <div style="font-size: large">
+                            Benefits<br/>
+                            <ul>
+                                <li><strong>Speed: </strong> no expensive system calls to create threads.</li>
+                                <li><strong>Memory: </strong> small stack per-goroutine; can grow as needed.</li>
+                                <li><strong>Context Switching: </strong> entirely within the process (faster).</li>
+                                <li><strong>Scheduling: </strong> optimized for Go.</li>
+                                <li>Excellent overview: <a href="https://youtu.be/YHRO5WQGh0k" target="_blank">The Scheduler Saga</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: scheduling</h3>
+                    A goroutine is blocked by another:<br/>
+                    <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.step0.drawio.svg" height="400"/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: scheduling</h3>
+                    Some threads created by the Go runtime have been freed up:<br/>
+                    <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.step1.drawio.svg" height="400"/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: scheduling</h3>
+                    Go runtime schedules goroutine to a free thread:<br/>
+                    <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.step2.drawio.svg" height="400"/>
+                </div>
+                <div class="fragment">
+                    <h3>Code</h3>
+                    <pre><code data-trim data-noescape>
+                        func main() {
+                            go func() {
+                                fmt.Println("Hello goroutine!")
+                            }()
+                        }
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Questions?</h2>
+        </section>
+
+        <section>
+            <h2>TODO</h2>
+            <ul>
+                <li>Concurrency != Parallelism</li>
+                <li>feature image</li>
+                <li>Go Routines</li>
+                <li>WaitGroups</li>
+                <li>Channels</li>
+                <li>sync & sync/atomic: maps, mutexes, atomic mem access</li>
+                <li>ErrGroup</li>
+                <li>
+                    https://encore.dev/blog/advanced-go-concurrency
+                        https://godoc.org/golang.org/x/sync/singleflight
+                        https://godoc.org/golang.org/x/sync/errgroup
+                        https://godoc.org/golang.org/x/sync/semaphore
+                </li>
+            </ul>
+        </section>
+    </div>
+</div>
+
+<script src="../assets/reveal.js/dist/reveal.js"></script>
+<script src="../assets/reveal.js/plugin/notes/notes.js"></script>
+<script src="../assets/reveal.js/plugin/markdown/markdown.js"></script>
+<script src="../assets/reveal.js/plugin/highlight/highlight.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+    });
+</script>
+</body>
+</html>
