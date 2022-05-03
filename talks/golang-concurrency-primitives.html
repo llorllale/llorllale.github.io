@@ -950,6 +950,90 @@
                         }
                     </code></pre>
                 </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Use to defer some initialization code that should run only once and not necessarily on every program
+                    execution.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers="3-7">
+                        var once sync.Once
+
+                        func expensiveInit() {
+                        	once.Do(func() {
+                        		fmt.Println("initialized!")
+                        	})
+                        }
+
+                        func main() {
+                        	expensiveInit() // prints "initialized!"
+                        	expensiveInit() // does nothing
+                        	expensiveInit() // does nothing
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers="10">
+                        var once sync.Once
+
+                        func expensiveInit() {
+                        	once.Do(func() {
+                        		fmt.Println("initialized!")
+                        	})
+                        }
+
+                        func main() {
+                        	expensiveInit() // prints "initialized!"
+                        	expensiveInit() // does nothing
+                        	expensiveInit() // does nothing
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers="11">
+                        var once sync.Once
+
+                        func expensiveInit() {
+                        	once.Do(func() {
+                        		fmt.Println("initialized!")
+                        	})
+                        }
+
+                        func main() {
+                        	expensiveInit() // prints "initialized!"
+                        	expensiveInit() // does nothing
+                        	expensiveInit() // does nothing
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers="12">
+                        var once sync.Once
+
+                        func expensiveInit() {
+                        	once.Do(func() {
+                        		fmt.Println("initialized!")
+                        	})
+                        }
+
+                        func main() {
+                        	expensiveInit() // prints "initialized!"
+                        	expensiveInit() // does nothing
+                        	expensiveInit() // does nothing
+                        }
+                    </code></pre>
+                </div>
             </div>
         </section>
 
