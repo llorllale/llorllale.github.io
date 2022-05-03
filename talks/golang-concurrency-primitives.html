@@ -233,7 +233,7 @@
 <div class="reveal">
     <div class="slides">
         <section class="cover">
-            <h1>Go: Concurrency Primitives</h1>
+            <h1>Concurrency Primitives in Go</h1>
             <img src="/assets/img/gopher_peek.png"/>
             <p>
                 <small>By <a href="https://georgearisty.dev/">George Aristy</a> /
@@ -254,18 +254,19 @@
             </footer>
         </section>
         <section>
-            <h2>Core: Goroutines</h2>
-            <h3>Model</h3>
-            <ul>
-                <li>Core concept in Go's concurrency model.</li>
-                <li>Builtin with <code class="highlight">go</code> keyword.</li>
-            </ul>
-        </section>
-        <section>
             <h2>Goroutines</h2>
             <div class="r-stack">
                 <div class="fragment fade-in-then-out">
-                    <h3>Simplified Visual Model</h3>
+                    <ul>
+                        <li>Core concept in Go's concurrency model.</li>
+                        <li>Can efficiently run 1000s of goroutines (for work not bound by CPU)</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h2>How do they work?</h2>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>M:N Scheduler</h3>
                     <div style="float: left">
                         <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.model.drawio.svg" height="400"/>
                     </div>
@@ -277,7 +278,7 @@
                             <br/>
                             Schedulers<br/>
                             <ul>
-                                <li><strong>Go runtime: </strong> schedules goroutines unto threads.</li>
+                                <li><strong>Go runtime: </strong> schedules goroutines (M) unto threads (N).</li>
                                 <li><strong>OS: </strong> schedules threads unto CPU cores.</li>
                             </ul>
                         </div>
@@ -309,13 +310,491 @@
                     Go runtime schedules goroutine to a free thread:<br/>
                     <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.step2.drawio.svg" height="400"/>
                 </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I run goroutines?</h3>
+                </div>
                 <div class="fragment">
-                    <h3>Code</h3>
+                    <h3>How do I run goroutines?</h3>
+                    Use keyword <code class="highlight">go</code> followed by an expression (typically a function call):
                     <pre><code data-trim data-noescape>
                         func main() {
                             go func() {
                                 fmt.Println("Hello goroutine!")
                             }()
+                        }
+                    </code></pre>
+                    <footer>
+                        <small>
+                            Spec: <a target="_blank" href="https://go.dev/ref/spec#Go_statements">https://go.dev/ref/spec#Go_statements</a>
+                        </small>
+                    </footer>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Channels</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <h3>What are channels?</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>What are channels?</h3>
+                    <ul>
+                        <li>Bounded queues ("buffered" in go parlance)</li>
+                        <li>Queues have a type</li>
+                        <li>Thread-safe</li>
+                        <li>Can allow either reads or writes (or both)</li>
+                    </ul>
+                    <br/>
+                    <br/>
+                    <footer>
+                        <small>
+                            Spec: <a target="_blank" href="https://go.dev/ref/spec#Channel_types">https://go.dev/ref/spec#Channel_types</a>
+                        </small>
+                    </footer>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Fun Fact</h3>
+                    Channels are a struct, <a target="_blank" href="https://github.com/golang/go/blob/4fc9565ffce91c4299903f7c17a275f0786734a1/src/runtime/chan.go#L17-L29">hchan</a>,
+                    under the hood. Access to hchan's buffer is guarded by a mutex.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Purpose</h3>
+                    <blockquote>
+                        A channel provides a mechanism for concurrently executing functions to communicate by sending and receiving values of a specified element type.
+                    </blockquote>
+                    - The Spec
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    Create one using the <code class="highlight">make</code> keyword:
+                    <pre><code data-noescape data-trim>
+                        func main() {
+                            unbuffered := make(chan int)
+                            buffered := make(chan int, 3)
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    Read and write using the <code class="highlight"><-</code> and <code class="highlight">-></code> operators:
+                    <pre><code data-noescape data-trim>
+                        // Which of the following compiles?
+                        func main() {
+                        	readWrite := make(chan int)
+                        	readOnly := make(<-chan int)
+                        	writeOnly := make(chan<- int)
+
+                        	readWrite <- 1 // OK
+                        	<-readWrite    // OK
+                        	readOnly <- 1  // compilation error
+                        	<-readOnly     // OK
+                        	writeOnly <- 1 // OK
+                        	<-writeOnly    // compilation error
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    Read in a loop using the <code class="highlight">range</code> keyword:
+                    <pre><code data-noescape data-trim>
+                        func main() {
+                        	ch := make(chan string, 3)
+
+                        	ch <- "Hello"
+                        	ch <- "Fellow"
+                        	ch <- "Gophers"
+
+                        	close(ch)
+
+                        	for s := range ch { // exits when channel is closed
+                        		fmt.Println(s)
+                        	}
+
+                            // Output:
+                            //  Hello
+                            //  Fellow
+                            //  Gophers
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    Read from the first available channel using the <code class="highlight">select</code> statement:
+                    <pre><code data-noescape data-trim>
+                        select {
+                        case <-ch1:
+                            doSomething()
+                        case <-ch2:
+                            doSomethingElse()
+                        ...
+                        case <-chN:
+                            doTheNthThing()
+                        }
+                    </code></pre>
+                    <footer>
+                        <small>
+                            Spec: <a target="_blank" href="https://go.dev/ref/spec#Select_statements">https://go.dev/ref/spec#Select_statements</a>
+                        </small>
+                    </footer>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    <code class="highlight">select</code> example:
+                    <pre><code data-noescape data-trim data-line-numbers="4-5">
+                        func main() {
+                        	rand.Seed(time.Now().Unix())
+
+                        	ch1 := make(chan int)
+                        	ch2 := make(chan int)
+
+                        	go func() { // write to ch1 after random delay
+                        		delay := time.Duration(rand.Intn(2)) * time.Second
+                        		time.Sleep(delay)
+                        		ch1 <- 1
+                        		close(ch1)
+                        	}()
+
+                        	go func() { // write to ch2 after random delay
+                        		delay := time.Duration(rand.Intn(2)) * time.Second
+                        		time.Sleep(delay)
+                        		ch2 <- 2
+                        		close(ch2)
+                        	}()
+
+                        	select { // Output: either 1 or 2
+                        	case v := <-ch1:
+                        		fmt.Println(v)
+                        	case v := <-ch2:
+                        		fmt.Println(v)
+                        	}
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    <code class="highlight">select</code> example:
+                    <pre><code data-noescape data-trim data-line-numbers="7-12">
+                        func main() {
+                        	rand.Seed(time.Now().Unix())
+
+                        	ch1 := make(chan int)
+                        	ch2 := make(chan int)
+
+                        	go func() { // write to ch1 after random delay
+                        		delay := time.Duration(rand.Intn(2)) * time.Second
+                        		time.Sleep(delay)
+                        		ch1 <- 1
+                        		close(ch1)
+                        	}()
+
+                        	go func() { // write to ch2 after random delay
+                        		delay := time.Duration(rand.Intn(2)) * time.Second
+                        		time.Sleep(delay)
+                        		ch2 <- 2
+                        		close(ch2)
+                        	}()
+
+                        	select { // Output: either 1 or 2
+                        	case v := <-ch1:
+                        		fmt.Println(v)
+                        	case v := <-ch2:
+                        		fmt.Println(v)
+                        	}
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    <code class="highlight">select</code> example:
+                    <pre><code data-noescape data-trim data-line-numbers="13-19">
+                        func main() {
+                        	rand.Seed(time.Now().Unix())
+
+                        	ch1 := make(chan int)
+                        	ch2 := make(chan int)
+
+                        	go func() { // write to ch1 after random delay
+                        		delay := time.Duration(rand.Intn(2)) * time.Second
+                        		time.Sleep(delay)
+                        		ch1 <- 1
+                        		close(ch1)
+                        	}()
+
+                        	go func() { // write to ch2 after random delay
+                        		delay := time.Duration(rand.Intn(2)) * time.Second
+                        		time.Sleep(delay)
+                        		ch2 <- 2
+                        		close(ch2)
+                        	}()
+
+                        	select { // Output: either 1 or 2
+                        	case v := <-ch1:
+                        		fmt.Println(v)
+                        	case v := <-ch2:
+                        		fmt.Println(v)
+                        	}
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    <code class="highlight">select</code> example:
+                    <pre><code data-noescape data-trim data-line-numbers="21-26">
+                        func main() {
+                        	rand.Seed(time.Now().Unix())
+
+                        	ch1 := make(chan int)
+                        	ch2 := make(chan int)
+
+                        	go func() { // write to ch1 after random delay
+                        		delay := time.Duration(rand.Intn(2)) * time.Second
+                        		time.Sleep(delay)
+                        		ch1 <- 1
+                        		close(ch1)
+                        	}()
+
+                        	go func() { // write to ch2 after random delay
+                        		delay := time.Duration(rand.Intn(2)) * time.Second
+                        		time.Sleep(delay)
+                        		ch2 <- 2
+                        		close(ch2)
+                        	}()
+
+                        	select { // Output: either 1 or 2
+                        	case v := <-ch1:
+                        		fmt.Println(v)
+                        	case v := <-ch2:
+                        		fmt.Println(v)
+                        	}
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <img src="/assets/img/talks/golang-concurrency-primitives/producer-consumer.drawio.svg"/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="2">
+                        func main() { // "main" goroutine
+                        	data := make(chan string) // data channel
+
+                        	go func() { // producer
+                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                        			data <- s
+                        		}
+
+                        		close(data)
+                        	}()
+
+                        	done := make(chan struct{}) // done channel
+
+                        	go func() { // consumer
+                        		for s := range data {
+                        			fmt.Println(s)
+                        		}
+
+                        		close(done)
+                        	}()
+
+                        	select {
+                        	case <-done:
+                        		fmt.Println("bye!")
+                        	case <-time.After(time.Second):
+                        		fmt.Println("timeout!")
+                        	}
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="4-10">
+                        func main() { // "main" goroutine
+                        	data := make(chan string) // data channel
+
+                        	go func() { // producer
+                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                        			data <- s
+                        		}
+
+                        		close(data)
+                        	}()
+
+                        	done := make(chan struct{}) // done channel
+
+                        	go func() { // consumer
+                        		for s := range data {
+                        			fmt.Println(s)
+                        		}
+
+                        		close(done)
+                        	}()
+
+                        	select {
+                        	case <-done:
+                        		fmt.Println("bye!")
+                        	case <-time.After(time.Second):
+                        		fmt.Println("timeout!")
+                        	}
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="12">
+                        func main() { // "main" goroutine
+                        	data := make(chan string) // data channel
+
+                        	go func() { // producer
+                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                        			data <- s
+                        		}
+
+                        		close(data)
+                        	}()
+
+                        	done := make(chan struct{}) // done channel
+
+                        	go func() { // consumer
+                        		for s := range data {
+                        			fmt.Println(s)
+                        		}
+
+                        		close(done)
+                        	}()
+
+                        	select {
+                        	case <-done:
+                        		fmt.Println("bye!")
+                        	case <-time.After(time.Second):
+                        		fmt.Println("timeout!")
+                        	}
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="14-20">
+                        func main() { // "main" goroutine
+                        	data := make(chan string) // data channel
+
+                        	go func() { // producer
+                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                        			data <- s
+                        		}
+
+                        		close(data)
+                        	}()
+
+                        	done := make(chan struct{}) // done channel
+
+                        	go func() { // consumer
+                        		for s := range data {
+                        			fmt.Println(s)
+                        		}
+
+                        		close(done)
+                        	}()
+
+                        	select {
+                        	case <-done:
+                        		fmt.Println("bye!")
+                        	case <-time.After(time.Second):
+                        		fmt.Println("timeout!")
+                        	}
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="22-27">
+                        func main() { // "main" goroutine
+                        	data := make(chan string) // data channel
+
+                        	go func() { // producer
+                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                        			data <- s
+                        		}
+
+                        		close(data)
+                        	}()
+
+                        	done := make(chan struct{}) // done channel
+
+                        	go func() { // consumer
+                        		for s := range data { // exits when data is closed
+                        			fmt.Println(s)
+                        		}
+
+                        		close(done)
+                        	}()
+
+                        	select {
+                        	case <-done:
+                        		fmt.Println("bye!")
+                        	case <-time.After(time.Second):
+                        		fmt.Println("timeout!")
+                        	}
+
+                            // Output:
+                            //  Hello
+                            //  Fellow
+                            //  Gophers!
+                            //  bye!
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="29-33">
+                        func main() { // "main" goroutine
+                        	data := make(chan string) // data channel
+
+                        	go func() { // producer
+                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                        			data <- s
+                        		}
+
+                        		close(data)
+                        	}()
+
+                        	done := make(chan struct{}) // done channel
+
+                        	go func() { // consumer
+                        		for s := range data { // exits when data is closed
+                        			fmt.Println(s)
+                        		}
+
+                        		close(done)
+                        	}()
+
+                        	select {
+                        	case <-done:
+                        		fmt.Println("bye!")
+                        	case <-time.After(time.Second):
+                        		fmt.Println("timeout!")
+                        	}
+
+                            // Output:
+                            //  Hello
+                            //  Fellow
+                            //  Gophers!
+                            //  bye!
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Common pitfalls</h3>
+                    Reads and writes block if the channel's buffer is full:
+                    <pre><code data-noescape data-trim>
+                        func main() {
+                        	buffered := make(chan int, 3)
+
+                        	buffered <- 1
+                        	buffered <- 2
+                        	buffered <- 3
+                        	buffered <- 4 // blocks: buffer is full
                         }
                     </code></pre>
                 </div>
