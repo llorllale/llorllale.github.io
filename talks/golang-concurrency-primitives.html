@@ -785,21 +785,174 @@
                     </code></pre>
                 </div>
                 <div class="fragment fade-in-then-out">
-                    <h3>Common pitfalls</h3>
-                    Reads and writes block if the channel's buffer is full:
-                    <pre><code data-noescape data-trim>
-                        func main() {
-                        	buffered := make(chan int, 3)
+                    <h3>Common pitfalls TODO</h3>
+                    <ul>
+                        <li>Reads and writes block if the channel's buffer is full</li>
+                        <li>Goroutines, loops, and varying variables</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>The <code class="highlight">sync</code> package</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    Contains useful APIs to synchronize work across goroutines.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Use when one goroutine needs to wait for several others to complete.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="2">
+                        func main() { // "main" goroutine
+                        	var wg sync.WaitGroup
 
-                        	buffered <- 1
-                        	buffered <- 2
-                        	buffered <- 3
-                        	buffered <- 4 // blocks: buffer is full
+                        	work := func(delay time.Duration) {
+                        		defer wg.Done() // signal this work is "done"
+                        		time.Sleep(delay)
+                        	}
+
+                        	wg.Add(3) // # of workers known beforehand
+
+                        	go work(time.Second)
+                        	go work(500 * time.Millisecond)
+                        	go work(700 * time.Millisecond)
+
+                        	wg.Wait() // blocks until all three are done
+
+                        	fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="4-7">
+                        func main() { // "main" goroutine
+                        	var wg sync.WaitGroup
+
+                        	work := func(delay time.Duration) {
+                        		defer wg.Done() // signal this work is "done"
+                        		time.Sleep(delay)
+                        	}
+
+                        	wg.Add(3) // # of workers known beforehand
+
+                        	go work(time.Second)
+                        	go work(500 * time.Millisecond)
+                        	go work(700 * time.Millisecond)
+
+                        	wg.Wait() // blocks until all three are done
+
+                        	fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="9">
+                        func main() { // "main" goroutine
+                        	var wg sync.WaitGroup
+
+                        	work := func(delay time.Duration) {
+                        		defer wg.Done() // signal this work is "done"
+                        		time.Sleep(delay)
+                        	}
+
+                        	wg.Add(3) // # of workers known beforehand
+
+                        	go work(time.Second)
+                        	go work(500 * time.Millisecond)
+                        	go work(700 * time.Millisecond)
+
+                        	wg.Wait() // blocks until all three are done
+
+                        	fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="11-13">
+                        func main() { // "main" goroutine
+                        	var wg sync.WaitGroup
+
+                        	work := func(delay time.Duration) {
+                        		defer wg.Done() // signal this work is "done"
+                        		time.Sleep(delay)
+                        	}
+
+                        	wg.Add(3) // # of workers known beforehand
+
+                        	go work(time.Second)
+                        	go work(500 * time.Millisecond)
+                        	go work(700 * time.Millisecond)
+
+                        	wg.Wait() // blocks until all three are done
+
+                        	fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="15">
+                        func main() { // "main" goroutine
+                        	var wg sync.WaitGroup
+
+                        	work := func(delay time.Duration) {
+                        		defer wg.Done() // signal this work is "done"
+                        		time.Sleep(delay)
+                        	}
+
+                        	wg.Add(3) // # of workers known beforehand
+
+                        	go work(time.Second)
+                        	go work(500 * time.Millisecond)
+                        	go work(700 * time.Millisecond)
+
+                        	wg.Wait() // blocks until all three are done
+
+                        	fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="17">
+                        func main() { // "main" goroutine
+                        	var wg sync.WaitGroup
+
+                        	work := func(delay time.Duration) {
+                        		defer wg.Done() // signal this work is "done"
+                        		time.Sleep(delay)
+                        	}
+
+                        	wg.Add(3) // # of workers known beforehand
+
+                        	go work(time.Second)
+                        	go work(500 * time.Millisecond)
+                        	go work(700 * time.Millisecond)
+
+                        	wg.Wait() // blocks until all three are done
+
+                        	fmt.Println("done!")
                         }
                     </code></pre>
                 </div>
             </div>
         </section>
+
         <section>
             <h2>Questions?</h2>
         </section>
