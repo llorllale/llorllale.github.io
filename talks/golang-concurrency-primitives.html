@@ -340,9 +340,9 @@
                 <div class="fragment fade-in-then-out">
                     <h3>What are channels?</h3>
                     <ul>
-                        <li>Bounded queues ("buffered" in go parlance)</li>
-                        <li>Queues have a type</li>
-                        <li>Thread-safe</li>
+                        <li>Blocking bounded queues</li>
+                        <li>Channels have a type</li>
+                        <li>Concurrency-safe</li>
                         <li>Can allow either reads or writes (or both)</li>
                     </ul>
                     <br/>
@@ -785,12 +785,12 @@
                     </code></pre>
                 </div>
                 <div class="fragment fade-in-then-out">
-                    <h3>Common pitfalls TODO</h3>
+                    <h3>&#9888;&#65039;️ Warning &#9888;&#65039;</h3>
+                    <br/>
                     <ul>
-                        <li>Reads and writes block if the channel's buffer is full</li>
-                        <li>Goroutines, loops, and varying variables</li>
-                        <li>Goroutine attempts to reacquire a lock (deadlock) (locks aren't reentrant)</li>
-                        <li>Copying mutexes</li>
+                        <li>Reading from a nil channel will hang forever</li>
+                        <li>Writing to a closed channel will <em>panic</em></li>
+                        <li>Closing a closed channel will <em>panic</em></li>
                     </ul>
                 </div>
             </div>
@@ -1260,6 +1260,13 @@
                     </code></pre>
                     <small>Char sequences guaranteed to be on their own lines.</small>
                 </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <br/>
+                    &#9888;&#65039; <strong>Warning</strong> &#9888;&#65039;
+                    <br/>
+                    Lock() is <em>not</em> reentrant!
+                </div>
             </div>
         </section>
         <section>
@@ -1498,12 +1505,8 @@ func main() {
                 <li>Concurrency != Parallelism</li>
                 <li>feature image</li>
                 <li>Share memory by communicating; don't communicate by sharing memory.</li>
-                <li>Common pitfalls</li>
                 <li>
                     https://encore.dev/blog/advanced-go-concurrency
-                        https://godoc.org/golang.org/x/sync/singleflight
-                        https://godoc.org/golang.org/x/sync/errgroup
-                        https://godoc.org/golang.org/x/sync/semaphore
                 </li>
             </ul>
         </section>
