@@ -1290,23 +1290,23 @@
                     Example (broken):
                     <pre><code data-noescape data-trim data-line-numbers>
                         func main() {
-                        	var (
-                        		total int32
-                        		wg    sync.WaitGroup
-                        	)
+                            var (
+                                total int32
+                                wg    sync.WaitGroup
+                            )
 
-                        	wg.Add(10_000)
+                            wg.Add(10_000)
 
-                        	for i := 0; i < 10_000; i++ {
-                        		go func() {
-                        			defer wg.Done()
-                        			total++
-                        		}()
-                        	}
+                            for i := 0; i < 10_000; i++ {
+                                go func() {
+                                    defer wg.Done()
+                                    total++
+                                }()
+                            }
 
-                        	wg.Wait()
+                            wg.Wait()
 
-                        	fmt.Println(total) // example: 9106
+                            fmt.Println(total) // example: 9106
                         }
                     </code></pre>
                 </div>
@@ -1315,23 +1315,61 @@
                     Example (fixed):
                     <pre><code data-noescape data-trim data-line-numbers>
                         func main() {
-                        	var (
-                        		total int32
-                        		wg    sync.WaitGroup
-                        	)
+                            var (
+                                total int32
+                                wg    sync.WaitGroup
+                            )
 
-                        	wg.Add(10_000)
+                            wg.Add(10_000)
 
-                        	for i := 0; i < 10_000; i++ {
-                        		go func() {
-                        			defer wg.Done()
-                        			atomic.AddInt32(&total, 1)
-                        		}()
-                        	}
+                            for i := 0; i < 10_000; i++ {
+                                go func() {
+                                    defer wg.Done()
+                                    atomic.AddInt32(&total, 1)
+                                }()
+                            }
 
-                        	wg.Wait()
+                            wg.Wait()
 
-                        	fmt.Println(total) // 10000
+                            fmt.Println(total) // 10000
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Map</h3>
+                    <br/>
+                    <ul>
+                        <li>Concurrency-safe</li>
+                        <li>Optimized for highly concurrent scenarios where keys are only added and read</li>
+                        <li>Still cannot bind type parameter at instantiation as of Go 1.18</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Map</h3>
+                    <br/>
+                    A regular <code class="highlight">map</code> guarded by a <code class="highlight">sync.RWMutex</code>
+                    should fulfill most use cases without sacrificing legibility.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Map</h3>
+                    Example:
+                    <pre><code data-noescape data-trim>
+                        func main() {
+                            var m sync.Map
+                            m.Store("key", 1)
+                            m.Store(1, 1)
+
+                            v, ok := m.Load("key")
+                            if ok {
+                                n := v.(int)
+                                fmt.Println(n) // 1
+                            }
+
+                            v, ok = m.Load(1)
+                            if ok {
+                                n := v.(int)
+                                fmt.Println(n) // 1
+                            }
                         }
                     </code></pre>
                 </div>
@@ -1348,9 +1386,9 @@
                 <li>Concurrency != Parallelism</li>
                 <li>feature image</li>
                 <li>Share memory by communicating; don't communicate by sharing memory.</li>
-                <li>sync.Map</li>
                 <li>sync.Pool</li>
                 <li>ErrGroup</li>
+                <li>Common pitfalls</li>
                 <li>
                     https://encore.dev/blog/advanced-go-concurrency
                         https://godoc.org/golang.org/x/sync/singleflight
