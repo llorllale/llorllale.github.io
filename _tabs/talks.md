@@ -7,4 +7,5 @@ comments: false
 
 # 2022
 
-* [April 6 - Golang Guild Session @ VerticalScope](/posts/golang-panics)
+* [April 6 - Golang Guild Session @ VerticalScope: Panics & Recovery](/posts/golang-panics)
+* [May 4 - Golang Guild Session @ VerticalScope: Concurrency Primitives](/posts/golang-concurrency-primitives)
