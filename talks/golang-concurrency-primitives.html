@@ -1353,7 +1353,7 @@
                 <div class="fragment fade-in-then-out">
                     <h3>sync.Map</h3>
                     Example:
-                    <pre><code data-noescape data-trim>
+                    <pre><code data-noescape data-trim data-line-numbers>
                         func main() {
                             var m sync.Map
                             m.Store("key", 1)
@@ -1373,6 +1373,118 @@
                         }
                     </code></pre>
                 </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>errgroup.Group</h3>
+                    <br/>
+                    <ul>
+                        <li>Part of golang.org/x/sync (non-standard)</li>
+                        <li>Supplement to sync.WaitGroup</li>
+                        <li>"Provides synchronization, error propagation, and Context cancelation"</li>
+                        <li>Maintained by Go authors</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>errgroup.Group</h3>
+                    Comparison: error handling with sync.WaitGroup:
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+	timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var urls = []string{
+		"http://www.golang.org/",
+		"http://www.google.com/",
+	}
+
+	var g sync.WaitGroup
+
+	g.Add(len(urls))
+
+	var client http.Client
+	var errors []error
+	var mu sync.Mutex
+
+	for _, url := range urls {
+		u := url
+		go func() {
+			defer g.Done()
+
+			req, err := http.NewRequestWithContext(timeout, http.MethodGet, u, nil)
+			if err != nil {
+				mu.Lock()
+				errors = append(errors, err)
+				mu.Unlock()
+
+				return
+			}
+
+			// Fetch the URL.
+			resp, err := client.Do(req)
+			if err != nil {
+				mu.Lock()
+				errors = append(errors, err)
+				mu.Unlock()
+
+				return
+			}
+
+			_ = resp.Body.Close()
+		}()
+	}
+
+	// Wait for all HTTP fetches to complete.
+	g.Wait()
+
+	if len(errors) == 0 {
+		fmt.Println("Successfully fetched all URLs.")
+	}
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>errgroup.Group</h3>
+                    Comparison: error handling with errgroup.Group:
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+	timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var urls = []string{
+		"http://www.golang.org/",
+		"http://www.google.com/",
+	}
+
+	g, _ := errgroup.WithContext(timeout)
+
+	var client http.Client
+
+	for _, url := range urls {
+		u := url
+		go func() {
+			g.Go(func() error {
+				req, err := http.NewRequestWithContext(timeout, http.MethodGet, u, nil)
+				if err != nil {
+					return err
+				}
+
+				// Fetch the URL.
+				resp, err := client.Do(req)
+				if err != nil {
+					return err
+				}
+
+				return resp.Body.Close()
+			})
+		}()
+	}
+
+	// Wait for all HTTP fetches to complete.
+	if err := g.Wait(); err == nil {
+		fmt.Println("Successfully fetched all URLs.")
+	}
+}
+                    </code></pre>
+                </div>
             </div>
         </section>
 
@@ -1386,8 +1498,6 @@
                 <li>Concurrency != Parallelism</li>
                 <li>feature image</li>
                 <li>Share memory by communicating; don't communicate by sharing memory.</li>
-                <li>sync.Pool</li>
-                <li>ErrGroup</li>
                 <li>Common pitfalls</li>
                 <li>
                     https://encore.dev/blog/advanced-go-concurrency
