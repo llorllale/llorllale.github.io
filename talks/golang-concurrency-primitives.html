@@ -789,6 +789,8 @@
                     <ul>
                         <li>Reads and writes block if the channel's buffer is full</li>
                         <li>Goroutines, loops, and varying variables</li>
+                        <li>Goroutine attempts to reacquire a lock (deadlock) (locks aren't reentrant)</li>
+                        <li>Copying mutexes</li>
                     </ul>
                 </div>
             </div>
@@ -1032,6 +1034,58 @@
                         	expensiveInit() // does nothing
                         	expensiveInit() // does nothing
                         }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    Use to control concurrent reads or writes to a shared data structure.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <ul>
+                        <li><strong>sync.Mutex: </strong>mutual exclusion lock</li>
+                        <li><strong>sync.RWMutex: </strong>reader/writer mutual exclusion lock</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    Example TODO
+                    <pre><code data-noescape data-trim data-line-numbers>
+                        func printLetters(words []string) {
+                        	for _, s := range words {
+                        		fmt.Print(s + " ")
+                        	}
+
+                        	fmt.Println()
+                        }
+
+                        func main() {
+                        	var wg sync.WaitGroup
+
+                        	wg.Add(2)
+
+                        	go func() {
+                        		defer wg.Done()
+                        		printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                        	}()
+
+                        	go func() {
+                        		defer wg.Done()
+                        		printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                        	}()
+
+                        	wg.Wait()
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    Example TODO
+                    <br/>
+                    Example Output:
+                    <pre><code data-noescape data-trim>
+                        k a b c d e f g h l m n o p q i r s t
+                        j
                     </code></pre>
                 </div>
             </div>
