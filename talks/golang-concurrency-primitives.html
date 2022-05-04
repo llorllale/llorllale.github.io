@@ -381,16 +381,16 @@
                     <pre><code data-noescape data-trim>
                         // Which of the following compiles?
                         func main() {
-                        	readWrite := make(chan int)
-                        	readOnly := make(<-chan int)
-                        	writeOnly := make(chan<- int)
+                            readWrite := make(chan int)
+                            readOnly := make(<-chan int)
+                            writeOnly := make(chan<- int)
 
-                        	readWrite <- 1 // OK
-                        	<-readWrite    // OK
-                        	readOnly <- 1  // compilation error
-                        	<-readOnly     // OK
-                        	writeOnly <- 1 // OK
-                        	<-writeOnly    // compilation error
+                            readWrite <- 1 // OK
+                            <-readWrite    // OK
+                            readOnly <- 1  // compilation error
+                            <-readOnly     // OK
+                            writeOnly <- 1 // OK
+                            <-writeOnly    // compilation error
                         }
                     </code></pre>
                 </div>
@@ -399,17 +399,17 @@
                     Read in a loop using the <code class="highlight">range</code> keyword:
                     <pre><code data-noescape data-trim>
                         func main() {
-                        	ch := make(chan string, 3)
+                            ch := make(chan string, 3)
 
-                        	ch <- "Hello"
-                        	ch <- "Fellow"
-                        	ch <- "Gophers"
+                            ch <- "Hello"
+                            ch <- "Fellow"
+                            ch <- "Gophers"
 
-                        	close(ch)
+                            close(ch)
 
-                        	for s := range ch { // exits when channel is closed
-                        		fmt.Println(s)
-                        	}
+                            for s := range ch { // exits when channel is closed
+                                fmt.Println(s)
+                            }
 
                             // Output:
                             //  Hello
@@ -443,31 +443,31 @@
                     <code class="highlight">select</code> example:
                     <pre><code data-noescape data-trim data-line-numbers="4-5">
                         func main() {
-                        	rand.Seed(time.Now().Unix())
+                            rand.Seed(time.Now().Unix())
 
-                        	ch1 := make(chan int)
-                        	ch2 := make(chan int)
+                            ch1 := make(chan int)
+                            ch2 := make(chan int)
 
-                        	go func() { // write to ch1 after random delay
-                        		delay := time.Duration(rand.Intn(2)) * time.Second
-                        		time.Sleep(delay)
-                        		ch1 <- 1
-                        		close(ch1)
-                        	}()
+                            go func() { // write to ch1 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch1 <- 1
+                                close(ch1)
+                            }()
 
-                        	go func() { // write to ch2 after random delay
-                        		delay := time.Duration(rand.Intn(2)) * time.Second
-                        		time.Sleep(delay)
-                        		ch2 <- 2
-                        		close(ch2)
-                        	}()
+                            go func() { // write to ch2 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch2 <- 2
+                                close(ch2)
+                            }()
 
-                        	select { // Output: either 1 or 2
-                        	case v := <-ch1:
-                        		fmt.Println(v)
-                        	case v := <-ch2:
-                        		fmt.Println(v)
-                        	}
+                            select { // Output: either 1 or 2
+                            case v := <-ch1:
+                                fmt.Println(v)
+                            case v := <-ch2:
+                                fmt.Println(v)
+                            }
                         }
                     </code></pre>
                 </div>
@@ -476,31 +476,31 @@
                     <code class="highlight">select</code> example:
                     <pre><code data-noescape data-trim data-line-numbers="7-12">
                         func main() {
-                        	rand.Seed(time.Now().Unix())
+                            rand.Seed(time.Now().Unix())
 
-                        	ch1 := make(chan int)
-                        	ch2 := make(chan int)
+                            ch1 := make(chan int)
+                            ch2 := make(chan int)
 
-                        	go func() { // write to ch1 after random delay
-                        		delay := time.Duration(rand.Intn(2)) * time.Second
-                        		time.Sleep(delay)
-                        		ch1 <- 1
-                        		close(ch1)
-                        	}()
+                            go func() { // write to ch1 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch1 <- 1
+                                close(ch1)
+                            }()
 
-                        	go func() { // write to ch2 after random delay
-                        		delay := time.Duration(rand.Intn(2)) * time.Second
-                        		time.Sleep(delay)
-                        		ch2 <- 2
-                        		close(ch2)
-                        	}()
+                            go func() { // write to ch2 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch2 <- 2
+                                close(ch2)
+                            }()
 
-                        	select { // Output: either 1 or 2
-                        	case v := <-ch1:
-                        		fmt.Println(v)
-                        	case v := <-ch2:
-                        		fmt.Println(v)
-                        	}
+                            select { // Output: either 1 or 2
+                            case v := <-ch1:
+                                fmt.Println(v)
+                            case v := <-ch2:
+                                fmt.Println(v)
+                            }
                         }
                     </code></pre>
                 </div>
@@ -509,31 +509,31 @@
                     <code class="highlight">select</code> example:
                     <pre><code data-noescape data-trim data-line-numbers="13-19">
                         func main() {
-                        	rand.Seed(time.Now().Unix())
+                            rand.Seed(time.Now().Unix())
 
-                        	ch1 := make(chan int)
-                        	ch2 := make(chan int)
+                            ch1 := make(chan int)
+                            ch2 := make(chan int)
 
-                        	go func() { // write to ch1 after random delay
-                        		delay := time.Duration(rand.Intn(2)) * time.Second
-                        		time.Sleep(delay)
-                        		ch1 <- 1
-                        		close(ch1)
-                        	}()
+                            go func() { // write to ch1 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch1 <- 1
+                                close(ch1)
+                            }()
 
-                        	go func() { // write to ch2 after random delay
-                        		delay := time.Duration(rand.Intn(2)) * time.Second
-                        		time.Sleep(delay)
-                        		ch2 <- 2
-                        		close(ch2)
-                        	}()
+                            go func() { // write to ch2 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch2 <- 2
+                                close(ch2)
+                            }()
 
-                        	select { // Output: either 1 or 2
-                        	case v := <-ch1:
-                        		fmt.Println(v)
-                        	case v := <-ch2:
-                        		fmt.Println(v)
-                        	}
+                            select { // Output: either 1 or 2
+                            case v := <-ch1:
+                                fmt.Println(v)
+                            case v := <-ch2:
+                                fmt.Println(v)
+                            }
                         }
                     </code></pre>
                 </div>
@@ -542,31 +542,31 @@
                     <code class="highlight">select</code> example:
                     <pre><code data-noescape data-trim data-line-numbers="21-26">
                         func main() {
-                        	rand.Seed(time.Now().Unix())
+                            rand.Seed(time.Now().Unix())
 
-                        	ch1 := make(chan int)
-                        	ch2 := make(chan int)
+                            ch1 := make(chan int)
+                            ch2 := make(chan int)
 
-                        	go func() { // write to ch1 after random delay
-                        		delay := time.Duration(rand.Intn(2)) * time.Second
-                        		time.Sleep(delay)
-                        		ch1 <- 1
-                        		close(ch1)
-                        	}()
+                            go func() { // write to ch1 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch1 <- 1
+                                close(ch1)
+                            }()
 
-                        	go func() { // write to ch2 after random delay
-                        		delay := time.Duration(rand.Intn(2)) * time.Second
-                        		time.Sleep(delay)
-                        		ch2 <- 2
-                        		close(ch2)
-                        	}()
+                            go func() { // write to ch2 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch2 <- 2
+                                close(ch2)
+                            }()
 
-                        	select { // Output: either 1 or 2
-                        	case v := <-ch1:
-                        		fmt.Println(v)
-                        	case v := <-ch2:
-                        		fmt.Println(v)
-                        	}
+                            select { // Output: either 1 or 2
+                            case v := <-ch1:
+                                fmt.Println(v)
+                            case v := <-ch2:
+                                fmt.Println(v)
+                            }
                         }
                     </code></pre>
                 </div>
@@ -578,32 +578,32 @@
                     <h3>Example: producer and consumer</h3>
                     <pre><code data-trim data-noescape data-line-numbers="2">
                         func main() { // "main" goroutine
-                        	data := make(chan string) // data channel
+                            data := make(chan string) // data channel
 
-                        	go func() { // producer
-                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
-                        			data <- s
-                        		}
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
 
-                        		close(data)
-                        	}()
+                                close(data)
+                            }()
 
-                        	done := make(chan struct{}) // done channel
+                            done := make(chan struct{}) // done channel
 
-                        	go func() { // consumer
-                        		for s := range data {
-                        			fmt.Println(s)
-                        		}
+                            go func() { // consumer
+                                for s := range data {
+                                    fmt.Println(s)
+                                }
 
-                        		close(done)
-                        	}()
+                                close(done)
+                            }()
 
-                        	select {
-                        	case <-done:
-                        		fmt.Println("bye!")
-                        	case <-time.After(time.Second):
-                        		fmt.Println("timeout!")
-                        	}
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
                         }
                     </code></pre>
                 </div>
@@ -611,32 +611,32 @@
                     <h3>Example: producer and consumer</h3>
                     <pre><code data-trim data-noescape data-line-numbers="4-10">
                         func main() { // "main" goroutine
-                        	data := make(chan string) // data channel
+                            data := make(chan string) // data channel
 
-                        	go func() { // producer
-                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
-                        			data <- s
-                        		}
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
 
-                        		close(data)
-                        	}()
+                                close(data)
+                            }()
 
-                        	done := make(chan struct{}) // done channel
+                            done := make(chan struct{}) // done channel
 
-                        	go func() { // consumer
-                        		for s := range data {
-                        			fmt.Println(s)
-                        		}
+                            go func() { // consumer
+                                for s := range data {
+                                    fmt.Println(s)
+                                }
 
-                        		close(done)
-                        	}()
+                                close(done)
+                            }()
 
-                        	select {
-                        	case <-done:
-                        		fmt.Println("bye!")
-                        	case <-time.After(time.Second):
-                        		fmt.Println("timeout!")
-                        	}
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
                         }
                     </code></pre>
                 </div>
@@ -644,32 +644,32 @@
                     <h3>Example: producer and consumer</h3>
                     <pre><code data-trim data-noescape data-line-numbers="12">
                         func main() { // "main" goroutine
-                        	data := make(chan string) // data channel
+                            data := make(chan string) // data channel
 
-                        	go func() { // producer
-                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
-                        			data <- s
-                        		}
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
 
-                        		close(data)
-                        	}()
+                                close(data)
+                            }()
 
-                        	done := make(chan struct{}) // done channel
+                            done := make(chan struct{}) // done channel
 
-                        	go func() { // consumer
-                        		for s := range data {
-                        			fmt.Println(s)
-                        		}
+                            go func() { // consumer
+                                for s := range data {
+                                    fmt.Println(s)
+                                }
 
-                        		close(done)
-                        	}()
+                                close(done)
+                            }()
 
-                        	select {
-                        	case <-done:
-                        		fmt.Println("bye!")
-                        	case <-time.After(time.Second):
-                        		fmt.Println("timeout!")
-                        	}
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
                         }
                     </code></pre>
                 </div>
@@ -677,32 +677,32 @@
                     <h3>Example: producer and consumer</h3>
                     <pre><code data-trim data-noescape data-line-numbers="14-20">
                         func main() { // "main" goroutine
-                        	data := make(chan string) // data channel
+                            data := make(chan string) // data channel
 
-                        	go func() { // producer
-                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
-                        			data <- s
-                        		}
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
 
-                        		close(data)
-                        	}()
+                                close(data)
+                            }()
 
-                        	done := make(chan struct{}) // done channel
+                            done := make(chan struct{}) // done channel
 
-                        	go func() { // consumer
-                        		for s := range data {
-                        			fmt.Println(s)
-                        		}
+                            go func() { // consumer
+                                for s := range data {
+                                    fmt.Println(s)
+                                }
 
-                        		close(done)
-                        	}()
+                                close(done)
+                            }()
 
-                        	select {
-                        	case <-done:
-                        		fmt.Println("bye!")
-                        	case <-time.After(time.Second):
-                        		fmt.Println("timeout!")
-                        	}
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
                         }
                     </code></pre>
                 </div>
@@ -710,32 +710,32 @@
                     <h3>Example: producer and consumer</h3>
                     <pre><code data-trim data-noescape data-line-numbers="22-27">
                         func main() { // "main" goroutine
-                        	data := make(chan string) // data channel
+                            data := make(chan string) // data channel
 
-                        	go func() { // producer
-                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
-                        			data <- s
-                        		}
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
 
-                        		close(data)
-                        	}()
+                                close(data)
+                            }()
 
-                        	done := make(chan struct{}) // done channel
+                            done := make(chan struct{}) // done channel
 
-                        	go func() { // consumer
-                        		for s := range data { // exits when data is closed
-                        			fmt.Println(s)
-                        		}
+                            go func() { // consumer
+                                for s := range data { // exits when data is closed
+                                    fmt.Println(s)
+                                }
 
-                        		close(done)
-                        	}()
+                                close(done)
+                            }()
 
-                        	select {
-                        	case <-done:
-                        		fmt.Println("bye!")
-                        	case <-time.After(time.Second):
-                        		fmt.Println("timeout!")
-                        	}
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
 
                             // Output:
                             //  Hello
@@ -749,32 +749,32 @@
                     <h3>Example: producer and consumer</h3>
                     <pre><code data-trim data-noescape data-line-numbers="29-33">
                         func main() { // "main" goroutine
-                        	data := make(chan string) // data channel
+                            data := make(chan string) // data channel
 
-                        	go func() { // producer
-                        		for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
-                        			data <- s
-                        		}
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
 
-                        		close(data)
-                        	}()
+                                close(data)
+                            }()
 
-                        	done := make(chan struct{}) // done channel
+                            done := make(chan struct{}) // done channel
 
-                        	go func() { // consumer
-                        		for s := range data { // exits when data is closed
-                        			fmt.Println(s)
-                        		}
+                            go func() { // consumer
+                                for s := range data { // exits when data is closed
+                                    fmt.Println(s)
+                                }
 
-                        		close(done)
-                        	}()
+                                close(done)
+                            }()
 
-                        	select {
-                        	case <-done:
-                        		fmt.Println("bye!")
-                        	case <-time.After(time.Second):
-                        		fmt.Println("timeout!")
-                        	}
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
 
                             // Output:
                             //  Hello
@@ -813,22 +813,22 @@
                     Example: "main" waits for three workers to finish
                     <pre><code data-noescape data-trim data-line-numbers="2">
                         func main() { // "main" goroutine
-                        	var wg sync.WaitGroup
+                            var wg sync.WaitGroup
 
-                        	work := func(delay time.Duration) {
-                        		defer wg.Done() // signal this work is "done"
-                        		time.Sleep(delay)
-                        	}
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
 
-                        	wg.Add(3) // # of workers known beforehand
+                            wg.Add(3) // # of workers known beforehand
 
-                        	go work(time.Second)
-                        	go work(500 * time.Millisecond)
-                        	go work(700 * time.Millisecond)
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
 
-                        	wg.Wait() // blocks until all three are done
+                            wg.Wait() // blocks until all three are done
 
-                        	fmt.Println("done!")
+                            fmt.Println("done!")
                         }
                     </code></pre>
                 </div>
@@ -837,22 +837,22 @@
                     Example: "main" waits for three workers to finish
                     <pre><code data-noescape data-trim data-line-numbers="4-7">
                         func main() { // "main" goroutine
-                        	var wg sync.WaitGroup
+                            var wg sync.WaitGroup
 
-                        	work := func(delay time.Duration) {
-                        		defer wg.Done() // signal this work is "done"
-                        		time.Sleep(delay)
-                        	}
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
 
-                        	wg.Add(3) // # of workers known beforehand
+                            wg.Add(3) // # of workers known beforehand
 
-                        	go work(time.Second)
-                        	go work(500 * time.Millisecond)
-                        	go work(700 * time.Millisecond)
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
 
-                        	wg.Wait() // blocks until all three are done
+                            wg.Wait() // blocks until all three are done
 
-                        	fmt.Println("done!")
+                            fmt.Println("done!")
                         }
                     </code></pre>
                 </div>
@@ -861,22 +861,22 @@
                     Example: "main" waits for three workers to finish
                     <pre><code data-noescape data-trim data-line-numbers="9">
                         func main() { // "main" goroutine
-                        	var wg sync.WaitGroup
+                            var wg sync.WaitGroup
 
-                        	work := func(delay time.Duration) {
-                        		defer wg.Done() // signal this work is "done"
-                        		time.Sleep(delay)
-                        	}
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
 
-                        	wg.Add(3) // # of workers known beforehand
+                            wg.Add(3) // # of workers known beforehand
 
-                        	go work(time.Second)
-                        	go work(500 * time.Millisecond)
-                        	go work(700 * time.Millisecond)
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
 
-                        	wg.Wait() // blocks until all three are done
+                            wg.Wait() // blocks until all three are done
 
-                        	fmt.Println("done!")
+                            fmt.Println("done!")
                         }
                     </code></pre>
                 </div>
@@ -885,22 +885,22 @@
                     Example: "main" waits for three workers to finish
                     <pre><code data-noescape data-trim data-line-numbers="11-13">
                         func main() { // "main" goroutine
-                        	var wg sync.WaitGroup
+                            var wg sync.WaitGroup
 
-                        	work := func(delay time.Duration) {
-                        		defer wg.Done() // signal this work is "done"
-                        		time.Sleep(delay)
-                        	}
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
 
-                        	wg.Add(3) // # of workers known beforehand
+                            wg.Add(3) // # of workers known beforehand
 
-                        	go work(time.Second)
-                        	go work(500 * time.Millisecond)
-                        	go work(700 * time.Millisecond)
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
 
-                        	wg.Wait() // blocks until all three are done
+                            wg.Wait() // blocks until all three are done
 
-                        	fmt.Println("done!")
+                            fmt.Println("done!")
                         }
                     </code></pre>
                 </div>
@@ -909,22 +909,22 @@
                     Example: "main" waits for three workers to finish
                     <pre><code data-noescape data-trim data-line-numbers="15">
                         func main() { // "main" goroutine
-                        	var wg sync.WaitGroup
+                            var wg sync.WaitGroup
 
-                        	work := func(delay time.Duration) {
-                        		defer wg.Done() // signal this work is "done"
-                        		time.Sleep(delay)
-                        	}
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
 
-                        	wg.Add(3) // # of workers known beforehand
+                            wg.Add(3) // # of workers known beforehand
 
-                        	go work(time.Second)
-                        	go work(500 * time.Millisecond)
-                        	go work(700 * time.Millisecond)
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
 
-                        	wg.Wait() // blocks until all three are done
+                            wg.Wait() // blocks until all three are done
 
-                        	fmt.Println("done!")
+                            fmt.Println("done!")
                         }
                     </code></pre>
                 </div>
@@ -933,22 +933,22 @@
                     Example: "main" waits for three workers to finish
                     <pre><code data-noescape data-trim data-line-numbers="17">
                         func main() { // "main" goroutine
-                        	var wg sync.WaitGroup
+                            var wg sync.WaitGroup
 
-                        	work := func(delay time.Duration) {
-                        		defer wg.Done() // signal this work is "done"
-                        		time.Sleep(delay)
-                        	}
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
 
-                        	wg.Add(3) // # of workers known beforehand
+                            wg.Add(3) // # of workers known beforehand
 
-                        	go work(time.Second)
-                        	go work(500 * time.Millisecond)
-                        	go work(700 * time.Millisecond)
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
 
-                        	wg.Wait() // blocks until all three are done
+                            wg.Wait() // blocks until all three are done
 
-                        	fmt.Println("done!")
+                            fmt.Println("done!")
                         }
                     </code></pre>
                 </div>
@@ -967,15 +967,15 @@
                         var once sync.Once
 
                         func expensiveInit() {
-                        	once.Do(func() {
-                        		fmt.Println("initialized!")
-                        	})
+                            once.Do(func() {
+                                fmt.Println("initialized!")
+                            })
                         }
 
                         func main() {
-                        	expensiveInit() // prints "initialized!"
-                        	expensiveInit() // does nothing
-                        	expensiveInit() // does nothing
+                            expensiveInit() // prints "initialized!"
+                            expensiveInit() // does nothing
+                            expensiveInit() // does nothing
                         }
                     </code></pre>
                 </div>
@@ -986,15 +986,15 @@
                         var once sync.Once
 
                         func expensiveInit() {
-                        	once.Do(func() {
-                        		fmt.Println("initialized!")
-                        	})
+                            once.Do(func() {
+                                fmt.Println("initialized!")
+                            })
                         }
 
                         func main() {
-                        	expensiveInit() // prints "initialized!"
-                        	expensiveInit() // does nothing
-                        	expensiveInit() // does nothing
+                            expensiveInit() // prints "initialized!"
+                            expensiveInit() // does nothing
+                            expensiveInit() // does nothing
                         }
                     </code></pre>
                 </div>
@@ -1005,15 +1005,15 @@
                         var once sync.Once
 
                         func expensiveInit() {
-                        	once.Do(func() {
-                        		fmt.Println("initialized!")
-                        	})
+                            once.Do(func() {
+                                fmt.Println("initialized!")
+                            })
                         }
 
                         func main() {
-                        	expensiveInit() // prints "initialized!"
-                        	expensiveInit() // does nothing
-                        	expensiveInit() // does nothing
+                            expensiveInit() // prints "initialized!"
+                            expensiveInit() // does nothing
+                            expensiveInit() // does nothing
                         }
                     </code></pre>
                 </div>
@@ -1024,15 +1024,15 @@
                         var once sync.Once
 
                         func expensiveInit() {
-                        	once.Do(func() {
-                        		fmt.Println("initialized!")
-                        	})
+                            once.Do(func() {
+                                fmt.Println("initialized!")
+                            })
                         }
 
                         func main() {
-                        	expensiveInit() // prints "initialized!"
-                        	expensiveInit() // does nothing
-                        	expensiveInit() // does nothing
+                            expensiveInit() // prints "initialized!"
+                            expensiveInit() // does nothing
+                            expensiveInit() // does nothing
                         }
                     </code></pre>
                 </div>
@@ -1049,44 +1049,216 @@
                 </div>
                 <div class="fragment fade-in-then-out">
                     <h3>sync.Mutex & sync.RWMutex</h3>
-                    Example TODO
-                    <pre><code data-noescape data-trim data-line-numbers>
+                    Example: what does the following print?
+                    <pre><code data-noescape data-trim data-line-numbers="1-10">
                         func printLetters(words []string) {
-                        	for _, s := range words {
-                        		fmt.Print(s + " ")
-                        	}
+                            n := time.Duration(rand.Intn(100))
 
-                        	fmt.Println()
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
                         }
 
                         func main() {
-                        	var wg sync.WaitGroup
+                            rand.Seed(time.Now().Unix())
 
-                        	wg.Add(2)
+                            var wg sync.WaitGroup
 
-                        	go func() {
-                        		defer wg.Done()
-                        		printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
-                        	}()
+                            wg.Add(2)
 
-                        	go func() {
-                        		defer wg.Done()
-                        		printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
-                        	}()
+                            go func() {
+                                defer wg.Done()
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
 
-                        	wg.Wait()
+                            go func() {
+                                defer wg.Done()
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
                         }
                     </code></pre>
                 </div>
                 <div class="fragment fade-in-then-out">
                     <h3>sync.Mutex & sync.RWMutex</h3>
-                    Example TODO
-                    <br/>
-                    Example Output:
-                    <pre><code data-noescape data-trim>
-                        k a b c d e f g h l m n o p q i r s t
-                        j
+                    Example: what does the following print?
+                    <pre><code data-noescape data-trim data-line-numbers="12-30">
+                        func printLetters(words []string) {
+                            n := time.Duration(rand.Intn(100))
+
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
+                        }
+
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            var wg sync.WaitGroup
+
+                            wg.Add(2)
+
+                            go func() {
+                                defer wg.Done()
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
+
+                            go func() {
+                                defer wg.Done()
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
+                        }
                     </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <br/>
+                    <pre><code data-noescape data-trim>
+                        k a b c l d e m f g n h i o j
+                        p q r s t
+                    </code></pre>
+                    <small>Char sequences are not on their own lines.</small>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Let's fix it!</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <pre><code data-noescape data-trim data-line-numbers="16">
+                        func printLetters(words []string) {
+                            n := time.Duration(rand.Intn(100))
+
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
+                        }
+
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            var wg sync.WaitGroup
+                            var mu sync.Mutex
+
+                            wg.Add(2)
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <pre><code data-noescape data-trim data-line-numbers="22-23">
+                        func printLetters(words []string) {
+                            n := time.Duration(rand.Intn(100))
+
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
+                        }
+
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            var wg sync.WaitGroup
+                            var mu sync.Mutex
+
+                            wg.Add(2)
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <pre><code data-noescape data-trim data-line-numbers="29-30">
+                        func printLetters(words []string) {
+                            n := time.Duration(rand.Intn(100))
+
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
+                        }
+
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            var wg sync.WaitGroup
+                            var mu sync.Mutex
+
+                            wg.Add(2)
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <br/>
+                    <pre><code data-noescape data-trim>
+                        k l m n o p q r s t
+                        a b c d e f g h i j
+                    </code></pre>
+                    <small>Char sequences guaranteed to be on their own lines.</small>
                 </div>
             </div>
         </section>
