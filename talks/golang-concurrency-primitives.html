@@ -1262,6 +1262,82 @@
                 </div>
             </div>
         </section>
+        <section>
+            <h2>Honorable Mentions</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <h3>Package <code class="highlight">sync/atomic</code></h3>
+                </div>
+            </div>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <h3>Package <code class="highlight">sync/atomic</code></h3>
+                    Primitive wrapper functions around atomic variable operations built into CPU registers (swap, load, store, compare-and-swap).
+                    They are lockless and often used in implementation of other sync primitives.
+                    <br/>
+                    <small>You probably don't need these.</small>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Package <code class="highlight">sync/atomic</code></h3>
+                    A few std packages where used:
+                    <ul>
+                        <li>sync</li>
+                        <li>database/sql</li>
+                        <li>net/http</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Package <code class="highlight">sync/atomic</code></h3>
+                    Example (broken):
+                    <pre><code data-noescape data-trim data-line-numbers>
+                        func main() {
+                        	var (
+                        		total int32
+                        		wg    sync.WaitGroup
+                        	)
+
+                        	wg.Add(10_000)
+
+                        	for i := 0; i < 10_000; i++ {
+                        		go func() {
+                        			defer wg.Done()
+                        			total++
+                        		}()
+                        	}
+
+                        	wg.Wait()
+
+                        	fmt.Println(total) // example: 9106
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Package <code class="highlight">sync/atomic</code></h3>
+                    Example (fixed):
+                    <pre><code data-noescape data-trim data-line-numbers>
+                        func main() {
+                        	var (
+                        		total int32
+                        		wg    sync.WaitGroup
+                        	)
+
+                        	wg.Add(10_000)
+
+                        	for i := 0; i < 10_000; i++ {
+                        		go func() {
+                        			defer wg.Done()
+                        			atomic.AddInt32(&total, 1)
+                        		}()
+                        	}
+
+                        	wg.Wait()
+
+                        	fmt.Println(total) // 10000
+                        }
+                    </code></pre>
+                </div>
+            </div>
+        </section>
 
         <section>
             <h2>Questions?</h2>
@@ -1272,10 +1348,9 @@
             <ul>
                 <li>Concurrency != Parallelism</li>
                 <li>feature image</li>
-                <li>Go Routines</li>
-                <li>WaitGroups</li>
-                <li>Channels</li>
-                <li>sync & sync/atomic: maps, mutexes, atomic mem access</li>
+                <li>Share memory by communicating; don't communicate by sharing memory.</li>
+                <li>sync.Map</li>
+                <li>sync.Pool</li>
                 <li>ErrGroup</li>
                 <li>
                     https://encore.dev/blog/advanced-go-concurrency
