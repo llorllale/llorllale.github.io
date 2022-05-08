@@ -1,6 +1,8 @@
 ---
 layout: page
 title: About Me
+icon: fas fa-info-circle
+order: 4
 tags: [about, llorllale]
 date: 2018-07-02
 comments: false
