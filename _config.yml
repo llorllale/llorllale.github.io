@@ -80,9 +80,24 @@ avatar: /assets/img/portrait.png
 # boolean type, the global switch for ToC in posts.
 toc: true
 
-disqus:
-  comments: true  # boolean type, the global switch for posts comments.
-  shortname: llorllale    # Fill with your Disqus shortname. › https://help.disqus.com/en/articles/1717111-what-s-a-shortname
+comments:
+  active: disqus
+  disqus:
+    shortname: llorllale
+  # utterances settings › https://utteranc.es/
+  utterances:
+    repo:         # <gh-username>/<repo>
+    issue_term:   # < url | pathname | title | ...>
+  # Giscus options › https://giscus.app
+  giscus:
+    repo:             # <gh-username>/<repo>
+    repo_id:
+    category:
+    category_id:
+    mapping:          # optional, default to 'pathname'
+    input_position:   # optional, default to 'bottom'
+    lang:             # optional, default to the value of `site.lang`
+
 
 paginate: 10
 
@@ -106,8 +121,7 @@ collections:
 
 
 defaults:
-  -
-    scope:
+  - scope:
       path: ''          # An empty string here means all files in the project
       type: posts
     values:
@@ -117,19 +131,25 @@ defaults:
       # DO NOT modify the following parameter unless you are confident enough
       # to update the code of all other post links in this project.
       permalink: /posts/:title/
-  -
-    scope:
+  - scope:
       path: _drafts
     values:
       comments: false
-  -
-    scope:
+  - scope:
       path: ''
       type: tabs             # see `site.collections`
     values:
       layout: page
       permalink: /:title/
       dynamic_title: true    # Hide title in mobile screens.
+  - scope:
+      path: assets/img/favicons
+    values:
+      swcache: true
+  - scope:
+      path: assets/js/dist
+    values:
+      swcache: true
 
 sass:
   style: compressed
@@ -162,3 +182,8 @@ jekyll-archives:
   permalinks:
     tag: /tags/:name/
     category: /categories/:name/
+
+assets:
+  self_host:
+    enabled: true
+    env: development

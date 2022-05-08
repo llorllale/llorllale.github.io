@@ -1,6 +1,8 @@
 ---
-layout: post
+layout: page
 title: Projects
+icon: fas fa-project-diagram
+order: 6
 excerpt: "A List of Projects"
 date: 2019-03-13
 comments: false
