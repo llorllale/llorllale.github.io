@@ -7,7 +7,7 @@ categories:
 - books
 - social
 tags:
-- books
+- book
 - negotiation
 ---
 

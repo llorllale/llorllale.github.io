@@ -20,6 +20,10 @@ A collection of books I've read over time.
 * [Getting to Yes: Negotiating Agreement Without Giving In](/posts/getting-to-yes)
 * [Test-Driven Development By Example](/posts/test-driven-development-by-example)
 
+### Q2
+
+* [Kubernetes In Action](/posts/kubernetes-in-action)
+
 ## 2021
 
 ### Q4

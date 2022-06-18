@@ -11,6 +11,7 @@ categories:
 tags:
 - clean-architecture
 - uncle-bob
+- book
 ---
 
 ![book cover](/assets/img/clean-architecture.jpg){: .left height="300" width="200" }
