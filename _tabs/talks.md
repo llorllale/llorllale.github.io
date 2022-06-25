@@ -11,3 +11,4 @@ comments: false
 
 * [April 6 - Golang Guild Session @ VerticalScope: Panics & Recovery](/posts/golang-panics)
 * [May 4 - Golang Guild Session @ VerticalScope: Concurrency Primitives](/posts/golang-concurrency-primitives)
+* [June 29 - Golang Guild Session @ VerticalScope: Concurrency Patterns](/posts/golang-concurrency-patterns)

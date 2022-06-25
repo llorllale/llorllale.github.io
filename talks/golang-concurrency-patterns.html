@@ -1,0 +1,519 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Golang: Concurrency Patterns</title>
+
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/theme/black.css">
+    <link rel="stylesheet" href="../assets/lib/fontawesome-free-5.15.4/css/all.min.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="../assets/reveal.js/plugin/highlight/monokai.css">
+
+    <style>
+        /* Aside */
+        .left {
+            float: left;
+        }
+
+        img.left {
+            margin: 0;
+            padding: 0;
+            width: 25%;
+        }
+
+        img.left + ul {
+            margin: 0;
+            width: 60%;
+        }
+
+        /* Figures with captions */
+        .reveal section figure {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 600px;
+            height: 400px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .reveal section figure > img {
+            width: 100%;
+            max-height: none;
+            border-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section figure > figcaption {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            width: 100%;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section figure > figcaption {
+            line-height: 1.5em;
+            vertical-align: middle;
+        }
+
+        .reveal section figure > figcaption a {
+            line-height: 1.5em !important;
+        }
+
+        /* Cover */
+        .reveal section.cover footer {
+            line-height: 33px;
+            clear: both;
+        }
+
+        .reveal section.cover > footer {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section.cover footer img {
+            float: left;
+            margin: 0 1em 0 0;
+            padding: 0;
+            cursor: pointer;
+            border-style: none;
+        }
+
+        .reveal section.cover footer a,
+        .reveal section.cover footer span {
+            margin: 0;
+            padding: 0;
+            vertical-align: baseline;
+            line-height: 33px;
+        }
+
+        /* Separata */
+        .reveal section.separata hgroup {
+            margin-top: 0.5em;
+        }
+
+        .reveal section.separata hgroup h2,
+        .reveal section.separata hgroup h3,
+        .reveal section.separata hgroup h4 {
+            color: #F0F1EB;
+            text-shadow: #111150 0px 0px 0.2em;
+        }
+
+        .reveal section.separata figure {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section.separata figure > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            z-index: -1;
+        }
+
+        /* Animation */
+        div.animation-container {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 809px;
+            height: 399px;
+            background-color: transparent;
+            -moz-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            overflow: hidden;
+        }
+
+        .animation-container .frame,
+        .animation-container .frame > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            min-width: 100%;
+            max-width: none;
+            max-height: none;
+            box-shadow: none
+        }
+
+        .animation-container .frame > img.loader {
+            position: absolute;
+            top: 140px;
+            left: 180px;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            width: 126px;
+            min-width: 126px;
+            box-shadow: none;
+        }
+
+        .snippet {
+            font-family: monospace !important;
+        }
+
+        .reveal table.matrix {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reveal table.matrix th.pivot {
+            border-style: none;
+        }
+
+        .reveal table.matrix th, .reveal table.matrix td {
+            border-style: solid;
+            border-width: 1px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .reveal table.matrix td li {
+            list-style: none;
+        }
+
+        .reveal pre {
+            width:100%;
+        }
+
+        .reveal code {
+            font-size: 0.6em;
+            line-height: normal;
+        }
+
+        .reveal .bad {
+            color: red;
+            font-style: italic;
+        }
+
+        .reveal .small {
+            font-size: 0.6em;
+        }
+
+        .reveal .highlight {
+            background-color: #606000; /*#222230;*/
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section class="cover">
+            <h1>Concurrency Patterns in Go</h1>
+            <img src="/assets/img/talks/golang-concurrency-primitives/cover.png" width="500"/>
+            <p>
+                <small>By <a href="https://georgearisty.dev/">George Aristy</a> /
+                    <a href="https://github.com/llorllale">llorllale</a></small>
+            </p>
+            <footer>
+                <a rel="license"
+                   href="http://creativecommons.org/licenses/by-nc-sa/2.0/">
+                    <img alt="Creative Commons License"
+                         src="http://i.creativecommons.org/l/by-nc-sa/2.0/88x31.png"/>
+                </a>
+                <span>This work is licensed under a </span>
+                <a rel="license"
+                   href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+                    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 Generic
+                    License
+                </a>
+            </footer>
+        </section>
+        <section>
+            <h2>Topics</h2>
+        </section>
+        <section>
+            <h2>Common Pitfalls</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <h5>Loop variable reference in goroutines</h5>
+                    Bug:
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+    data := []int{1, 2, 3, 4, 5}
+
+    var wg sync.WaitGroup
+    wg.Add(len(data))
+
+    for _, v := range data {
+        go func() {
+            defer wg.Done()
+            fmt.Println(v)
+        }()
+    }
+
+    wg.Wait()
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h5>Loop variable reference in goroutines</h5>
+                    Wrong output:
+                    <pre><code data-noescape data-trim>
+5
+5
+5
+5
+5
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h5>Loop variable reference in goroutines</h5>
+                    Cause:
+                    <pre><code data-noescape data-trim data-line-numbers="7-12">
+func main() {
+    data := []int{1, 2, 3, 4, 5}
+
+    var wg sync.WaitGroup
+    wg.Add(len(data))
+
+    for _, v := range data { // loop ends before goroutines execute
+        go func() {
+            defer wg.Done()
+            fmt.Println(v)  // closures capturing and evaluating same reference to `v`
+        }()
+    }
+
+    wg.Wait()
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h5>Loop variable reference in goroutines</h5>
+                    Common fixes:
+                    <pre><code data-noescape data-trim>
+    for _, v := range data {
+        go func(v int) {
+            defer wg.Done()
+            fmt.Println(v)
+        }(v) // `v` evaluated and value captured here before dispatching goroutine
+    }
+                    </code></pre>
+                    or
+                    <pre><code data-noescape data-trim>
+    for _, v := range data {
+        v := v // `v` evaluated and value captured in block-scoped variable `v`
+        go func() {
+            defer wg.Done()
+            fmt.Println(v)
+        }()
+    }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h5>Loop variable reference in goroutines</h5>
+                    Example output (<a href="https://go.dev/play/p/F_NGcfRluJ7" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim>
+5
+2
+1
+3
+4
+                   </code></pre>
+                </div>
+            </div>
+           <div class="fragment">
+               <h3>TODO</h3>
+           </div>
+        </section>
+        <section>
+            <h2>The <strong>Done</strong> Channel Pattern</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    Provides a way to send a "stop" or "done" signal to a goroutine:<br/>
+                    <ul>
+                        <li>Cancel sub goroutines</li>
+                        <li>TODO</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>... with the <code class="highlight">context</code> package</h3>
+                    Core pattern (<a href="https://go.dev/play/p/qWmlehQ5uVX" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim data-line-numbers>
+func foo() interface{} {
+    return "Hello, World!"
+}
+
+func main() { // main goroutine
+    ctx, cancel := context.WithCancel(context.Background()) // or context.WithDeadline()
+    defer cancel()                                          // cancel when we're done with the context
+
+    result := make(chan interface{}) // setup result channel
+
+    go func() { // sub goroutine
+        select { // leverage `select` to handle cancellation or result, whichever comes first
+        case <-ctx.Done():
+            fmt.Println("cancelled")
+        default:
+            result <- foo()
+        }
+    }()
+
+    select { // leverage `select` to handle timeout or result, whichever comes first
+    case r := <-result:
+        fmt.Println(r)
+    case <-time.After(time.Second):
+        panic("timeout") // handle timeout
+    }
+
+    // cancel() is always invoked
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>... with the <code class="highlight">context</code> package</h3>
+                    If you own <code class="highlight">foo()</code> (<a href="https://go.dev/play/p/KRtP_o5MHGh" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim data-line-numbers>
+func foo(ctx context.Context, result chan<- interface{}) {
+	go func() { // sub goroutine
+		select { // leverage `select` to handle cancellation or result, whichever comes first
+		case <-ctx.Done():
+			fmt.Println("cancelled")
+		default:
+			result <- "Hello, World!"
+		}
+	}()
+}
+
+func main() { // main goroutine
+	ctx, cancel := context.WithCancel(context.Background()) // or context.WithDeadline()
+	defer cancel()                                          // cancel when we're done with the context
+
+	result := make(chan interface{}) // setup result channel
+
+	go foo(ctx, result) // start foo sub goroutine
+
+	select { // leverage `select` to handle timeout or result, whichever comes first
+	case r := <-result:
+		fmt.Println(r)
+	case <-time.After(time.Second):
+		panic("timeout") // handle timeout
+	}
+
+	// cancel() is always invoked
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>... with the <code class="highlight">context</code> package</h3>
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+    search := func(ctx context.Context, query string, results chan<- string) {
+        max, min := 10_000, 1000
+        delayMillis := rand.Intn(max-min) + min
+
+        select {
+        case <-ctx.Done():
+            fmt.Println("search cancelled")
+        case <-time.After(time.Duration(delayMillis) * time.Millisecond): // work simulation
+            results <- fmt.Sprintf("results for '%s'", query)
+        }
+    }
+
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    query := "hello world!"
+    results := make(chan string)
+
+    for i := 0; i < 10; i++ {
+        go search(ctx, query, results)
+    }
+
+    result := <-results
+
+    cancel()                          // unnecessary, but good for demo purposes
+    time.Sleep(50 * time.Millisecond) // unnecessary, but good for demo purposes
+
+    fmt.Println(result)
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>... with a <code class="highlight">cancel()</code> function</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Timeouts</h3>
+
+
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Questions?</h2>
+        </section>
+        <section>
+            TODO:
+            <ul>
+                <li>always pass context.Context to work functions</li>
+                <li>https://go.dev/blog/context</li>
+                <li>https://go.dev/blog/pipelines</li>
+                <li>context.Context</li>
+                <li>worker pool</li>
+                <li>learning go</li>
+                <li>cloud native go</li>
+                <li>go.dev/blog</li>
+                <li>reddit/r/golang</li>
+                <li>gopher cover image</li>
+            </ul>
+        </section>
+    </div>
+</div>
+
+<script src="../assets/reveal.js/dist/reveal.js"></script>
+<script src="../assets/reveal.js/plugin/notes/notes.js"></script>
+<script src="../assets/reveal.js/plugin/markdown/markdown.js"></script>
+<script src="../assets/reveal.js/plugin/highlight/highlight.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+    });
+</script>
+</body>
+</html>
