@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Golang Guild Session: Concurrency Patterns"
-date: 2022-06-18 09:00:00 -0400
+date: 2022-06-29 15:30:00 -0400
 author: George Aristy
 categories:
 - talks
@@ -28,9 +28,18 @@ Click on the slide deck then press `F` to expand to full screen.
 
 ## Topics
 
-TODO
+<ul>
+    <li><i style="color: lightgreen" class="fa fa-plus"></i> The Done channel pattern</li>
+    <li><i style="color: lightgreen" class="fa fa-plus"></i> The Fan-In pattern</li>
+    <li><i style="color: lightgreen" class="fa fa-plus"></i> The Fan-Out pattern</li>
+    <li><i style="color: lightgreen" class="fa fa-plus"></i> Sharding</li>
+    <li><i style="color: lightgreen" class="fa fa-plus"></i> Bounded Parallelism</li>
+    <li><i style="color: lightgreen" class="fa fa-plus"></i> Backpressure</li>
+    <li><i style="color: red" class="fa fa-minus"></i> Deadlocks <span>(stay tuned)</span></li>
+</ul>
 
 ## References
 
-* [Common Mistakes](https://github.com/golang/go/wiki/CommonMistakes)
 * [Learning Go: An Idiomatic Approach to Real-World Go Programming](https://www.amazon.ca/Learning-Go-Idiomatic-Real-World-Programming/dp/1492077216)
+* [Cloud-Native Go: Building Reliable Services in Unreliable Environments](https://www.amazon.ca/Cloud-Native-Go-Unreliable-Environments/dp/1492076333)
+* [The Go Blog: Go Concurrency Patterns: Pipelines and cancellation](https://go.dev/blog/pipelines)
