@@ -18,6 +18,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0  # for posts's lastmod
+          submodules: true
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
