@@ -81,20 +81,18 @@ avatar: /assets/img/portrait.png
 toc: true
 
 comments:
-  active: disqus
-  disqus:
-    shortname: llorllale
+  active: giscus
   # utterances settings › https://utteranc.es/
   utterances:
     repo:         # <gh-username>/<repo>
     issue_term:   # < url | pathname | title | ...>
   # Giscus options › https://giscus.app
   giscus:
-    repo:             # <gh-username>/<repo>
-    repo_id:
-    category:
-    category_id:
-    mapping:          # optional, default to 'pathname'
+    repo: llorllale/llorllale.github.io
+    repo_id: "MDEwOlJlcG9zaXRvcnk4MDM1Mjk5Ng=="
+    category: "Announcements"
+    category_id: "DIC_kwDOBMoW5M4COm92"
+    mapping: "title"
     input_position:   # optional, default to 'bottom'
     lang:             # optional, default to the value of `site.lang`
 
