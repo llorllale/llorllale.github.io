@@ -186,4 +186,3 @@ jekyll-archives:
 assets:
   self_host:
     enabled: true
-    env: development
