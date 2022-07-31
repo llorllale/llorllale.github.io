@@ -19,7 +19,8 @@ init() {
     _no_branch=true
     git checkout -b "$PAGES_BRANCH"
   else
-    git checkout "$PAGES_BRANCH"
+    git checkout -f "$PAGES_BRANCH"
+    rm -rf ./assets/lib
   fi
 }
 
