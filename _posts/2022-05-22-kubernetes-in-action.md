@@ -46,8 +46,67 @@ applying configurations and testing them. These configurations and extra resourc
 
 # Tools and runtimes
 
+Kubernetes comes in several flavors. "Vanilla" Kubernetes can be installed using
+[`kubeadm`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/).
+Other flavors, such as [minikube](https://github.com/kubernetes/minikube), make it very easy to install a local
+Kubernetes cluster for development purposes.
+
 The primary way to interact with a Kubernetes cluster is with
-[`kubectl`](https://kubernetes.io/docs/reference/kubectl/kubectl/)[^2].
+[`kubectl`](https://kubernetes.io/docs/reference/kubectl/kubectl/)[^3][^4]. You can install it directly using the official
+instructions, but other installation means are available, such as with
+[`gcloud components install kubectl`](https://cloud.google.com/sdk/gcloud/reference/components/install) if
+[GKE](https://cloud.google.com/kubernetes-engine) is your provider.
+
+Normally `kubectl` is automatically configured by your Kubernetes provisioner with the necessary configuration to interact
+with the cluster. For example, here is what my configuration looks like after running
+[`minikube start`](https://minikube.sigs.k8s.io/docs/start/)[^5]:
+
+<details>
+    <summary markdown="span">Click to expand</summary>
+    <div markdown="1">
+
+```shell
+kubectl config view
+```
+
+```yaml
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /home/llorllale/.minikube/ca.crt
+    extensions:
+    - extension:
+        last-update: Wed, 24 Aug 2022 21:33:37 EDT
+        provider: minikube.sigs.k8s.io
+        version: v1.25.2
+      name: cluster_info
+    server: https://192.168.49.2:8443
+  name: minikube
+contexts:
+- context:
+    cluster: minikube
+    extensions:
+    - extension:
+        last-update: Wed, 24 Aug 2022 21:33:37 EDT
+        provider: minikube.sigs.k8s.io
+        version: v1.25.2
+      name: context_info
+    namespace: default
+    user: minikube
+  name: minikube
+current-context: minikube
+kind: Config
+preferences: {}
+users:
+- name: minikube
+  user:
+    client-certificate: /home/llorllale/.minikube/profiles/minikube/client.crt
+    client-key: /home/llorllale/.minikube/profiles/minikube/client.key
+```
+</div>
+</details>
+
+> TODO talk about kubectl setups and plugins
 
 
 # Kubernetes Resources
@@ -69,9 +128,16 @@ _Arrows indicate references to the target component._
 _Containers_ are instances of pre-packaged images (or "snapshots") of executable software that can be run on any platform[^2],
 including Kubernetes. Pods are what run your application.
 
+In case the number of connections to the Pod node in the [diagram above](#kubernetes-resources): Pods are the workhorse
+of a Kubernetes application deployment. We'll explore most of those other objects in later sections.
+
+The following example pod definition was created with `kubectl run nginx --image=nginx --dry-run=client -o yaml`
+(with a couple of unnecessary fields removed):
+
 <details>
-    <summary markdown="span">Here is an example Pod definition</summary>
+    <summary markdown="span">Simple Pod definition</summary>
     <div markdown="1">
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -89,7 +155,56 @@ spec:
 </div>
 </details>
 
-This pod defines a single container named _nginx_ with container image also _nginx_. The pod's name also happens to be _nginx_.
+This pod defines a single container named _nginx_ with container image also _nginx_. The pod's name also happens to be
+_nginx_.
+
+Pods are composed of one or more containers; these containers can be divided into three types:
+
+* containers: these are your regular containers that run your application workload.
+* [initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/): similar to regular containers
+  except that [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) runs them first
+  before regular containers. All `initContainers` must run successfully for regular containers to be started. Their use case
+  is obvious: use them to execute utilities or setup scripts not present in the regular container.
+* [ephemeralContainers](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container):
+  these containers are added to the pod at runtime when debugging a Pod. They are not part of the Pod's original manifest.
+
+### `initContainers`
+
+Sadly, `kubect run` does not support specifying initContainers, so we have to add them to the Pod's spec manually:
+
+<details>
+  <summary markdown="span"></summary>
+  <div markdown="1">
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+  labels:
+    app: nginx
+spec:
+  initContainers:
+    - name: init
+      image: busybox
+      command: ["echo", "<DOCTYPE !html><body><h1>Hello, World!</h1</body>", ">", "/usr/share/nginx/html/index.html"]
+      volumeMounts:
+        - name: content
+          mountPath: /usr/share/nginx/html
+  containers:
+    - name: app
+      image: nginx
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: content
+          mountPath: /usr/share/nginx/html
+  volumes:
+    - name: content
+      emptyDir: {}
+```
+</div>
+</details>
 
 # Chapters
 
@@ -154,6 +269,11 @@ the book claims Minikube does not support this type of service. It does nowadays
 # Footnotes
 
 [^1]: It appears you can use code **au35luk** to get a <a target="_blank" href="https://github.com/luksa/kubernetes-in-action-2nd-edition#purchasing-the-book">35% discount <i class="fa fa-external-link-alt"></i></a>.
-[^2]: Fondly pronounced by many as "cube cuddle".
-[^3]: The [Open Container Initiative](https://opencontainers.org/) standardizes the formats of container images and runtimes such that container images bundled by one vendor can be executed by the runtime of a different vendor. Kubernetes supports any container runtime that conforms to its [Container Runtime Interface](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md#specifications-design-documents-and-proposals). The Docker runtime was usually the one in use but as of v1.20 was [deprecated](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/), with removal finally occurring in v1.24. [You do not need to panic. It's not as dramatic as it sounds.](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
-[^4]: Apparently, back then with generators, `kubectl run` would create a [`ReplicationController`](https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/) to manage the pod's instances. While not outright deprecated, _ReplicationController_ are no longer recommended - use [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) instead.
+[^2]: I will eventually dabble with this when I start working towards the [CKA](https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/).
+[^3]: Fondly pronounced by many as "cube cuddle".
+[^4]: Other ways include a console offered by your cloud provider in cases where Kubernetes is available as a service.
+[^5]: We will explore the configuration in depth in a future article - stay tuned.
+
+The [Open Container Initiative](https://opencontainers.org/) standardizes the formats of container images and runtimes such that container images bundled by one vendor can be executed by the runtime of a different vendor. Kubernetes supports any container runtime that conforms to its [Container Runtime Interface](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md#specifications-design-documents-and-proposals). The Docker runtime was usually the one in use but as of v1.20 was [deprecated](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/), with removal finally occurring in v1.24. [You do not need to panic. It's not as dramatic as it sounds.](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
+
+Apparently, back then with generators, `kubectl run` would create a [`ReplicationController`](https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/) to manage the pod's instances. While not outright deprecated, _ReplicationController_ are no longer recommended - use [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) instead.
