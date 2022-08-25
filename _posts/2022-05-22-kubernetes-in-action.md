@@ -24,7 +24,7 @@ Written by [Marko Lukša](https://www.linkedin.com/in/marko-luk%C5%A1a-a71205/),
 aspects of Kubernetes. I find it _very_ hard to think of a better book on the subject. This is the first edition
 of the book, published in December 2017, and although dated around the edges and details, Marko's in-depth dive into
 the different components that make up Kubernetes and how they work is timeless. I highly recommend this book to anyone
-looking for any serious learning of Kubernetes. This book's shelf life is pretty long considering Kubernetes' active
+looking for any serious learning of Kubernetes. This book's shelf life is pretty long despite Kubernetes' active
 development - I would think it can only be supplanted by the
 [second edition coming out later this year](https://www.manning.com/books/kubernetes-in-action-second-edition)[^1].
 
@@ -44,11 +44,52 @@ and how to extend Kubernetes with custom resources. The reader is kept engaged w
 applying configurations and testing them. These configurations and extra resources can be found in the book's
 [GitHub repository](https://github.com/luksa/kubernetes-in-action).
 
-It explains Kubernetes from two perspectives:
+# Tools and runtimes
 
-The configuration side:
+The primary way to interact with a Kubernetes cluster is with
+[`kubectl`](https://kubernetes.io/docs/reference/kubectl/kubectl/)[^2].
 
 
+# Kubernetes Resources
+
+All resources in Kubernetes are specified 
+
+Kubernetes is a massive beast. Here are (almost) all the resources I am aware of as a developer:
+
+![image](/assets/img/books/k8s-in-action/k8s-config-components.svg)
+_Arrows indicate references to the target component._
+
+## Pods
+
+> _Pods_ are the smallest deployable units of computing that you can create and manage in Kubernetes.
+> Pods are composed of one or more containers with shared storage and network resources.
+> 
+> -- [Kubernetes/Pods](https://kubernetes.io/docs/concepts/workloads/pods/)
+
+_Containers_ are instances of pre-packaged images (or "snapshots") of executable software that can be run on any platform[^2],
+including Kubernetes. Pods are what run your application.
+
+<details>
+    <summary markdown="span">Here is an example Pod definition</summary>
+    <div markdown="1">
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+```
+</div>
+</details>
+
+This pod defines a single container named _nginx_ with container image also _nginx_. The pod's name also happens to be _nginx_.
 
 # Chapters
 
@@ -113,4 +154,6 @@ the book claims Minikube does not support this type of service. It does nowadays
 # Footnotes
 
 [^1]: It appears you can use code **au35luk** to get a <a target="_blank" href="https://github.com/luksa/kubernetes-in-action-2nd-edition#purchasing-the-book">35% discount <i class="fa fa-external-link-alt"></i></a>.
-[^2]: Apparently, back then with generators, `kubectl run` would create a [`ReplicationController`](https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/) to manage the pod's instances. While not outright deprecated, _ReplicationController_ are no longer recommended - use [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) instead.
+[^2]: Fondly pronounced by many as "cube cuddle".
+[^3]: The [Open Container Initiative](https://opencontainers.org/) standardizes the formats of container images and runtimes such that container images bundled by one vendor can be executed by the runtime of a different vendor. Kubernetes supports any container runtime that conforms to its [Container Runtime Interface](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md#specifications-design-documents-and-proposals). The Docker runtime was usually the one in use but as of v1.20 was [deprecated](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/), with removal finally occurring in v1.24. [You do not need to panic. It's not as dramatic as it sounds.](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
+[^4]: Apparently, back then with generators, `kubectl run` would create a [`ReplicationController`](https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/) to manage the pod's instances. While not outright deprecated, _ReplicationController_ are no longer recommended - use [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) instead.
