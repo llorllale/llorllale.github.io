@@ -1,0 +1,307 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Golang: Deadlocks (and how to break out of them)</title>
+
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/theme/black.css">
+    <link rel="stylesheet" href="../assets/lib/fontawesome-free-5.15.4/css/all.min.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="../assets/reveal.js/plugin/highlight/monokai.css">
+
+    <style>
+        /* Aside */
+        .left {
+            float: left;
+        }
+
+        img.left {
+            margin: 0;
+            padding: 0;
+            width: 25%;
+        }
+
+        img.left + ul {
+            margin: 0;
+            width: 60%;
+        }
+
+        /* Figures with captions */
+        .reveal section figure {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 600px;
+            height: 400px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .reveal section figure > img {
+            width: 100%;
+            max-height: none;
+            border-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section figure > figcaption {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            width: 100%;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section figure > figcaption {
+            line-height: 1.5em;
+            vertical-align: middle;
+        }
+
+        .reveal section figure > figcaption a {
+            line-height: 1.5em !important;
+        }
+
+        /* Cover */
+        .reveal section.cover footer {
+            line-height: 33px;
+            clear: both;
+        }
+
+        .reveal section.cover > footer {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section.cover footer img {
+            float: left;
+            margin: 0 1em 0 0;
+            padding: 0;
+            cursor: pointer;
+            border-style: none;
+        }
+
+        .reveal section.cover footer a,
+        .reveal section.cover footer span {
+            margin: 0;
+            padding: 0;
+            vertical-align: baseline;
+            line-height: 33px;
+        }
+
+        /* Separata */
+        .reveal section.separata hgroup {
+            margin-top: 0.5em;
+        }
+
+        .reveal section.separata hgroup h2,
+        .reveal section.separata hgroup h3,
+        .reveal section.separata hgroup h4 {
+            color: #F0F1EB;
+            text-shadow: #111150 0px 0px 0.2em;
+        }
+
+        .reveal section.separata figure {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section.separata figure > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            z-index: -1;
+        }
+
+        /* Animation */
+        div.animation-container {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 809px;
+            height: 399px;
+            background-color: transparent;
+            -moz-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            overflow: hidden;
+        }
+
+        .animation-container .frame,
+        .animation-container .frame > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            min-width: 100%;
+            max-width: none;
+            max-height: none;
+            box-shadow: none
+        }
+
+        .animation-container .frame > img.loader {
+            position: absolute;
+            top: 140px;
+            left: 180px;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            width: 126px;
+            min-width: 126px;
+            box-shadow: none;
+        }
+
+        .snippet {
+            font-family: monospace !important;
+        }
+
+        .reveal table.matrix {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reveal table.matrix th.pivot {
+            border-style: none;
+        }
+
+        .reveal table.matrix th, .reveal table.matrix td {
+            border-style: solid;
+            border-width: 1px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .reveal table.matrix td li {
+            list-style: none;
+        }
+
+        .reveal pre {
+            width:100%;
+        }
+
+        .reveal code {
+            font-size: 0.6em;
+            line-height: normal;
+        }
+
+        .reveal .bad {
+            color: red;
+            font-style: italic;
+        }
+
+        .reveal .small {
+            font-size: 0.6em;
+        }
+
+        .reveal .highlight {
+            background-color: #606000; /*#222230;*/
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section class="cover">
+            <h1>Deadlocks in Go (and how to break out of them)</h1>
+            <img src="/assets/img/talks/golang-concurrency-patterns/gopher-concurrency.jpg" width="500"/>
+            <p>
+                <small>By <a href="https://georgearisty.dev/">George Aristy</a> /
+                    <a href="https://github.com/llorllale">llorllale</a></small>
+            </p>
+            <footer>
+                <a rel="license"
+                   href="http://creativecommons.org/licenses/by-nc-sa/2.0/">
+                    <img alt="Creative Commons License"
+                         src="http://i.creativecommons.org/l/by-nc-sa/2.0/88x31.png"/>
+                </a>
+                <span>This work is licensed under a </span>
+                <a rel="license"
+                   href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+                    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 Generic
+                    License
+                </a>
+            </footer>
+        </section>
+        <section>
+            Extending my previous talk on <a href="/posts/golang-concurrency-patterns">Golang Concurrency Patterns</a>.
+        </section>
+        <section>
+            <h2>Topics</h2>
+            <ul>
+                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> TODO</li>
+                <li class="fragment"><i style="color: red" class="fa fa-minus"></i> TODO</li>
+            </ul>
+        </section>
+        <section>
+            <h2>References</h2>
+            <div class="r-stack">
+            <ul>
+                <li class="fragment">TODO</li>
+            </ul>
+            </div>
+        </section>
+        <section>
+            <h2>Questions?</h2>
+        </section>
+        <section>
+            TODO:
+            - cover image
+            - in the cover: can we put the text in parenthesis in a subtitle?
+        </section>
+    </div>
+</div>
+
+<script src="../assets/reveal.js/dist/reveal.js"></script>
+<script src="../assets/reveal.js/plugin/notes/notes.js"></script>
+<script src="../assets/reveal.js/plugin/markdown/markdown.js"></script>
+<script src="../assets/reveal.js/plugin/highlight/highlight.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+    });
+</script>
+</body>
+</html>
