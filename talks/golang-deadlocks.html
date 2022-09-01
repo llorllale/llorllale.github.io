@@ -265,7 +265,7 @@
         <section>
             <h2>Topics</h2>
             <ul>
-                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> TODO</li>
+                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> What are deadlocks?</li>
                 <li class="fragment"><i style="color: red" class="fa fa-minus"></i> TODO</li>
             </ul>
         </section>
@@ -273,17 +273,581 @@
             <h2>References</h2>
             <div class="r-stack">
             <ul>
-                <li class="fragment">TODO</li>
+                <li class="fragment"><a href="https://go.dev/ref/mem" target="_blank">The Go Memory Model <i class="fa fa-external-link-alt"></i></a></li>
             </ul>
             </div>
         </section>
+        <section>
+            <h2>What are deadlocks?</h2>
+            <div class="r-stack">
+                <ul>
+                    <li class="fragment">A state where no process can proceed because each is waiting on another process (including themselves).</li>
+                    <li class="fragment">In Go, these "processes" are <a href="https://go.dev/ref/mem#go" target="_blank">goroutines <i class="fa fa-external-link-alt"></i></a>.</li>
+                </ul>
+            </div>
+        </section>
+        <section>
+            <h2>Goroutines are deadlocked when...</h2>
+            <div class="r-stack">
+                <ul>
+                    <li class="fragment">There is lock contention. (TODO - can this be rephrased? Perhaps "when they cannot acquire a lock"?) (TODO reference go mem model on locks)</li>
+                    <li class="fragment">Attempting to read from an empty or <code class="highlight">nil</code> <a href="https://go.dev/ref/spec#Channel_types" target="_blank">channel <i class="fa fa-external-link-alt"></i></a>.</li>
+                    <li class="fragment">Attempting to write to a channel with a full buffer.</li>
+                </ul>
+            </div>
+        </section>
+        <section>
+            <h2>Example with all cases</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-trim data-noescape data-line-numbers>
+package main
+
+import "sync"
+
+func main() {
+    muA := sync.Mutex{}
+    muB := sync.Mutex{}
+
+    // main goroutine acquires both locks
+    muA.Lock()
+    muB.Lock()
+
+    // first sub goroutine attempts to lock "B" before releasing "A".
+    go func() {
+        defer muA.Unlock()
+        muB.Lock()
+    }()
+
+    // second sub goroutine attempts to lock "A" before releasing "B".
+    go func() { // second sub goroutine
+        defer muB.Unlock()
+        muA.Lock()
+    }()
+
+    // third sub goroutine attempts to read from an empty channel that is never written to
+    go func() {
+        empty := make(chan struct{})
+        <-empty
+    }()
+
+    // fourth sub goroutine attempts to read from a nil channel
+    go func() {
+        var c chan struct{}
+        <-c
+    }()
+
+    // main goroutine blocked trying to write to an unbuffered channel
+    make(chan struct{}) <- struct{}{}
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-trim data-noescape data-line-numbers="6-11">
+package main
+
+import "sync"
+
+func main() {
+    muA := sync.Mutex{}
+    muB := sync.Mutex{}
+
+    // main goroutine acquires both locks
+    muA.Lock()
+    muB.Lock()
+
+    // first sub goroutine attempts to lock "B" before releasing "A".
+    go func() {
+        defer muA.Unlock()
+        muB.Lock()
+    }()
+
+    // second sub goroutine attempts to lock "A" before releasing "B".
+    go func() { // second sub goroutine
+        defer muB.Unlock()
+        muA.Lock()
+    }()
+
+    // third sub goroutine attempts to read from an empty channel that is never written to
+    go func() {
+        empty := make(chan struct{})
+        <-empty
+    }()
+
+    // fourth sub goroutine attempts to read from a nil channel
+    go func() {
+        var c chan struct{}
+        <-c
+    }()
+
+    // main goroutine blocked trying to write to an unbuffered channel
+    make(chan struct{}) <- struct{}{}
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-trim data-noescape data-line-numbers="13-17">
+package main
+
+import "sync"
+
+func main() {
+    muA := sync.Mutex{}
+    muB := sync.Mutex{}
+
+    // main goroutine acquires both locks
+    muA.Lock()
+    muB.Lock()
+
+    // first sub goroutine attempts to lock "B" before releasing "A".
+    go func() {
+        defer muA.Unlock()
+        muB.Lock()
+    }()
+
+    // second sub goroutine attempts to lock "A" before releasing "B".
+    go func() { // second sub goroutine
+        defer muB.Unlock()
+        muA.Lock()
+    }()
+
+    // third sub goroutine attempts to read from an empty channel that is never written to
+    go func() {
+        empty := make(chan struct{})
+        <-empty
+    }()
+
+    // fourth sub goroutine attempts to read from a nil channel
+    go func() {
+        var c chan struct{}
+        <-c
+    }()
+
+    // main goroutine blocked trying to write to an unbuffered channel
+    make(chan struct{}) <- struct{}{}
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-trim data-noescape data-line-numbers="19-23">
+package main
+
+import "sync"
+
+func main() {
+    muA := sync.Mutex{}
+    muB := sync.Mutex{}
+
+    // main goroutine acquires both locks
+    muA.Lock()
+    muB.Lock()
+
+    // first sub goroutine attempts to lock "B" before releasing "A".
+    go func() {
+        defer muA.Unlock()
+        muB.Lock()
+    }()
+
+    // second sub goroutine attempts to lock "A" before releasing "B".
+    go func() { // second sub goroutine
+        defer muB.Unlock()
+        muA.Lock()
+    }()
+
+    // third sub goroutine attempts to read from an empty channel that is never written to
+    go func() {
+        empty := make(chan struct{})
+        <-empty
+    }()
+
+    // fourth sub goroutine attempts to read from a nil channel
+    go func() {
+        var c chan struct{}
+        <-c
+    }()
+
+    // main goroutine blocked trying to write to an unbuffered channel
+    make(chan struct{}) <- struct{}{}
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-trim data-noescape data-line-numbers="25-29">
+package main
+
+import "sync"
+
+func main() {
+    muA := sync.Mutex{}
+    muB := sync.Mutex{}
+
+    // main goroutine acquires both locks
+    muA.Lock()
+    muB.Lock()
+
+    // first sub goroutine attempts to lock "B" before releasing "A".
+    go func() {
+        defer muA.Unlock()
+        muB.Lock()
+    }()
+
+    // second sub goroutine attempts to lock "A" before releasing "B".
+    go func() { // second sub goroutine
+        defer muB.Unlock()
+        muA.Lock()
+    }()
+
+    // third sub goroutine attempts to read from an empty channel that is never written to
+    go func() {
+        empty := make(chan struct{})
+        <-empty
+    }()
+
+    // fourth sub goroutine attempts to read from a nil channel
+    go func() {
+        var c chan struct{}
+        <-c
+    }()
+
+    // main goroutine blocked trying to write to an unbuffered channel
+    make(chan struct{}) <- struct{}{}
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-trim data-noescape data-line-numbers="31-35">
+package main
+
+import "sync"
+
+func main() {
+    muA := sync.Mutex{}
+    muB := sync.Mutex{}
+
+    // main goroutine acquires both locks
+    muA.Lock()
+    muB.Lock()
+
+    // first sub goroutine attempts to lock "B" before releasing "A".
+    go func() {
+        defer muA.Unlock()
+        muB.Lock()
+    }()
+
+    // second sub goroutine attempts to lock "A" before releasing "B".
+    go func() { // second sub goroutine
+        defer muB.Unlock()
+        muA.Lock()
+    }()
+
+    // third sub goroutine attempts to read from an empty channel that is never written to
+    go func() {
+        empty := make(chan struct{})
+        <-empty
+    }()
+
+    // fourth sub goroutine attempts to read from a nil channel
+    go func() {
+        var c chan struct{}
+        <-c
+    }()
+
+    // main goroutine blocked trying to write to an unbuffered channel
+    make(chan struct{}) <- struct{}{}
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-trim data-noescape data-line-numbers="37-38">
+package main
+
+import "sync"
+
+func main() {
+    muA := sync.Mutex{}
+    muB := sync.Mutex{}
+
+    // main goroutine acquires both locks
+    muA.Lock()
+    muB.Lock()
+
+    // first sub goroutine attempts to lock "B" before releasing "A".
+    go func() {
+        defer muA.Unlock()
+        muB.Lock()
+    }()
+
+    // second sub goroutine attempts to lock "A" before releasing "B".
+    go func() { // second sub goroutine
+        defer muB.Unlock()
+        muA.Lock()
+    }()
+
+    // third sub goroutine attempts to read from an empty channel that is never written to
+    go func() {
+        empty := make(chan struct{})
+        <-empty
+    }()
+
+    // fourth sub goroutine attempts to read from a nil channel
+    go func() {
+        var c chan struct{}
+        <-c
+    }()
+
+    // main goroutine blocked trying to write to an unbuffered channel
+    make(chan struct{}) <- struct{}{}
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Something nasty happens:
+                    <pre><code data-noescape data-trim>
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan send]:
+main.main()
+        /home/llorllale/scratchpad/main.go:38 +0x169
+
+goroutine 6 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc0000220a0)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func1()
+        /home/llorllale/scratchpad/main.go:16 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:14 +0xe5
+
+goroutine 7 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc000022098)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func2()
+        /home/llorllale/scratchpad/main.go:22 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:20 +0x139
+
+goroutine 8 [chan receive]:
+main.main.func3()
+        /home/llorllale/scratchpad/main.go:28 +0x2c
+created by main.main
+        /home/llorllale/scratchpad/main.go:26 +0x145
+
+goroutine 9 [chan receive (nil chan)]:
+main.main.func4()
+        /home/llorllale/scratchpad/main.go:34 +0x1d
+created by main.main
+        /home/llorllale/scratchpad/main.go:32 +0x151
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Let's break that error down.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    The Go runtime yells that all goroutines are blocked:
+                    <pre><code data-noescape data-trim data-line-numbers="1">
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan send]:
+main.main()
+        /home/llorllale/scratchpad/main.go:38 +0x169
+
+goroutine 6 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc0000220a0)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func1()
+        /home/llorllale/scratchpad/main.go:16 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:14 +0xe5
+
+goroutine 7 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc000022098)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func2()
+        /home/llorllale/scratchpad/main.go:22 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:20 +0x139
+
+goroutine 8 [chan receive]:
+main.main.func3()
+        /home/llorllale/scratchpad/main.go:28 +0x2c
+created by main.main
+        /home/llorllale/scratchpad/main.go:26 +0x145
+
+goroutine 9 [chan receive (nil chan)]:
+main.main.func4()
+        /home/llorllale/scratchpad/main.go:34 +0x1d
+created by main.main
+        /home/llorllale/scratchpad/main.go:32 +0x151
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <code class="highlight">main</code> goroutine is blocked trying to send to a channel:
+                    <pre><code data-noescape data-trim data-line-numbers="3-5">
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan send]:
+main.main()
+        /home/llorllale/scratchpad/main.go:38 +0x169
+
+goroutine 6 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc0000220a0)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func1()
+        /home/llorllale/scratchpad/main.go:16 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:14 +0xe5
+
+goroutine 7 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc000022098)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func2()
+        /home/llorllale/scratchpad/main.go:22 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:20 +0x139
+
+goroutine 8 [chan receive]:
+main.main.func3()
+        /home/llorllale/scratchpad/main.go:28 +0x2c
+created by main.main
+        /home/llorllale/scratchpad/main.go:26 +0x145
+
+goroutine 9 [chan receive (nil chan)]:
+main.main.func4()
+        /home/llorllale/scratchpad/main.go:34 +0x1d
+created by main.main
+        /home/llorllale/scratchpad/main.go:32 +0x151
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <code class="highlight">first</code> sub goroutine is blocked trying to acquire a lock:
+                    <pre><code data-noescape data-trim data-line-numbers="7-17">
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan send]:
+main.main()
+        /home/llorllale/scratchpad/main.go:38 +0x169
+
+goroutine 6 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc0000220a0)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func1()
+        /home/llorllale/scratchpad/main.go:16 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:14 +0xe5
+
+goroutine 7 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc000022098)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func2()
+        /home/llorllale/scratchpad/main.go:22 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:20 +0x139
+
+goroutine 8 [chan receive]:
+main.main.func3()
+        /home/llorllale/scratchpad/main.go:28 +0x2c
+created by main.main
+        /home/llorllale/scratchpad/main.go:26 +0x145
+
+goroutine 9 [chan receive (nil chan)]:
+main.main.func4()
+        /home/llorllale/scratchpad/main.go:34 +0x1d
+created by main.main
+        /home/llorllale/scratchpad/main.go:32 +0x151
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <code class="highlight">second</code> sub goroutine is blocked trying to acquire a lock:
+                    <pre><code data-noescape data-trim data-line-numbers="19-29">
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan send]:
+main.main()
+        /home/llorllale/scratchpad/main.go:38 +0x169
+
+goroutine 6 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc0000220a0)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func1()
+        /home/llorllale/scratchpad/main.go:16 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:14 +0xe5
+
+goroutine 7 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc000022098)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func2()
+        /home/llorllale/scratchpad/main.go:22 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:20 +0x139
+
+goroutine 8 [chan receive]:
+main.main.func3()
+        /home/llorllale/scratchpad/main.go:28 +0x2c
+created by main.main
+        /home/llorllale/scratchpad/main.go:26 +0x145
+
+goroutine 9 [chan receive (nil chan)]:
+main.main.func4()
+        /home/llorllale/scratchpad/main.go:34 +0x1d
+created by main.main
+        /home/llorllale/scratchpad/main.go:32 +0x151
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+
         <section>
             <h2>Questions?</h2>
         </section>
         <section>
             TODO:
             - cover image
+            - have we covered all scenarios for deadlocks?
             - in the cover: can we put the text in parenthesis in a subtitle?
+            - can the go runtime help us?
+            - how does the go runtime detect deadlocks?
+            - analyze deadlock stacktrace structure
+            - can we add a more realistic example for lock contention?
         </section>
     </div>
 </div>
