@@ -297,7 +297,7 @@
             </div>
         </section>
         <section>
-            <h2>Example with all cases</h2>
+            <h2>Example deadlocks</h2>
             <div class="r-stack">
                 <div class="fragment fade-in-then-out">
                     <pre><code data-trim data-noescape data-line-numbers>
@@ -833,6 +833,98 @@ created by main.main
         /home/llorllale/scratchpad/main.go:32 +0x151
                     </code></pre>
                 </div>
+                <div class="fragment fade-in-then-out">
+                    <code class="highlight">third</code> sub goroutine is stuck waiting to receive on a channel:
+                    <pre><code data-noescape data-trim data-line-numbers="31-35">
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan send]:
+main.main()
+        /home/llorllale/scratchpad/main.go:38 +0x169
+
+goroutine 6 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc0000220a0)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func1()
+        /home/llorllale/scratchpad/main.go:16 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:14 +0xe5
+
+goroutine 7 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc000022098)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func2()
+        /home/llorllale/scratchpad/main.go:22 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:20 +0x139
+
+goroutine 8 [chan receive]:
+main.main.func3()
+        /home/llorllale/scratchpad/main.go:28 +0x2c
+created by main.main
+        /home/llorllale/scratchpad/main.go:26 +0x145
+
+goroutine 9 [chan receive (nil chan)]:
+main.main.func4()
+        /home/llorllale/scratchpad/main.go:34 +0x1d
+created by main.main
+        /home/llorllale/scratchpad/main.go:32 +0x151
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <code class="highlight">fourth</code> sub goroutine is stuck waiting to receive on a <code class="highlight">nil</code> channel:
+                    <pre><code data-noescape data-trim data-line-numbers="37-41">
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan send]:
+main.main()
+        /home/llorllale/scratchpad/main.go:38 +0x169
+
+goroutine 6 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc0000220a0)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func1()
+        /home/llorllale/scratchpad/main.go:16 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:14 +0xe5
+
+goroutine 7 [semacquire]:
+sync.runtime_SemacquireMutex(0x0?, 0x0?, 0x0?)
+        /home/llorllale/.gvm/gos/go1.19/src/runtime/sema.go:77 +0x25
+sync.(*Mutex).lockSlow(0xc000022098)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:171 +0x165
+sync.(*Mutex).Lock(...)
+        /home/llorllale/.gvm/gos/go1.19/src/sync/mutex.go:90
+main.main.func2()
+        /home/llorllale/scratchpad/main.go:22 +0x72
+created by main.main
+        /home/llorllale/scratchpad/main.go:20 +0x139
+
+goroutine 8 [chan receive]:
+main.main.func3()
+        /home/llorllale/scratchpad/main.go:28 +0x2c
+created by main.main
+        /home/llorllale/scratchpad/main.go:26 +0x145
+
+goroutine 9 [chan receive (nil chan)]:
+main.main.func4()
+        /home/llorllale/scratchpad/main.go:34 +0x1d
+created by main.main
+        /home/llorllale/scratchpad/main.go:32 +0x151
+                    </code></pre>
+                </div>
             </div>
         </section>
 
@@ -848,6 +940,8 @@ created by main.main
             - how does the go runtime detect deadlocks?
             - analyze deadlock stacktrace structure
             - can we add a more realistic example for lock contention?
+            - https://medium.com/a-journey-with-go/go-how-are-deadlocks-triggered-2305504ac019
+            - pprof, any others?
         </section>
     </div>
 </div>
