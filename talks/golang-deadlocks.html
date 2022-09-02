@@ -274,6 +274,7 @@
             <div class="r-stack">
             <ul>
                 <li class="fragment"><a href="https://go.dev/ref/mem" target="_blank">The Go Memory Model <i class="fa fa-external-link-alt"></i></a></li>
+                <li class="fragment"><a href="https://docs.google.com/document/d/1TTj4T2JO42uD5ID9e89oa0sLKhJYD0Y_kqxDv3I3XMw">Scalable Go Scheduler Design Doc <i class="fa fa-external-link-alt"></i></a></li>
             </ul>
             </div>
         </section>
@@ -925,6 +926,23 @@ created by main.main
         /home/llorllale/scratchpad/main.go:32 +0x151
                     </code></pre>
                 </div>
+            </div>
+        </section>
+        <section>
+            <h2>Go's runtime detects deadlocks</h2>
+
+            <div class="r-stack" style="font-size: 22px">
+                <ul>
+                    <li class="fragment fade-left"><code>"fatal error: all goroutines are asleep - deadlock!"</code> - Go runtime</li>
+                    <li class="fragment fade-left">Triggered only when *all* goroutines are blocked (not too useful):
+                        <ul>
+                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5100-L5103">No deadlock if there are free worker threads <i class="fa fa-external-link-alt"></i>.</a></li>
+                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5161-L5165">No deadlock if there are no free worker threads but there is at least one processor with future work scheduled <i class="fa fa-external-link-alt"></i>.</a></li>
+                            <li class="fragment fade-left">Source: <a href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5068" target="_blank"><code class="highlight">checkdead()</code> <i class="fa fa-external-link-alt"></i></a></li>
+                        </ul>
+                    </li>
+                    <li class="fragment fade-left">Recall prior overview of the <a href="/talks/golang-concurrency-primitives.html#/1/0/3" target="_blank">scheduler <i class="fa fa-external-link-alt"></i></a></li>
+                </ul>
             </div>
         </section>
 
