@@ -930,20 +930,55 @@ created by main.main
         </section>
         <section>
             <h2>Go's runtime detects deadlocks</h2>
-
             <div class="r-stack" style="font-size: 22px">
                 <ul>
                     <li class="fragment fade-left"><code>"fatal error: all goroutines are asleep - deadlock!"</code> - Go runtime</li>
-                    <li class="fragment fade-left">Triggered only when *all* goroutines are blocked (not too useful):
+                    <li class="fragment fade-left">Triggered only when *all* goroutines are blocked (so not too useful...)</li>
+                    <li class="fragment fade-left">Triggered if:
                         <ul>
-                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5100-L5103">No deadlock if there are free worker threads <i class="fa fa-external-link-alt"></i>.</a></li>
-                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5161-L5165">No deadlock if there are no free worker threads but there is at least one processor with future work scheduled <i class="fa fa-external-link-alt"></i>.</a></li>
+                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5100-L5103">There are no free worker threads <i class="fa fa-external-link-alt"></i></a>, and:</li>
+                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5161-L5165">If no processor has future work scheduled <i class="fa fa-external-link-alt"></i>.</a></li>
                             <li class="fragment fade-left">Source: <a href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5068" target="_blank"><code class="highlight">checkdead()</code> <i class="fa fa-external-link-alt"></i></a></li>
                         </ul>
                     </li>
                     <li class="fragment fade-left">Recall prior overview of the <a href="/talks/golang-concurrency-primitives.html#/1/0/3" target="_blank">scheduler <i class="fa fa-external-link-alt"></i></a></li>
                 </ul>
             </div>
+        </section>
+        <section>
+            <h2>Go's stacktrace format:</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-noescape data-trim data-line-numbers="1">
+goroutine 21 [chan receive (nil chan)]:                <=== wait reason
+main.main.func4(0x0?)
+        /home/llorllale/scratchpad/main.go:34 +0x1b
+created by main.main
+        /home/llorllale/scratchpad/main.go:33 +0x173
+                    </code></pre>
+                    <a href="https://github.com/golang/go/blob/6e74c4116ae2825efab69cb8c60d078d76572a78/src/runtime/runtime2.go#L1023-L1049" target="_blank">Wait reasons <i class="fa fa-external-link-alt"></i>.</a>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-noescape data-trim data-line-numbers="2-3">
+goroutine 21 [chan receive (nil chan)]:
+main.main.func4(0x0?)                                  <=== FQN of func + args
+        /home/llorllale/scratchpad/main.go:34 +0x1b    <=== file + line no.
+created by main.main
+        /home/llorllale/scratchpad/main.go:33 +0x173
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <pre><code data-noescape data-trim data-line-numbers="4-5">
+goroutine 21 [chan receive (nil chan)]:
+main.main.func4(0x0?)
+        /home/llorllale/scratchpad/main.go:34 +0x1b
+created by main.main                                   <=== ancestor
+        /home/llorllale/scratchpad/main.go:33 +0x173   <=== ancestor definition
+                    </code></pre>
+                </div>
+            </div>
+
+
         </section>
 
         <section>
@@ -960,6 +995,8 @@ created by main.main
             - can we add a more realistic example for lock contention?
             - https://medium.com/a-journey-with-go/go-how-are-deadlocks-triggered-2305504ac019
             - pprof, any others?
+            - checkdead() needs lock on sched.lock
+            - GOTRACEBACK
         </section>
     </div>
 </div>
