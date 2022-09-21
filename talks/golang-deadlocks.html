@@ -265,8 +265,11 @@
         <section>
             <h2>Topics</h2>
             <ul>
-                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> What are deadlocks?</li>
-                <li class="fragment"><i style="color: red" class="fa fa-minus"></i> TODO</li>
+                <li class="fragment fade-left"><i style="color: lightgreen" class="fa fa-plus"></i> What deadlocks are</li>
+                <li class="fragment fade-left"><i style="color: lightgreen" class="fa fa-plus"></i> When deadlocks typically happen</li>
+                <li class="fragment fade-left"><i style="color: lightgreen" class="fa fa-plus"></i> How Go's runtime detects deadlocks</li>
+                <li class="fragment fade-left"><i style="color: lightgreen" class="fa fa-plus"></i> Go's stacktraces</li>
+                <li class="fragment fade-left"><i style="color: lightgreen" class="fa fa-plus"></i> Tools</li>
             </ul>
         </section>
         <section>
@@ -291,7 +294,7 @@
             <h2>Goroutines are deadlocked when...</h2>
             <div class="r-stack">
                 <ul>
-                    <li class="fragment">There is lock contention. (TODO - can this be rephrased? Perhaps "when they cannot acquire a lock"?) (TODO reference go mem model on locks)</li>
+                    <li class="fragment">There is lock contention.</li>
                     <li class="fragment">Attempting to read from an empty or <code class="highlight">nil</code> <a href="https://go.dev/ref/spec#Channel_types" target="_blank">channel <i class="fa fa-external-link-alt"></i></a>.</li>
                     <li class="fragment">Attempting to write to a channel with a full buffer.</li>
                 </ul>
@@ -650,6 +653,11 @@ created by main.main
                 <div class="fragment fade-in-then-out">
                     Let's break that error down.
                 </div>
+            </div>
+        </section>
+        <section>
+            <h2>Stacktraces in Go</h2>
+            <div class="r-stack">
                 <div class="fragment fade-in-then-out">
                     The Go runtime yells that all goroutines are blocked:
                     <pre><code data-noescape data-trim data-line-numbers="1">
@@ -929,23 +937,6 @@ created by main.main
             </div>
         </section>
         <section>
-            <h2>Go's runtime detects deadlocks</h2>
-            <div class="r-stack" style="font-size: 22px">
-                <ul>
-                    <li class="fragment fade-left"><code>"fatal error: all goroutines are asleep - deadlock!"</code> - Go runtime</li>
-                    <li class="fragment fade-left">Triggered only when *all* goroutines are blocked (so not too useful...)</li>
-                    <li class="fragment fade-left">Triggered if:
-                        <ul>
-                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5100-L5103">There are no free worker threads <i class="fa fa-external-link-alt"></i></a>, and:</li>
-                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5161-L5165">If no processor has future work scheduled <i class="fa fa-external-link-alt"></i>.</a></li>
-                            <li class="fragment fade-left">Source: <a href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5068" target="_blank"><code class="highlight">checkdead()</code> <i class="fa fa-external-link-alt"></i></a></li>
-                        </ul>
-                    </li>
-                    <li class="fragment fade-left">Recall prior overview of the <a href="/talks/golang-concurrency-primitives.html#/1/0/3" target="_blank">scheduler <i class="fa fa-external-link-alt"></i></a></li>
-                </ul>
-            </div>
-        </section>
-        <section>
             <h2>Go's stacktrace format:</h2>
             <div class="r-stack">
                 <div class="fragment fade-in-then-out">
@@ -979,7 +970,25 @@ created by main.main                                   <=== ancestor
             </div>
         </section>
         <section>
-            <h2>Breaking out</h2>
+            <h2>Go's runtime detects deadlocks</h2>
+            <div class="r-stack" style="font-size: 22px">
+                <ul>
+                    <li class="fragment fade-left"><code>"fatal error: all goroutines are asleep - deadlock!"</code> - Go runtime</li>
+                    <li class="fragment fade-left">Triggered only when *all* goroutines are blocked (too late, so not too useful...)</li>
+                    <li class="fragment fade-left">Triggered if:
+                        <ul>
+                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5100-L5103">There are no free worker threads <i class="fa fa-external-link-alt"></i></a>, and:</li>
+                            <li class="fragment fade-left"><a target="_blank" href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5161-L5165">If no processor has future work scheduled <i class="fa fa-external-link-alt"></i>.</a></li>
+                            <li class="fragment fade-left">Source: <a href="https://github.com/golang/go/blob/ef8414101fba959c8df220ca0e544781029ce111/src/runtime/proc.go#L5068" target="_blank"><code class="highlight">checkdead()</code> <i class="fa fa-external-link-alt"></i></a></li>
+                        </ul>
+                    </li>
+                    <li class="fragment fade-left">Recall prior overview of the <a href="/talks/golang-concurrency-primitives.html#/1/0/3" target="_blank">scheduler <i class="fa fa-external-link-alt"></i></a></li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>Tools</h2>
             <div class="r-stack">
                 <div class="fragment fade-in-then-out">
                     <h3>pprof</h3>
@@ -1169,7 +1178,42 @@ Showing top 10 nodes out of 13
                     <img src="/assets/img/talks/golang-deadlocks/pprof_profile_graph.png" alt="pprof_profile_graph"/>
                 </div>
                 <div class="fragment fade-in-then-out">
-                     Detect potential deadlocks on inconsistent lock ordering with <a target="_blank" href="https://github.com/sasha-s/go-deadlock">sasha-s/go-deadlock <i class="fa fa-external-link-alt"></i></a>.
+                    <h3>panicparse</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>panicparse</h3>
+                    Friendlier tracing:
+                    <div data-markdown>
+```diff
+diff --git a/cmd/api/server/init.go b/cmd/api/server/init.go
+index 071bc782..7ee8c3c0 100644
+--- a/cmd/api/server/init.go
++++ b/cmd/api/server/init.go
+@@ -2,6 +2,7 @@ package api
+
+import (
++       "github.com/maruel/panicparse/v2/stack/webstack"
+
+@@ -65,6 +66,11 @@ func InitServer() *Server
+
++       a.Echo.GET("/debug/panicparse", func(c echo.Context) error {
++               webstack.SnapshotHandler(c.Response(), c.Request())
++               return nil
++       })
+```
+                    </div>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>panicparse</h3>
+                    Go to http://{localhost}/debug/panicparse:
+                    <img src="/assets/img/talks/golang-deadlocks/panicparse.png" alt="panicparse"/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sasha-s/go-deadlock</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sasha-s/go-deadlock</h3>
+                     Detect potential deadlocks on inconsistent lock ordering:
                     <pre><code data-trim data-noescape data-line-numbers>
 package main
 
@@ -1204,6 +1248,7 @@ func main() {
                     </code></pre>
                 </div>
                 <div class="fragment fade-in-then-out">
+                    <h3>sasha-s/go-deadlock</h3>
                     Output:
                     <pre><code data-trim data-noescape data-line-numbers>
 POTENTIAL DEADLOCK:
@@ -1232,6 +1277,7 @@ sasha-deadlock/main.go:14 main.main { A.Lock() } <<<<<
                     </code></pre>
                 </div>
                 <div class="fragment fade-in-then-out">
+                    <h3>sasha-s/go-deadlock</h3>
                     Who holds the lock:
                     <pre><code data-trim data-noescape data-line-numbers="2-4">
 POTENTIAL DEADLOCK:
@@ -1260,6 +1306,7 @@ sasha-deadlock/main.go:14 main.main { A.Lock() } <<<<<
                     </code></pre>
                 </div>
                 <div class="fragment fade-in-then-out">
+                    <h3>sasha-s/go-deadlock</h3>
                     Who wants the lock:
                     <pre><code data-trim data-noescape data-line-numbers="8-10">
 POTENTIAL DEADLOCK:
@@ -1288,6 +1335,7 @@ sasha-deadlock/main.go:14 main.main { A.Lock() } <<<<<
                     </code></pre>
                 </div>
                 <div class="fragment fade-in-then-out">
+                    <h3>sasha-s/go-deadlock</h3>
                     What everyone is doing:
                     <pre><code data-trim data-noescape data-line-numbers="13-23">
 POTENTIAL DEADLOCK:
@@ -1315,55 +1363,16 @@ sasha-deadlock/main.go:14 main.main { A.Lock() } <<<<<
 ~/.gvm/gos/go1.19/src/runtime/proc.go:258 runtime.main { // Once it does, it will exit. See issues 3934 and 20018. }
                     </code></pre>
                 </div>
-                <div class="fragment fade-in-then-out">
-                    Enable <code class="highlight">panicparse</code>:
-                    <div data-markdown>
-```diff
-diff --git a/cmd/api/server/init.go b/cmd/api/server/init.go
-index 071bc782..7ee8c3c0 100644
---- a/cmd/api/server/init.go
-+++ b/cmd/api/server/init.go
-@@ -2,6 +2,7 @@ package api
-
-import (
-+       "github.com/maruel/panicparse/v2/stack/webstack"
-
-@@ -65,6 +66,11 @@ func InitServer() *Server
-
-+       a.Echo.GET("/debug/panicparse", func(c echo.Context) error {
-+               webstack.SnapshotHandler(c.Response(), c.Request())
-+               return nil
-+       })
-```
-                    </div>
-                </div>
-                <div class="fragment fade-in-then-out">
-                    Go to http://{localhost}/debug/panicparse:
-                    <img src="/assets/img/talks/golang-deadlocks/panicparse.png" alt="panicparse"/>
-                </div>
-
             </div>
         </section>
-
         <section>
             <h2>Questions?</h2>
         </section>
         <section>
             TODO:
             - cover image
-            - have we covered all scenarios for deadlocks?
-              - WaitGroup that is never done: https://github.com/verticalscope/california/blob/dfbf2aeda3d0eca2e9fcf5e4b7c928734be92507/services/mlbq/main.go#L80-L84
             - in the cover: can we put the text in parenthesis in a subtitle?
-            - can the go runtime help us?
-            - how does the go runtime detect deadlocks?
-            - analyze deadlock stacktrace structure
-            - can we add a more realistic example for lock contention?
-            - https://medium.com/a-journey-with-go/go-how-are-deadlocks-triggered-2305504ac019
-            - pprof, any others?
-            - checkdead() needs lock on sched.lock
-            - GOTRACEBACK
             - grabbing RLock twice in same goroutine: https://github.com/sasha-s/go-deadlock#grabbing-an-rlock-twice-from-the-same-goroutine
-            - GCP profiler
         </section>
     </div>
 </div>
