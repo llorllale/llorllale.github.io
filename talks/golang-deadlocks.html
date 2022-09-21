@@ -982,6 +982,193 @@ created by main.main                                   <=== ancestor
             <h2>Breaking out</h2>
             <div class="r-stack">
                 <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    Your Swiss Army Knife.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    Enable it:
+                    <div data-markdown>
+```diff
+diff --git a/cmd/api/main.go b/cmd/api/main.go
+index bec2bf16..dab3d03f 100644
+--- a/cmd/api/main.go
++++ b/cmd/api/main.go
+@@ -2,11 +2,15 @@ package main
+
+ import (
++       "net/http"
++       _ "net/http/pprof"
+ )
+
+ func main() {
+@@ -16,6 +20,10 @@ func main() {
++       go func() {
++               log.Println(http.ListenAndServe(":6060", nil)) // debug handler
++       }()
+```
+                    </div>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    View stacktraces at <a href="http://localhost:6060/debug/pprof/goroutine?debug=1">http://localhost:6060/debug/pprof/goroutine?debug=1</a>:
+                    <div style="font-size: 20px;" data-markdown>
+```shell
+goroutine profile: total 29
+10 @ 0x43bff6 0x44bd9c 0x1132ba5 0x46ce01
+#    0x1132ba4    cloud.google.com/go/spanner.(*healthChecker).worker+0x344    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/cloud.google.com/go/spanner@v1.38.0/session.go:1556
+
+4 @ 0x43bff6 0x434a77 0x467349 0x4d7292 0x4d85fa 0x4d85e8 0x5d2189 0x5e4565 0x6645db 0x4afb5a 0x76b1ee 0x76b1a8 0x76ba55 0x8d3f7e 0x46ce01
+#    0x467348    internal/poll.runtime_pollWait+0x88                                      /home/llorllale/.gvm/gos/go1.19/src/runtime/netpoll.go:305
+#    0x4d7291    internal/poll.(*pollDesc).wait+0x31                                      /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:84
+#    0x4d85f9    internal/poll.(*pollDesc).waitRead+0x259                                 /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:89
+#    0x4d85e7    internal/poll.(*FD).Read+0x247                                           /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_unix.go:167
+#    0x5d2188    net.(*netFD).Read+0x28                                                   /home/llorllale/.gvm/gos/go1.19/src/net/fd_posix.go:55
+#    0x5e4564    net.(*conn).Read+0x44                                                    /home/llorllale/.gvm/gos/go1.19/src/net/net.go:183
+#    0x6645da    bufio.(*Reader).Read+0x1ba                                               /home/llorllale/.gvm/gos/go1.19/src/bufio/bufio.go:237
+#    0x4afb59    io.ReadAtLeast+0x99                                                      /home/llorllale/.gvm/gos/go1.19/src/io/io.go:332
+#    0x76b1ed    io.ReadFull+0x6d                                                         /home/llorllale/.gvm/gos/go1.19/src/io/io.go:351
+#    0x76b1a7    golang.org/x/net/http2.readFrameHeader+0x27                              /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/golang.org/x/net@v0.0.0-20220722155237-a158d28d115b/http2/frame.go:237
+#    0x76ba54    golang.org/x/net/http2.(*Framer).ReadFrame+0x94                          /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/golang.org/x/net@v0.0.0-20220722155237-a158d28d115b/http2/frame.go:498
+#    0x8d3f7d    google.golang.org/grpc/internal/transport.(*http2Client).reader+0x4bd    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/internal/transport/http2_client.go:1503
+
+4 @ 0x43bff6 0x44bd9c 0x8bfb55 0x8c0265 0x8c9c6a 0x46ce01
+#    0x8bfb54    google.golang.org/grpc/internal/transport.(*controlBuffer).get+0x114    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/internal/transport/controlbuf.go:408
+#    0x8c0264    google.golang.org/grpc/internal/transport.(*loopyWriter).run+0x84       /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/internal/transport/controlbuf.go:535
+#    0x8c9c69    google.golang.org/grpc/internal/transport.newHTTP2Client.func3+0x69     /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/internal/transport/http2_client.go:417
+
+4 @ 0x43bff6 0x44bd9c 0x93b2f3 0x46ce01
+#    0x93b2f2    google.golang.org/grpc.(*ccBalancerWrapper).watcher+0x72    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/balancer_conn_wrappers.go:112
+
+1 @ 0x4314f6 0x466ea5 0x98f895 0x98f6ad 0x98c5cb 0x137e905 0x137f49e 0x6e266f 0x6e4009 0x6e5a6c 0x6e1147 0x46ce01
+#    0x466ea4    runtime/pprof.runtime_goroutineProfileWithLabels+0x24    /home/llorllale/.gvm/gos/go1.19/src/runtime/mprof.go:846
+#    0x98f894    runtime/pprof.writeRuntimeProfile+0xb4                   /home/llorllale/.gvm/gos/go1.19/src/runtime/pprof/pprof.go:723
+#    0x98f6ac    runtime/pprof.writeGoroutine+0x4c                        /home/llorllale/.gvm/gos/go1.19/src/runtime/pprof/pprof.go:683
+#    0x98c5ca    runtime/pprof.(*Profile).WriteTo+0x14a                   /home/llorllale/.gvm/gos/go1.19/src/runtime/pprof/pprof.go:330
+#    0x137e904    net/http/pprof.handler.ServeHTTP+0x4a4                  /home/llorllale/.gvm/gos/go1.19/src/net/http/pprof/pprof.go:253
+#    0x137f49d    net/http/pprof.Index+0x13d                              /home/llorllale/.gvm/gos/go1.19/src/net/http/pprof/pprof.go:371
+#    0x6e266e    net/http.HandlerFunc.ServeHTTP+0x2e                      /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:2109
+#    0x6e4008    net/http.(*ServeMux).ServeHTTP+0x148                     /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:2487
+#    0x6e5a6b    net/http.serverHandler.ServeHTTP+0x30b                   /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:2947
+#    0x6e1146    net/http.(*conn).serve+0x606                             /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:1991
+
+1 @ 0x43bff6 0x434a77 0x467349 0x4d7292 0x4d85fa 0x4d85e8 0x5d2189 0x5e4565 0x6daedf 0x46ce01
+#    0x467348    internal/poll.runtime_pollWait+0x88           /home/llorllale/.gvm/gos/go1.19/src/runtime/netpoll.go:305
+#    0x4d7291    internal/poll.(*pollDesc).wait+0x31           /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:84
+#    0x4d85f9    internal/poll.(*pollDesc).waitRead+0x259      /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:89
+#    0x4d85e7    internal/poll.(*FD).Read+0x247                /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_unix.go:167
+#    0x5d2188    net.(*netFD).Read+0x28                        /home/llorllale/.gvm/gos/go1.19/src/net/fd_posix.go:55
+#    0x5e4564    net.(*conn).Read+0x44                         /home/llorllale/.gvm/gos/go1.19/src/net/net.go:183
+#    0x6daede    net/http.(*connReader).backgroundRead+0x3e    /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:678
+
+1 @ 0x43bff6 0x434a77 0x467349 0x4d7292 0x4dc514 0x4dc501 0x5d4295 0x5ed9a8 0x5eca1d 0x7aaf1d 0x66106d 0x6e5fc5 0x7a98c5 0x13637c9 0x1380925 0x43bc32 0x46ce01
+#    0x467348    internal/poll.runtime_pollWait+0x88                                      /home/llorllale/.gvm/gos/go1.19/src/runtime/netpoll.go:305
+#    0x4d7291    internal/poll.(*pollDesc).wait+0x31                                      /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:84
+#    0x4dc513    internal/poll.(*pollDesc).waitRead+0x233                                 /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:89
+#    0x4dc500    internal/poll.(*FD).Accept+0x220                                         /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_unix.go:614
+#    0x5d4294    net.(*netFD).accept+0x34                                                 /home/llorllale/.gvm/gos/go1.19/src/net/fd_unix.go:172
+#    0x5ed9a7    net.(*TCPListener).accept+0x27                                           /home/llorllale/.gvm/gos/go1.19/src/net/tcpsock_posix.go:142
+#    0x5eca1c    net.(*TCPListener).AcceptTCP+0x3c                                        /home/llorllale/.gvm/gos/go1.19/src/net/tcpsock.go:275
+#    0x7aaf1c    github.com/labstack/echo/v4.tcpKeepAliveListener.Accept+0x1c             /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/github.com/labstack/echo/v4@v4.9.0/echo.go:957
+#    0x66106c    crypto/tls.(*listener).Accept+0x2c                                       /home/llorllale/.gvm/gos/go1.19/src/crypto/tls/tls.go:66
+#    0x6e5fc4    net/http.(*Server).Serve+0x384                                           /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:3070
+#    0x7a98c4    github.com/labstack/echo/v4.(*Echo).StartServer+0x84                     /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/github.com/labstack/echo/v4@v4.9.0/echo.go:745
+#    0x13637c8    github.com/some-org/some-repo/cmd/api/server.(*Server).StartTLS+0xe8    /home/llorllale/dev/some-org/some-repo/cmd/api/server/server.go:36
+#    0x1380924    main.main+0x1e4                                                         /home/llorllale/dev/some-org/some-repo/cmd/api/main.go:47
+#    0x43bc31    runtime.main+0x211                                                       /home/llorllale/.gvm/gos/go1.19/src/runtime/proc.go:250
+
+1 @ 0x43bff6 0x434a77 0x467349 0x4d7292 0x4dc514 0x4dc501 0x5d4295 0x5ed9a8 0x5ecb7d 0x6e5fc5 0x6e5bfd 0x13806e5 0x13806b5 0x46ce01
+#    0x467348    internal/poll.runtime_pollWait+0x88           /home/llorllale/.gvm/gos/go1.19/src/runtime/netpoll.go:305
+#    0x4d7291    internal/poll.(*pollDesc).wait+0x31           /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:84
+#    0x4dc513    internal/poll.(*pollDesc).waitRead+0x233      /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:89
+#    0x4dc500    internal/poll.(*FD).Accept+0x220              /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_unix.go:614
+#    0x5d4294    net.(*netFD).accept+0x34                      /home/llorllale/.gvm/gos/go1.19/src/net/fd_unix.go:172
+#    0x5ed9a7    net.(*TCPListener).accept+0x27                /home/llorllale/.gvm/gos/go1.19/src/net/tcpsock_posix.go:142
+#    0x5ecb7c    net.(*TCPListener).Accept+0x3c                /home/llorllale/.gvm/gos/go1.19/src/net/tcpsock.go:288
+#    0x6e5fc4    net/http.(*Server).Serve+0x384                /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:3070
+#    0x6e5bfc    net/http.(*Server).ListenAndServe+0x7c        /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:2999
+#    0x13806e4    net/http.ListenAndServe+0x44                 /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:3255
+#    0x13806b4    main.main.func2+0x14                         /home/llorllale/dev/some-org/some-repo/cmd/api/main.go:24
+
+1 @ 0x43bff6 0x44bd9c 0x11338ed 0x46ce01
+#    0x11338ec    cloud.google.com/go/spanner.(*healthChecker).maintainer+0x40c    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/cloud.google.com/go/spanner@v1.38.0/session.go:1619
+
+1 @ 0x43bff6 0x44bd9c 0x9a10ad 0x46ce01
+#    0x9a10ac    go.opencensus.io/stats/view.(*worker).start+0xac    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/go.opencensus.io@v0.23.0/stats/view/worker.go:276
+
+1 @ 0x43bff6 0x44bd9c 0x9eda65 0x46ce01
+#    0x9eda64    github.com/facebookgo/muster.(*Client).worker+0x224    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/github.com/facebookgo/muster@v0.0.0-20150708232844-fd3d7953fd52/muster.go:165
+```
+                    </div>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    Trace execution:
+                    <ol>
+                        <li style="font-size: smaller;"><code>wget -O trace.out http://localhost:6060/debug/pprof/trace?seconds=5</code></li>
+                    </ol>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    Trace execution:
+                    <ol>
+                        <li style="font-size: smaller;"><code>wget -O trace.out http://localhost:6060/debug/pprof/trace?seconds=5</code></li>
+                        <li style="font-size: smaller;"><code>go tool trace ./trace.out</code></li>
+                    </ol>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    Trace execution:
+                    <img src="/assets/img/talks/golang-deadlocks/pprof_trace.png" alt="pprof_trace"/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    CPU profile:
+                     <ol>
+                        <li style="font-size: smaller;"><code>wget -O profile.out http://localhost:6060/debug/pprof/profile?seconds=5</code></li>
+                    </ol>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    CPU profile:
+                     <ol>
+                        <li style="font-size: smaller;"><code>wget -O profile.out http://localhost:6060/debug/pprof/profile?seconds=5</code></li>
+                        <li style="font-size: smaller;"><code>go tool pprof ./profile.out</code></li>
+                    </ol>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    CPU profile:
+                    <div data-markdown>
+```shell
+File: main-api
+Type: cpu
+Time: Sep 21, 2022 at 6:53am (EDT)
+Duration: 5s, Total samples = 100ms ( 2.00%)
+Entering interactive mode (type "help" for commands, "o" for options)
+(pprof) top
+Showing nodes accounting for 100ms, 100% of 100ms total
+Showing top 10 nodes out of 13
+    flat  flat%   sum%        cum   cum%
+    40ms 40.00% 40.00%       40ms 40.00%  runtime.epollwait
+    10ms 10.00% 50.00%       20ms 20.00%  cloud.google.com/go/spanner.(*healthChecker).worker.func1
+    10ms 10.00% 60.00%       10ms 10.00%  cloud.google.com/go/spanner.(*session).getNextCheck
+    10ms 10.00% 70.00%       70ms 70.00%  runtime.findRunnable
+    10ms 10.00% 80.00%       10ms 10.00%  runtime.makechan
+    10ms 10.00% 90.00%       50ms 50.00%  runtime.netpoll
+    10ms 10.00%   100%       10ms 10.00%  runtime.stealWork
+       0     0%   100%       30ms 30.00%  cloud.google.com/go/spanner.(*healthChecker).worker
+       0     0%   100%       70ms 70.00%  runtime.mcall
+       0     0%   100%       70ms 70.00%  runtime.park_m
+```
+                    </div>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>pprof</h3>
+                    CPU profile (graph):
+                    <img src="/assets/img/talks/golang-deadlocks/pprof_profile_graph.png" alt="pprof_profile_graph"/>
+                </div>
+                <div class="fragment fade-in-then-out">
                      Detect potential deadlocks on inconsistent lock ordering with <a target="_blank" href="https://github.com/sasha-s/go-deadlock">sasha-s/go-deadlock <i class="fa fa-external-link-alt"></i></a>.
                     <pre><code data-trim data-noescape data-line-numbers>
 package main
@@ -1154,118 +1341,7 @@ import (
                     Go to http://{localhost}/debug/panicparse:
                     <img src="/assets/img/talks/golang-deadlocks/panicparse.png" alt="panicparse"/>
                 </div>
-                <div class="fragment fade-in-then-out">
-                    Enable <code class="highlight">net/http/pprof</code>:
-                    <pre><code data-noescape data-trim>
-diff --git a/cmd/api/main.go b/cmd/api/main.go
-index bec2bf16..dab3d03f 100644
---- a/cmd/api/main.go
-+++ b/cmd/api/main.go
-@@ -2,11 +2,15 @@ package main
 
- import (
-+       "net/http"
-+       _ "net/http/pprof"
- )
-
- func main() {
-@@ -16,6 +20,10 @@ func main() {
-+       go func() {
-+               log.Println(http.ListenAndServe(":6060", nil)) // debug handler
-+       }()
-                    </code></pre>
-                </div>
-                <div class="fragment fade-in-then-out">
-                    Go to <a href="http://localhost:6060/debug/pprof/goroutine?debug=1">http://localhost:6060/debug/pprof/goroutine?debug=1</a>:
-                    <div style="font-size: 20px;" data-markdown>
-```shell
-goroutine profile: total 29
-10 @ 0x43bff6 0x44bd9c 0x1132ba5 0x46ce01
-#    0x1132ba4    cloud.google.com/go/spanner.(*healthChecker).worker+0x344    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/cloud.google.com/go/spanner@v1.38.0/session.go:1556
-
-4 @ 0x43bff6 0x434a77 0x467349 0x4d7292 0x4d85fa 0x4d85e8 0x5d2189 0x5e4565 0x6645db 0x4afb5a 0x76b1ee 0x76b1a8 0x76ba55 0x8d3f7e 0x46ce01
-#    0x467348    internal/poll.runtime_pollWait+0x88                                      /home/llorllale/.gvm/gos/go1.19/src/runtime/netpoll.go:305
-#    0x4d7291    internal/poll.(*pollDesc).wait+0x31                                      /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:84
-#    0x4d85f9    internal/poll.(*pollDesc).waitRead+0x259                                 /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:89
-#    0x4d85e7    internal/poll.(*FD).Read+0x247                                           /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_unix.go:167
-#    0x5d2188    net.(*netFD).Read+0x28                                                   /home/llorllale/.gvm/gos/go1.19/src/net/fd_posix.go:55
-#    0x5e4564    net.(*conn).Read+0x44                                                    /home/llorllale/.gvm/gos/go1.19/src/net/net.go:183
-#    0x6645da    bufio.(*Reader).Read+0x1ba                                               /home/llorllale/.gvm/gos/go1.19/src/bufio/bufio.go:237
-#    0x4afb59    io.ReadAtLeast+0x99                                                      /home/llorllale/.gvm/gos/go1.19/src/io/io.go:332
-#    0x76b1ed    io.ReadFull+0x6d                                                         /home/llorllale/.gvm/gos/go1.19/src/io/io.go:351
-#    0x76b1a7    golang.org/x/net/http2.readFrameHeader+0x27                              /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/golang.org/x/net@v0.0.0-20220722155237-a158d28d115b/http2/frame.go:237
-#    0x76ba54    golang.org/x/net/http2.(*Framer).ReadFrame+0x94                          /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/golang.org/x/net@v0.0.0-20220722155237-a158d28d115b/http2/frame.go:498
-#    0x8d3f7d    google.golang.org/grpc/internal/transport.(*http2Client).reader+0x4bd    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/internal/transport/http2_client.go:1503
-
-4 @ 0x43bff6 0x44bd9c 0x8bfb55 0x8c0265 0x8c9c6a 0x46ce01
-#    0x8bfb54    google.golang.org/grpc/internal/transport.(*controlBuffer).get+0x114    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/internal/transport/controlbuf.go:408
-#    0x8c0264    google.golang.org/grpc/internal/transport.(*loopyWriter).run+0x84       /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/internal/transport/controlbuf.go:535
-#    0x8c9c69    google.golang.org/grpc/internal/transport.newHTTP2Client.func3+0x69     /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/internal/transport/http2_client.go:417
-
-4 @ 0x43bff6 0x44bd9c 0x93b2f3 0x46ce01
-#    0x93b2f2    google.golang.org/grpc.(*ccBalancerWrapper).watcher+0x72    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/google.golang.org/grpc@v1.49.0/balancer_conn_wrappers.go:112
-
-1 @ 0x4314f6 0x466ea5 0x98f895 0x98f6ad 0x98c5cb 0x137e905 0x137f49e 0x6e266f 0x6e4009 0x6e5a6c 0x6e1147 0x46ce01
-#    0x466ea4    runtime/pprof.runtime_goroutineProfileWithLabels+0x24    /home/llorllale/.gvm/gos/go1.19/src/runtime/mprof.go:846
-#    0x98f894    runtime/pprof.writeRuntimeProfile+0xb4                   /home/llorllale/.gvm/gos/go1.19/src/runtime/pprof/pprof.go:723
-#    0x98f6ac    runtime/pprof.writeGoroutine+0x4c                        /home/llorllale/.gvm/gos/go1.19/src/runtime/pprof/pprof.go:683
-#    0x98c5ca    runtime/pprof.(*Profile).WriteTo+0x14a                   /home/llorllale/.gvm/gos/go1.19/src/runtime/pprof/pprof.go:330
-#    0x137e904    net/http/pprof.handler.ServeHTTP+0x4a4                  /home/llorllale/.gvm/gos/go1.19/src/net/http/pprof/pprof.go:253
-#    0x137f49d    net/http/pprof.Index+0x13d                              /home/llorllale/.gvm/gos/go1.19/src/net/http/pprof/pprof.go:371
-#    0x6e266e    net/http.HandlerFunc.ServeHTTP+0x2e                      /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:2109
-#    0x6e4008    net/http.(*ServeMux).ServeHTTP+0x148                     /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:2487
-#    0x6e5a6b    net/http.serverHandler.ServeHTTP+0x30b                   /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:2947
-#    0x6e1146    net/http.(*conn).serve+0x606                             /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:1991
-
-1 @ 0x43bff6 0x434a77 0x467349 0x4d7292 0x4d85fa 0x4d85e8 0x5d2189 0x5e4565 0x6daedf 0x46ce01
-#    0x467348    internal/poll.runtime_pollWait+0x88           /home/llorllale/.gvm/gos/go1.19/src/runtime/netpoll.go:305
-#    0x4d7291    internal/poll.(*pollDesc).wait+0x31           /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:84
-#    0x4d85f9    internal/poll.(*pollDesc).waitRead+0x259      /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:89
-#    0x4d85e7    internal/poll.(*FD).Read+0x247                /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_unix.go:167
-#    0x5d2188    net.(*netFD).Read+0x28                        /home/llorllale/.gvm/gos/go1.19/src/net/fd_posix.go:55
-#    0x5e4564    net.(*conn).Read+0x44                         /home/llorllale/.gvm/gos/go1.19/src/net/net.go:183
-#    0x6daede    net/http.(*connReader).backgroundRead+0x3e    /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:678
-
-1 @ 0x43bff6 0x434a77 0x467349 0x4d7292 0x4dc514 0x4dc501 0x5d4295 0x5ed9a8 0x5eca1d 0x7aaf1d 0x66106d 0x6e5fc5 0x7a98c5 0x13637c9 0x1380925 0x43bc32 0x46ce01
-#    0x467348    internal/poll.runtime_pollWait+0x88                                      /home/llorllale/.gvm/gos/go1.19/src/runtime/netpoll.go:305
-#    0x4d7291    internal/poll.(*pollDesc).wait+0x31                                      /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:84
-#    0x4dc513    internal/poll.(*pollDesc).waitRead+0x233                                 /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:89
-#    0x4dc500    internal/poll.(*FD).Accept+0x220                                         /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_unix.go:614
-#    0x5d4294    net.(*netFD).accept+0x34                                                 /home/llorllale/.gvm/gos/go1.19/src/net/fd_unix.go:172
-#    0x5ed9a7    net.(*TCPListener).accept+0x27                                           /home/llorllale/.gvm/gos/go1.19/src/net/tcpsock_posix.go:142
-#    0x5eca1c    net.(*TCPListener).AcceptTCP+0x3c                                        /home/llorllale/.gvm/gos/go1.19/src/net/tcpsock.go:275
-#    0x7aaf1c    github.com/labstack/echo/v4.tcpKeepAliveListener.Accept+0x1c             /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/github.com/labstack/echo/v4@v4.9.0/echo.go:957
-#    0x66106c    crypto/tls.(*listener).Accept+0x2c                                       /home/llorllale/.gvm/gos/go1.19/src/crypto/tls/tls.go:66
-#    0x6e5fc4    net/http.(*Server).Serve+0x384                                           /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:3070
-#    0x7a98c4    github.com/labstack/echo/v4.(*Echo).StartServer+0x84                     /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/github.com/labstack/echo/v4@v4.9.0/echo.go:745
-#    0x13637c8    github.com/some-org/some-repo/cmd/api/server.(*Server).StartTLS+0xe8    /home/llorllale/dev/some-org/some-repo/cmd/api/server/server.go:36
-#    0x1380924    main.main+0x1e4                                                         /home/llorllale/dev/some-org/some-repo/cmd/api/main.go:47
-#    0x43bc31    runtime.main+0x211                                                       /home/llorllale/.gvm/gos/go1.19/src/runtime/proc.go:250
-
-1 @ 0x43bff6 0x434a77 0x467349 0x4d7292 0x4dc514 0x4dc501 0x5d4295 0x5ed9a8 0x5ecb7d 0x6e5fc5 0x6e5bfd 0x13806e5 0x13806b5 0x46ce01
-#    0x467348    internal/poll.runtime_pollWait+0x88           /home/llorllale/.gvm/gos/go1.19/src/runtime/netpoll.go:305
-#    0x4d7291    internal/poll.(*pollDesc).wait+0x31           /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:84
-#    0x4dc513    internal/poll.(*pollDesc).waitRead+0x233      /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_poll_runtime.go:89
-#    0x4dc500    internal/poll.(*FD).Accept+0x220              /home/llorllale/.gvm/gos/go1.19/src/internal/poll/fd_unix.go:614
-#    0x5d4294    net.(*netFD).accept+0x34                      /home/llorllale/.gvm/gos/go1.19/src/net/fd_unix.go:172
-#    0x5ed9a7    net.(*TCPListener).accept+0x27                /home/llorllale/.gvm/gos/go1.19/src/net/tcpsock_posix.go:142
-#    0x5ecb7c    net.(*TCPListener).Accept+0x3c                /home/llorllale/.gvm/gos/go1.19/src/net/tcpsock.go:288
-#    0x6e5fc4    net/http.(*Server).Serve+0x384                /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:3070
-#    0x6e5bfc    net/http.(*Server).ListenAndServe+0x7c        /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:2999
-#    0x13806e4    net/http.ListenAndServe+0x44                 /home/llorllale/.gvm/gos/go1.19/src/net/http/server.go:3255
-#    0x13806b4    main.main.func2+0x14                         /home/llorllale/dev/some-org/some-repo/cmd/api/main.go:24
-
-1 @ 0x43bff6 0x44bd9c 0x11338ed 0x46ce01
-#    0x11338ec    cloud.google.com/go/spanner.(*healthChecker).maintainer+0x40c    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/cloud.google.com/go/spanner@v1.38.0/session.go:1619
-
-1 @ 0x43bff6 0x44bd9c 0x9a10ad 0x46ce01
-#    0x9a10ac    go.opencensus.io/stats/view.(*worker).start+0xac    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/go.opencensus.io@v0.23.0/stats/view/worker.go:276
-
-1 @ 0x43bff6 0x44bd9c 0x9eda65 0x46ce01
-#    0x9eda64    github.com/facebookgo/muster.(*Client).worker+0x224    /home/llorllale/.gvm/pkgsets/go1.19/global/pkg/mod/github.com/facebookgo/muster@v0.0.0-20150708232844-fd3d7953fd52/muster.go:165
-```
-                    </div>
-                </div>
             </div>
         </section>
 
