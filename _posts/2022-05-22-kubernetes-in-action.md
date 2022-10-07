@@ -111,9 +111,7 @@ users:
 
 # Kubernetes Resources
 
-All resources in Kubernetes are specified 
-
-Kubernetes is a massive beast. Here are (almost) all the resources I am aware of as a developer:
+Kubernetes is a massive beast. Here are (almost) all the resources I am aware of as a developer[^6]:
 
 ![image](/assets/img/books/k8s-in-action/k8s-config-components.svg)
 _Arrows indicate references to the target component._
@@ -128,8 +126,8 @@ _Arrows indicate references to the target component._
 _Containers_ are instances of pre-packaged images (or "snapshots") of executable software that can be run on any platform[^2],
 including Kubernetes. Pods are what run your application.
 
-In case the number of connections to the Pod node in the [diagram above](#kubernetes-resources): Pods are the workhorse
-of a Kubernetes application deployment. We'll explore most of those other objects in later sections.
+The _Pod_ resource is centered in the [diagram above](#kubernetes-resources) because it is the workhorse
+of a Kubernetes application deployment. We'll explore most of those other objects in later sections. TODO and later articles?
 
 The following example pod definition was created with `kubectl run nginx --image=nginx --dry-run=client -o yaml`
 (with a couple of unnecessary fields removed):
@@ -173,7 +171,7 @@ Pods are composed of one or more containers; these containers can be divided int
 Sadly, `kubect run` does not support specifying initContainers, so we have to add them to the Pod's spec manually:
 
 <details>
-  <summary markdown="span"></summary>
+  <summary markdown="span">Example pod with initContainers</summary>
   <div markdown="1">
 
 ```yaml
@@ -269,10 +267,11 @@ the book claims Minikube does not support this type of service. It does nowadays
 # Footnotes
 
 [^1]: It appears you can use code **au35luk** to get a <a target="_blank" href="https://github.com/luksa/kubernetes-in-action-2nd-edition#purchasing-the-book">35% discount <i class="fa fa-external-link-alt"></i></a>.
-[^2]: I will eventually dabble with this when I start working towards the [CKA](https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/).
+[^2]: TODO is this footnote still needed? I will eventually dabble with this when I start working towards the [CKA](https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/).
 [^3]: Fondly pronounced by many as "cube cuddle".
 [^4]: Other ways include a console offered by your cloud provider in cases where Kubernetes is available as a service.
 [^5]: We will explore the configuration in depth in a future article - stay tuned.
+[^6]: _As a developer_ I am not including objects that I typically will not configure, such as TODO
 
 The [Open Container Initiative](https://opencontainers.org/) standardizes the formats of container images and runtimes such that container images bundled by one vendor can be executed by the runtime of a different vendor. Kubernetes supports any container runtime that conforms to its [Container Runtime Interface](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md#specifications-design-documents-and-proposals). The Docker runtime was usually the one in use but as of v1.20 was [deprecated](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/), with removal finally occurring in v1.24. [You do not need to panic. It's not as dramatic as it sounds.](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
 
