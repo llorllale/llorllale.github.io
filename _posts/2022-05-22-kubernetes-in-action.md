@@ -61,50 +61,52 @@ Normally `kubectl` is automatically configured by your Kubernetes provisioner wi
 with the cluster. For example, here is what my configuration looks like after running
 [`minikube start`](https://minikube.sigs.k8s.io/docs/start/)[^5]:
 
-<details>
-    <summary markdown="span">Click to expand</summary>
-    <div markdown="1">
-
-```shell
-kubectl config view
-```
-
-```yaml
-apiVersion: v1
-clusters:
-- cluster:
-    certificate-authority: /home/llorllale/.minikube/ca.crt
-    extensions:
-    - extension:
-        last-update: Wed, 24 Aug 2022 21:33:37 EDT
-        provider: minikube.sigs.k8s.io
-        version: v1.25.2
-      name: cluster_info
-    server: https://192.168.49.2:8443
-  name: minikube
-contexts:
-- context:
-    cluster: minikube
-    extensions:
-    - extension:
-        last-update: Wed, 24 Aug 2022 21:33:37 EDT
-        provider: minikube.sigs.k8s.io
-        version: v1.25.2
-      name: context_info
-    namespace: default
-    user: minikube
-  name: minikube
-current-context: minikube
-kind: Config
-preferences: {}
-users:
-- name: minikube
-  user:
-    client-certificate: /home/llorllale/.minikube/profiles/minikube/client.crt
-    client-key: /home/llorllale/.minikube/profiles/minikube/client.key
-```
-</div>
-</details>
+> **Hands On**
+> 
+> View your local configuration:
+> 
+> <details>
+>     <summary markdown="span">Example</summary>
+>     <div markdown="1">
+> 
+> ```shell
+> $ kubectl config view
+> apiVersion: v1
+> clusters:
+> - cluster:
+>     certificate-authority: /home/llorllale/.minikube/ca.crt
+>     extensions:
+>     - extension:
+>         last-update: Wed, 24 Aug 2022 21:33:37 EDT
+>         provider: minikube.sigs.k8s.io
+>         version: v1.25.2
+>       name: cluster_info
+>     server: https://192.168.49.2:8443
+>   name: minikube
+> contexts:
+> - context:
+>     cluster: minikube
+>     extensions:
+>     - extension:
+>         last-update: Wed, 24 Aug 2022 21:33:37 EDT
+>         provider: minikube.sigs.k8s.io
+>         version: v1.25.2
+>       name: context_info
+>     namespace: default
+>     user: minikube
+>   name: minikube
+> current-context: minikube
+> kind: Config
+> preferences: {}
+> users:
+> - name: minikube
+>   user:
+>     client-certificate: /home/llorllale/.minikube/profiles/minikube/client.crt
+>     client-key: /home/llorllale/.minikube/profiles/minikube/client.key
+> ```
+> </div>
+> </details>
+{: .prompt-tip }
 
 > TODO talk about kubectl setups and plugins
 
@@ -116,7 +118,112 @@ Kubernetes is a massive beast. Here are (almost) all the resources I am aware of
 ![image](/assets/img/books/k8s-in-action/k8s-config-components.svg)
 _Arrows indicate references to the target component._
 
-## Pods
+## Namespace
+
+Don't let its distance and disconnection from other nodes in the diagram above mislead you:
+_[namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)_ is one of the most fundamental
+concepts in Kubernetes, as it lets developers and administrators separate different resources into logical groups.
+For example, environments such as _dev_, _staging_, and _prod_, can reside in different namespaces within the same K8S
+cluster. Another popular use of namespaces is to group resources belonging to applications with cross-cutting concerns.
+
+Beyond grouping user resources into logical units, it is important to understand that some built-in resources are
+scoped to the namespace they are declared in and others operate across the whole cluster. For those that are _namespaced_,
+the `default` namespace is the default if none is specified.
+
+> **Hands On**
+> 
+> Set namespace with `metadata.namespace`
+>
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```yaml
+> apiVersion: v1
+> kind: Pod
+> metadata:
+>   name: myapp
+>   namespace: mynamespace
+> spec:
+>   containers:
+>     - name: myapp
+>       image: nginx
+> ```
+>   </div>
+> </details>
+> <br/>
+> Set namespace with `kubectl`:
+> 
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```shell
+> $ kubectl run -n mynamespace myapp --image nginx --dry-run=client -o yaml
+> apiVersion: v1
+> kind: Pod
+> metadata:
+>   creationTimestamp: null
+>   labels:
+>     run: myapp
+>   name: myapp
+>   namespace: mynamespace
+> spec:
+>   containers:
+>   - image: nginx
+>     name: myapp
+>     resources: {}
+>   dnsPolicy: ClusterFirst
+>   restartPolicy: Always
+> status: {}
+> ```
+>   </div>
+> </details>
+> <br/>
+> View all namespaces for a given cluster/context:
+> 
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+>
+> ```shell
+> $ kubectl get ns
+> NAME              STATUS   AGE
+> default           Active   63d
+> istio-system      Active   59d
+> kube-node-lease   Active   63d
+> kube-public       Active   63d
+> kube-system       Active   63d
+> ```
+>   </div>
+> </details>
+> <br/>
+> List all resources and see which are namespaced and which aren't:
+> 
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```shell
+> $ kubectl api-resources
+> NAME                              SHORTNAMES   APIVERSION                             NAMESPACED   KIND
+> bindings                                       v1                                     true         Binding
+> componentstatuses                 cs           v1                                     false        ComponentStatus
+> configmaps                        cm           v1                                     true         ConfigMap
+> endpoints                         ep           v1                                     true         Endpoints
+> events                            ev           v1                                     true         Event
+> limitranges                       limits       v1                                     true         LimitRange
+> namespaces                        ns           v1                                     false        Namespace
+> nodes                             no           v1                                     false        Node
+> persistentvolumeclaims            pvc          v1                                     true         PersistentVolumeClaim
+> persistentvolumes                 pv           v1                                     false        PersistentVolume
+> ...
+> ```
+>   </div>
+> </details>
+{: .prompt-tip }
+
+## Pod
 
 > _Pods_ are the smallest deployable units of computing that you can create and manage in Kubernetes.
 > Pods are composed of one or more containers with shared storage and network resources.
@@ -162,13 +269,10 @@ Pods are composed of one or more containers; these containers can be divided int
 * [initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/): similar to regular containers
   except that [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) runs them first
   before regular containers. All `initContainers` must run successfully for regular containers to be started. Their use case
-  is obvious: use them to execute utilities or setup scripts not present in the regular container.
+  is obvious: use them to execute utilities or setup scripts not present in the regular container. Sadly, `kubect run`
+  does not support specifying initContainers, so we have to add them to the Pod's spec manually.
 * [ephemeralContainers](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container):
   these containers are added to the pod at runtime when debugging a Pod. They are not part of the Pod's original manifest.
-
-### `initContainers`
-
-Sadly, `kubect run` does not support specifying initContainers, so we have to add them to the Pod's spec manually:
 
 <details>
   <summary markdown="span">Example pod with initContainers</summary>
@@ -271,7 +375,7 @@ the book claims Minikube does not support this type of service. It does nowadays
 [^3]: Fondly pronounced by many as "cube cuddle".
 [^4]: Other ways include a console offered by your cloud provider in cases where Kubernetes is available as a service.
 [^5]: We will explore the configuration in depth in a future article - stay tuned.
-[^6]: _As a developer_ I am not including objects that I typically will not configure, such as TODO
+[^6]: _As a developer_ I am not including objects that I typically will not configure, such as TODO. These are usually non-namespaced resources.
 
 The [Open Container Initiative](https://opencontainers.org/) standardizes the formats of container images and runtimes such that container images bundled by one vendor can be executed by the runtime of a different vendor. Kubernetes supports any container runtime that conforms to its [Container Runtime Interface](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md#specifications-design-documents-and-proposals). The Docker runtime was usually the one in use but as of v1.20 was [deprecated](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/), with removal finally occurring in v1.24. [You do not need to panic. It's not as dramatic as it sounds.](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
 
