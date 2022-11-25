@@ -16,8 +16,6 @@ tags:
 - book
 ---
 
-TODO this whole section
-
 ![cover](/assets/img/books/k8s-in-action/cover.jpg){: .left height="300" width="200" }
 Written by [Marko Lukša](https://www.linkedin.com/in/marko-luk%C5%A1a-a71205/),
 [Kubernetes In Action](https://www.manning.com/books/kubernetes-in-action) is a fantastic book covering all operational
@@ -35,11 +33,9 @@ _Check out some other books I've read on the [bookshelf](/bookshelf/)._
 
 # Summary
 
-TODO
-
 _Kubernetes In Action_'s roadmap takes us on a journey with the end goal of developing _Kubia_ - a contrived sample application - while exploring
-the core concepts of Kubernetes in depth. Beyond the basics, the book explains the architecture, how pods
-communicate with each other, how to secure your K8S cluster, pod affinity and anti-affinity, tolerations, the API service,
+the core concepts of Kubernetes in depth. Beyond the basics, some of the things this book explains are Kubernetes' architecture,
+how pods communicate with each other, how to secure your K8S cluster, pod affinity and anti-affinity, tolerations, the API service,
 and how to extend Kubernetes with custom resources. The reader is kept engaged with practical exercises throughout by
 applying configurations and testing them. These configurations and extra resources can be found in the book's
 [GitHub repository](https://github.com/luksa/kubernetes-in-action).
@@ -63,7 +59,7 @@ with the cluster. For example, here is what my configuration looks like after ru
 
 > **Hands On**
 > 
-> View your local configuration:
+> Run `kubectl config view` to view your local configuration:
 > 
 > <details>
 >     <summary markdown="span">Example</summary>
@@ -108,8 +104,43 @@ with the cluster. For example, here is what my configuration looks like after ru
 > </details>
 {: .prompt-tip }
 
-> TODO talk about kubectl setups and plugins
+`kubectl` supports [drop-in plugins](https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/) since `v1.12`. 
+The community has provided many plugins, some of which I find immensely useful. I'll write about these in a future article.
 
+# System components
+
+![components](/assets/img/books/k8s-in-action/components-of-k8s.webp)
+_From Chapter 1, section 1.3.3 **Understanding the architecture of a Kubernetes cluster**_
+
+There are two sets of components:
+
+## Control Plane components
+
+These components are in charge of monitoring and responding to events in the cluster.
+
+* The **API server** ([`kube-apiserver`](https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/apiserver))
+  exposes a REST API and is what `kubectl` interacts with then you execute its commands. The other components
+  also discover the state of the cluster via the API server.
+* The **Controller Manager** ([`kube-controller-manager`](https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/controller-manager))
+  is the control loop that reconciles the cluster's actual state with the desired state.
+* The **Scheduler** ([`kube-scheduler`](https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/kube-scheduler))
+  assigns Pods unto nodes for them to run. There are many reasons why a pod may not be scheduled unto nodes and some
+  of those reasons can have side effects, such as an automatic scale up of the cluster's node pool. You will probably
+  spend a lot of time figuring out the scheduler and looking at Pod event logs at some point or another.
+* **etcd** is the distributed key-value store used by most Kubernetes clusters.
+
+## Node components
+
+These are components that run in each node and are used to realize the configurations sent out by the components in the
+control plane.
+
+* [`kubelet`](https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/kubelet) runs containers specified
+  in Pod specs and monitors their health.
+* [`kube-proxy`](https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/kube-proxy) is a network proxy
+  that implements part of the Kubernetes _Service_ concept. It takes the network rules configured by the control plane components
+  and applies them locally to the node's IP routing rules. It has different modes of operation; there is a nice explanation
+  [here](https://kubernetes.io/docs/concepts/services-networking/service/#configuration) about its modes.
+* `Container Runtime` are what run the containers (eg. docker, containerd).
 
 # Kubernetes Resources
 
@@ -117,6 +148,9 @@ Kubernetes is a massive beast. Here are (almost) all the resources I am aware of
 
 ![image](/assets/img/books/k8s-in-action/k8s-config-components.svg)
 _Arrows indicate references to the target component._
+
+_Kubernetes In Action_ covers **all** of these objects and more. I am only going to gloss over a handful of the most
+important ones.
 
 ## Namespace
 
@@ -126,13 +160,15 @@ concepts in Kubernetes, as it lets developers and administrators separate differ
 For example, environments such as _dev_, _staging_, and _prod_, can reside in different namespaces within the same K8S
 cluster. Another popular use of namespaces is to group resources belonging to applications with cross-cutting concerns.
 
+Adding a connection to `Namespace` from every resource that references it would make the diagram unwieldy!
+
 Beyond grouping user resources into logical units, it is important to understand that some built-in resources are
 scoped to the namespace they are declared in and others operate across the whole cluster. For those that are _namespaced_,
 the `default` namespace is the default if none is specified.
 
 > **Hands On**
 > 
-> Set namespace with `metadata.namespace`
+> Declaratively set namespace with `metadata.namespace`:
 >
 > <details>
 >   <summary markdown="span">Example</summary>
@@ -230,11 +266,15 @@ the `default` namespace is the default if none is specified.
 > 
 > -- [Kubernetes/Pods](https://kubernetes.io/docs/concepts/workloads/pods/)
 
-_Containers_ are instances of pre-packaged images (or "snapshots") of executable software that can be run on any platform[^2],
+_Containers_ are instances of pre-packaged images (or "snapshots") of executable software that can be run on any platform,
 including Kubernetes. Pods are what run your application.
 
 The _Pod_ resource is centered in the [diagram above](#kubernetes-resources) because it is the workhorse
-of a Kubernetes application deployment. We'll explore most of those other objects in later sections. TODO and later articles?
+of a Kubernetes application deployment. We'll explore most of those other objects in later sections.
+
+> _All roads lead to Pods_.
+> 
+> -- me
 
 The following example pod definition was created with `kubectl run nginx --image=nginx --dry-run=client -o yaml`
 (with a couple of unnecessary fields removed):
@@ -269,7 +309,7 @@ Pods are composed of one or more containers; these containers can be divided int
 * [initContainers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/): similar to regular containers
   except that [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) runs them first
   before regular containers. All `initContainers` must run successfully for regular containers to be started. Their use case
-  is obvious: use them to execute utilities or setup scripts not present in the regular container. Sadly, `kubect run`
+  is obvious: use them to execute utilities or setup scripts not present in the regular container. Sadly, `kubectl run`
   does not support specifying initContainers, so we have to add them to the Pod's spec manually.
 * [ephemeralContainers](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container):
   these containers are added to the pod at runtime when debugging a Pod. They are not part of the Pod's original manifest.
@@ -308,6 +348,178 @@ spec:
 </div>
 </details>
 
+## Deployment
+
+[Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) manage the state of a set of one or
+more pods. This is important for a number of use cases, such as scaling the number of pods or updating the application
+workload's version.
+
+> You describe a desired state in a Deployment, and the Deployment _Controller_ changes the actual state to the desired
+> state at a controlled rate.
+> 
+> -- [Kubernetes/Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
+
+Under the hood a _deployment_ uses a [ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/)
+to manage a set of pods for a given state. The latter deprecates and replaced the old 
+[ReplicationController](https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/).
+
+> A ReplicaSet's purpose is to maintain a stable set of replica Pods running at any given time. As such, it is often
+> used to guarantee the availability of a specified number of identical Pods.
+> 
+> -- [Kubernetes/ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/)
+
+## StatefulSet
+
+[StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) are very similar to _Deployments_
+with a big distinction: each pod managed by a _StatefulSet_ has a unique persistent identity which you can match to specific
+storage _volumes_ (these are described further down). This makes the _StatefulSet_ particularly useful for distributed applications
+such as CouchDB, Redis, Hyperledger Fabric, and many others.
+
+## HorizontalPodAutoscaler
+
+> Horizontal scaling means that the response to increased load is to deploy more Pods. This is different from vertical
+> scaling, which for Kubernetes would mean assigning more resources (for example: memory or CPU) to the Pods that are
+> already running for the workload.
+> 
+> -- [Kubernetes/HorizontalPodAutoscaler Walkthrough](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/)
+
+_HPAs_ will update the `.spec.replicas` of _Deployments_ and _StatefulSets_ using metrics collected from the
+[Metrics Server](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits),
+as input. The _Metrics Server_ is the default source of container metrics for autoscaling pipelines.
+
+> Kubernetes does not provide vertical pod autoscalers out of the box[^7]. You can install the
+> [autoscaler](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler) developed within the Kubernetes
+> project umbrella, or you may use your K8S provider's offering, such as
+> [GKE's Vertical Pod autoscaling](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler).
+> A vertical pod autoscaler will automatically update the Pod's resource
+> [requests and limits](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits).
+{: .prompt-tip }
+
+## Service
+
+Exposing services in Kubernetes both within and without would be more cumbersome if not for
+[Service](https://kubernetes.io/docs/concepts/services-networking/service/) objects. Pods are not permanent resources;
+_Services_ fill in the gap by providing a stable DNS name for a set of Pods. The target pods are selected by matching
+labels.
+
+There are four types of services:
+
+* `ClusterIP` (default): the service will only be reachable within the cluster.
+* `NodePort`: allocates a port number on every node (`.spec.ports[*].nodePort`) and forwards incoming traffic to the port
+  exposed by the service (`.spec.ports[*].port`). _NodePort_ services 
+* `LoadBalancer`: exposes the service to traffic originating from outside the cluster. The machinery used to do this
+  depends on the platform.
+* `ExternalName`: these map DNS names from within the cluster to external names. In other words, the cluster's DNS
+  service will return `CNAME` records instead of `A` records for queries targeting the service's name.
+
+> TODO talk about headless services
+
+> **Hands On**
+> 
+> Use `kubectl create svc` to create services imperatively:
+> 
+> <details>
+>     <summary markdown="span">Example</summary>
+>     <div markdown="1">
+> 
+> ```shell
+> # Create a service of type `ClusterIP`
+> $ kubectl create svc clusterip mysvc --tcp=8080:7001 --dry-run=client -o yaml
+> apiVersion: v1
+> kind: Service
+> metadata:
+>   labels:
+>     app: mysvc
+>     name: mysvc
+> spec:
+>   ports:
+>   - name: 8080-7001
+>     port: 8080
+>     protocol: TCP
+>     targetPort: 7001
+>   selector:
+>     app: mysvc
+>   type: ClusterIP
+> ```
+> </div>
+> </details>
+> 
+> The problem with `kubectl create svc` is that you can't specify a `selector`.
+> [Services without selectors](https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors)
+> have their uses, but you are more likely to want to point your service to a set of pods in your cluster.
+> For this use case you can either write the spec manually or use `kubectl expose`.
+> 
+> <details>
+>     <summary markdown="span">Example</summary>
+>     <div markdown="1">
+> 
+> ```shell
+> # Expose a deployment named `webapp`. Note the `selector` automatically added:
+> $ kubectl expose deploy webapp --type ClusterIP --name mysvc --port 8080 --dry-run=client -o yaml
+> apiVersion: v1
+> kind: Service
+> metadata:
+>   labels:
+>     app: webapp
+> name: mysvc
+> spec:
+>   ports:
+>   - port: 8080
+>     protocol: TCP
+>     targetPort: 8080
+>   selector:
+>     app: webapp
+>   type: ClusterIP
+> ```
+> </div>
+> </details>
+{: .prompt-tip }
+
+## Ingress
+
+> Ingress exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Traffic routing is
+> controlled by rules defined on the Ingress resource.
+> 
+> -- [Kubernetes/What is Ingress?](https://kubernetes.io/docs/concepts/services-networking/ingress/#what-is-ingress)
+
+An `Ingress` is an L7 proxy tailored for HTTP(S) services, allowing request routing based on simple rules such as
+path prefixes[^8]. Note that if you want to expose your services outside your cluster with something other than HTTP, you'd
+have to use `Service`s of type `NodePort` or `LoadBalancer`.
+
+> **Hands On**
+> 
+> Use `kubectl create ing` to create an Ingress imperatively:
+> 
+> <details>
+>     <summary markdown="span">Example</summary>
+>     <div markdown="1">
+> 
+> ```shell
+> # Create an Ingress that directs incoming traffic on `www.example.com` to a backend service `webapp` on port 8080:
+> $ kubectl create ing myingress --rule="www.example.com/webapp*=webapp:8080" --dry-run=client -o yaml
+> apiVersion: networking.k8s.io/v1
+> kind: Ingress
+> metadata:
+>   name: myingress
+> spec:
+>   rules:
+>   - host: www.example.com
+>     http:
+>       paths:
+>       - backend:
+>           service:
+>             name: webapp
+>             port:
+>               number: 8080
+>         path: /webapp
+>         pathType: Prefix
+> ```
+> </div>
+> </details>
+{: .prompt-tip }
+
+> TODO talk about controllers vs resources in general. Will probably lead in to CRDs.
+
 # Chapters
 
 ## Introducing Kubernetes
@@ -327,7 +539,7 @@ options: GKE or Minikube. This is where the book starts showing its age a little
 [no longer suitable to run GKE on](https://serverfault.com/a/1015902/496858).
 
 Next, we run the image on our K8S cluster using imperative commands. Here we observe some outdated technical details
-as well: generators were [removed from `kubectl run`](https://github.com/kubernetes/kubernetes/pull/87077) quite a while ago[^2].
+as well: generators were [removed from `kubectl run`](https://github.com/kubernetes/kubernetes/pull/87077) quite a while ago.
 
 One of the things that makes this book great is that it doesn't just command the reader to run CLIs and be done with it; it
 actually takes its time to explain what happens _behind the scenes_ as you run those commands.
@@ -371,11 +583,12 @@ the book claims Minikube does not support this type of service. It does nowadays
 # Footnotes
 
 [^1]: It appears you can use code **au35luk** to get a <a target="_blank" href="https://github.com/luksa/kubernetes-in-action-2nd-edition#purchasing-the-book">35% discount <i class="fa fa-external-link-alt"></i></a>.
-[^2]: TODO is this footnote still needed? I will eventually dabble with this when I start working towards the [CKA](https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/).
 [^3]: Fondly pronounced by many as "cube cuddle".
 [^4]: Other ways include a console offered by your cloud provider in cases where Kubernetes is available as a service.
 [^5]: We will explore the configuration in depth in a future article - stay tuned.
-[^6]: _As a developer_ I am not including objects that I typically will not configure, such as TODO. These are usually non-namespaced resources.
+[^6]: _As a developer_ I am not including objects that I'm not likely to encounter in may day-to-day, such as [`TokenReview`](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-review-v1/) or [`EndpointSlice`](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/). These will typically be objects configured by an administrator role, or perhaps are objects managed by the underlying K8S provider, such as GKE.
+[^7]: I've never used a _VPA_. That said, they might help size your nodes adequately, or have you consider making your pods more efficient.
+[^8]: For more advanced routing you should probably make use of a service mesh such as Istio (see [VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/#VirtualService)), or you can explore the [Gateway API](https://gateway-api.sigs.k8s.io/) that recently [graduated to beta status](https://kubernetes.io/blog/2022/07/13/gateway-api-graduates-to-beta/)!
 
 The [Open Container Initiative](https://opencontainers.org/) standardizes the formats of container images and runtimes such that container images bundled by one vendor can be executed by the runtime of a different vendor. Kubernetes supports any container runtime that conforms to its [Container Runtime Interface](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md#specifications-design-documents-and-proposals). The Docker runtime was usually the one in use but as of v1.20 was [deprecated](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/), with removal finally occurring in v1.24. [You do not need to panic. It's not as dramatic as it sounds.](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
 
