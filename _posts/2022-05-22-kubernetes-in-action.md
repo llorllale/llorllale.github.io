@@ -24,7 +24,7 @@ of the book, published in December 2017, and although dated around the edges and
 the different components that make up Kubernetes and how they work is timeless. I highly recommend this book to anyone
 looking for any serious learning of Kubernetes. This book's shelf life is pretty long despite Kubernetes' active
 development - I would think it can only be supplanted by the
-[second edition coming out later this year](https://www.manning.com/books/kubernetes-in-action-second-edition)[^1].
+[second edition coming out early next year](https://www.manning.com/books/kubernetes-in-action-second-edition)[^1].
 
 _Kubernetes In Action_ provided me with solid a theoretical and practical foundation on Kubernetes, enabling me to earn
 the [Certified Kubernetes Application Developer](/posts/ckad) badge.
@@ -276,32 +276,34 @@ of a Kubernetes application deployment. We'll explore most of those other object
 > 
 > -- me
 
-The following example pod definition was created with `kubectl run nginx --image=nginx --dry-run=client -o yaml`
-(with a couple of unnecessary fields removed):
-
-<details>
-    <summary markdown="span">Simple Pod definition</summary>
-    <div markdown="1">
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    run: nginx
-  name: nginx
-spec:
-  containers:
-  - image: nginx
-    name: nginx
-  dnsPolicy: ClusterFirst
-  restartPolicy: Always
-```
-</div>
-</details>
-
-This pod defines a single container named _nginx_ with container image also _nginx_. The pod's name also happens to be
-_nginx_.
+> **Hands On**
+> 
+> Use `kubectl run` to create and run Pods imperatively:
+> 
+> <details>
+>     <summary markdown="span">Example</summary>
+>     <div markdown="1">
+> 
+> ```shell
+> # This pod defines a single container named _nginx_ with container image also _nginx_.
+> # The pod's name also happens to be _nginx_.
+> $ kubectl run nginx --image=nginx --dry-run=client -o yaml
+> apiVersion: v1
+> kind: Pod
+> metadata:
+>   labels:
+>     run: nginx
+>   name: nginx
+> spec:
+>   containers:
+>   - image: nginx
+>     name: nginx
+>   dnsPolicy: ClusterFirst
+>   restartPolicy: Always
+> ```
+>   </div>
+> </details>
+{: .prompt-tip }
 
 Pods are composed of one or more containers; these containers can be divided into three types:
 
@@ -314,39 +316,44 @@ Pods are composed of one or more containers; these containers can be divided int
 * [ephemeralContainers](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container):
   these containers are added to the pod at runtime when debugging a Pod. They are not part of the Pod's original manifest.
 
-<details>
-  <summary markdown="span">Example pod with initContainers</summary>
-  <div markdown="1">
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-pod
-  labels:
-    app: nginx
-spec:
-  initContainers:
-    - name: init
-      image: busybox
-      command: ["echo", "<DOCTYPE !html><body><h1>Hello, World!</h1</body>", ">", "/usr/share/nginx/html/index.html"]
-      volumeMounts:
-        - name: content
-          mountPath: /usr/share/nginx/html
-  containers:
-    - name: app
-      image: nginx
-      ports:
-        - containerPort: 80
-      volumeMounts:
-        - name: content
-          mountPath: /usr/share/nginx/html
-  volumes:
-    - name: content
-      emptyDir: {}
-```
-</div>
-</details>
+> **Hands On**
+> 
+> `kubectl run` cannot add `initContainers` to a Pod. You must add them yourself:
+>
+> <details>
+>   <summary markdown="span">Example pod with initContainers</summary>
+>   <div markdown="1">
+> 
+> ```yaml
+> apiVersion: v1
+> kind: Pod
+> metadata:
+>   name: my-pod
+>   labels:
+>     app: nginx
+> spec:
+>   initContainers:
+>     - name: init
+>       image: busybox
+>       command: ["echo", "<DOCTYPE !html><body><h1>Hello, World!</h1</body>", ">", "/usr/share/nginx/html/index.html"]
+>       volumeMounts:
+>         - name: content
+>           mountPath: /usr/share/nginx/html
+>   containers:
+>     - name: app
+>       image: nginx
+>       ports:
+>         - containerPort: 80
+>       volumeMounts:
+>         - name: content
+>           mountPath: /usr/share/nginx/html
+>   volumes:
+>     - name: content
+>       emptyDir: {}
+> ```
+> </div>
+> </details>
+{: .prompt-tip }
 
 ## Deployment
 
@@ -368,12 +375,213 @@ to manage a set of pods for a given state. The latter deprecates and replaced th
 > 
 > -- [Kubernetes/ReplicaSet](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/)
 
+> **Hands On**
+> 
+> Create a deployment with `kubectl create deploy`:
+>
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```shell
+> $ kubectl create deploy mydeploy --image=nginx --replicas=2 --dry-run=client -o yaml
+> apiVersion: apps/v1
+> kind: Deployment
+> metadata:
+>   labels:
+>     app: mydeploy
+>     name: mydeploy
+> spec:
+>   replicas: 2
+>   selector:
+>     matchLabels:
+>       app: mydeploy
+> template:
+>   metadata:
+>   labels:
+>     app: mydeploy
+>   spec:
+>     containers:
+>     - image: nginx
+>       name: nginx
+> ```
+> </div>
+> </details>
+{: .prompt-tip }
+
+
 ## StatefulSet
 
 [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) are very similar to _Deployments_
 with a big distinction: each pod managed by a _StatefulSet_ has a unique persistent identity which you can match to specific
 storage _volumes_ (these are described further down). This makes the _StatefulSet_ particularly useful for distributed applications
 such as CouchDB, Redis, Hyperledger Fabric, and many others.
+
+> **Note:** `kubectl` does not have a command to create statefulsets.
+{: .prompt-tip }
+
+> **Hands On**
+> 
+> Here's a simple example from the [Kubernetes docs](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#components):
+> 
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```yaml
+> apiVersion: apps/v1
+> kind: StatefulSet
+> metadata:
+>   name: web
+> spec:
+>   selector:
+>     matchLabels:
+>       app: nginx # has to match .spec.template.metadata.labels
+>   serviceName: "nginx"
+>   replicas: 3 # by default is 1
+>   minReadySeconds: 10 # by default is 0
+>   template:
+>     metadata:
+>       labels:
+>         app: nginx # has to match .spec.selector.matchLabels
+>     spec:
+>       terminationGracePeriodSeconds: 10
+>       containers:
+>       - name: nginx
+>         image: registry.k8s.io/nginx-slim:0.8
+>         ports:
+>         - containerPort: 80
+>           name: web
+>         volumeMounts:
+>         - name: www
+>           mountPath: /usr/share/nginx/html
+>   volumeClaimTemplates:
+>   - metadata:
+>       name: www
+>     spec:
+>       accessModes: [ "ReadWriteOnce" ]
+>       storageClassName: "my-storage-class"
+>       resources:
+>         requests:
+>           storage: 1Gi
+> ```
+>   </div>
+> </details>
+> 
+> Deploying the above in my local `minikube` cluster using `kubectl apply -f <filename>` we can see:
+> 
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```shell
+> $ kubectl get statefulset web
+> NAME   READY   AGE
+> web    3/3     80s
+> ```
+> 
+> ```shell
+> $ kubectl get po
+> NAME    READY   STATUS    RESTARTS   AGE
+> web-0   1/1     Running   0          2m53s
+> web-1   1/1     Running   0          2m33s
+> web-2   1/1     Running   0          2m13s
+> ```
+>   </div>
+> </details>
+> 
+> If you describe the pods you'll realize each has an associated `PersistentVolumeClaim`:
+> 
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```shell
+> $ kubectl describe po web-2
+> Name:             web-2
+> Namespace:        default
+> Priority:         0
+> Service Account:  default
+> Node:             minikube/192.168.49.2
+> ...
+> Volumes:
+>   www:
+>     Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+>     ClaimName:  www-web-2
+>     ReadOnly:   false
+> ...
+> ```
+>   </div>
+> </details>
+> 
+> And when describing that PVC you'll see it's associated with a unique `PersistentVolume`:
+> 
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```shell
+> $ kubectl describe pvc www-web-2
+> Name:          www-web-2
+> Namespace:     default
+> ...
+> Volume:        pvc-33f94fdb-9e17-4ee6-a2e7-0b10d88699e3
+> ...
+> Used By:       web-2
+> ...
+> ```
+>   </div>
+> </details>
+> 
+> Scaling the statefulset down does not delete the PVs:
+> 
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```shell
+> $ kubectl scale statefulset web --replicas 1
+> statefulset.apps/web scaled
+> $ kubectl get po
+> NAME    READY   STATUS    RESTARTS   AGE
+> web-0   1/1     Running   0          91m
+> $ kubectl get pvc
+> NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+> www-web-0   Bound    pvc-bb53c1eb-de59-477f-b82e-606cdfe234ba   1Mi        RWO            standard       91m
+> www-web-1   Bound    pvc-e8ea7850-58da-460f-9fb2-315627708cc3   1Mi        RWO            standard       91m
+> www-web-2   Bound    pvc-33f94fdb-9e17-4ee6-a2e7-0b10d88699e3   1Mi        RWO            standard       91m
+> $ kubectl get pv
+> NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM               STORAGECLASS   REASON   AGE
+> pvc-33f94fdb-9e17-4ee6-a2e7-0b10d88699e3   1Gi        RWO            Delete           Bound    default/www-web-2   standard                91m
+> pvc-bb53c1eb-de59-477f-b82e-606cdfe234ba   1Gi        RWO            Delete           Bound    default/www-web-0   standard                92m
+> pvc-e8ea7850-58da-460f-9fb2-315627708cc3   1Gi        RWO            Delete           Bound    default/www-web-1   standard                91m
+> ```
+>   </div>
+> </details>
+> 
+> Scaling the statefulset back up does not create new PVCs; the existing PVCs are assigned to the pods in order:
+> 
+> <details>
+>   <summary markdown="span">Example</summary>
+>   <div markdown="1">
+> 
+> ```shell
+> $ kubectl scale statefuleset web --replicas 3
+> statefulset.apps/web scaled
+>  $ kubectl get po
+> NAME    READY   STATUS    RESTARTS   AGE
+> web-0   1/1     Running   0          96m
+> web-1   1/1     Running   0          47s
+> web-2   1/1     Running   0          27s
+> $ kubectl get pvc
+> NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+> www-web-0   Bound    pvc-bb53c1eb-de59-477f-b82e-606cdfe234ba   1Mi        RWO            standard       97m
+> www-web-1   Bound    pvc-e8ea7850-58da-460f-9fb2-315627708cc3   1Mi        RWO            standard       97m
+> www-web-2   Bound    pvc-33f94fdb-9e17-4ee6-a2e7-0b10d88699e3   1Mi        RWO            standard       96m
+> ```
+>   </div>
+> </details>
+{: .prompt-tip }
 
 ## HorizontalPodAutoscaler
 
@@ -387,7 +595,7 @@ _HPAs_ will update the `.spec.replicas` of _Deployments_ and _StatefulSets_ usin
 [Metrics Server](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits),
 as input. The _Metrics Server_ is the default source of container metrics for autoscaling pipelines.
 
-> Kubernetes does not provide vertical pod autoscalers out of the box[^7]. You can install the
+> **Note:** Kubernetes does not provide vertical pod autoscalers out of the box[^7]. You can install the
 > [autoscaler](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler) developed within the Kubernetes
 > project umbrella, or you may use your K8S provider's offering, such as
 > [GKE's Vertical Pod autoscaling](https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler).

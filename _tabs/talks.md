@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Talks
-icon: fas fa-speaker-deck
+icon: fas fa-comment
 order: 7
 date: 2022-04-01
 comments: false
