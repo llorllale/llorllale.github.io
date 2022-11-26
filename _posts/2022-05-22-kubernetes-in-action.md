@@ -355,6 +355,15 @@ Pods are composed of one or more containers; these containers can be divided int
 > </details>
 {: .prompt-tip }
 
+## PersistentVolumeClaims and PersistentVolumes
+
+A `PersistentVolume` provisions storage for use by Pods. They can be created either statically or dynamically.
+A `PersistentVolumeClaim` is a request for a `PersistentVolume`. A PVC specifies the amount of storage requested and, if
+a suitable PV is found then the PVC is _bound_ to the PV, otherwise a new PV _may_ be provisioned, depending on the PVC's
+`StorageClass`. A Pod (or a `PodTemplate`) can reference a PVC and mount it in one or more of its containers.
+
+We'll cover PVs and PVCs in depth in a later article.
+
 ## Deployment
 
 [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) manage the state of a set of one or
@@ -728,66 +737,6 @@ have to use `Service`s of type `NodePort` or `LoadBalancer`.
 
 > TODO talk about controllers vs resources in general. Will probably lead in to CRDs.
 
-# Chapters
-
-## Introducing Kubernetes
-
-Standard fare for books on Kubernetes; the chapter describes the breakdown of monoliths into microservices and the need
-for a system like Kubernetes.
-
-To my surprise it also explains what makes container isolation possible:
-[linux namespaces](https://man7.org/linux/man-pages/man7/namespaces.7.html).
-
-## First steps with Docker and Kubernetes
-
-This chapter explains several of Docker's core concepts, such as how images are built, run, and pushed to the image registry.
-
-Next we run our basic Docker image as a container in Kubernetes, but first we are given a choice as to our Kubernetes runtime
-options: GKE or Minikube. This is where the book starts showing its age a little: the GCP machine type `f1-micro` is
-[no longer suitable to run GKE on](https://serverfault.com/a/1015902/496858).
-
-Next, we run the image on our K8S cluster using imperative commands. Here we observe some outdated technical details
-as well: generators were [removed from `kubectl run`](https://github.com/kubernetes/kubernetes/pull/87077) quite a while ago.
-
-One of the things that makes this book great is that it doesn't just command the reader to run CLIs and be done with it; it
-actually takes its time to explain what happens _behind the scenes_ as you run those commands.
-
-We then expose the pod via a `LoadBalancer` service using `kubectl`. The instructions still work fine for GKE; however,
-the book claims Minikube does not support this type of service. It does nowadays, but you need to run
-[`minikube tunnel`](https://minikube.sigs.k8s.io/docs/commands/tunnel/) to expose them on your host.
-
-## Pods: running containers in Kubernetes
-
-## Replication and other controllers: deploying managed pods
-
-## Services: enabling clients to discover and talk to pods
-
-## Volumes: attaching disk storage to containers
-
-## ConfigMaps and Secrets: configuring applications
-
-## Accessing pod metadata and other resources from applications
-
-## Deployments: updating applications declaratively
-
-## StatefulSets: deploying replicated stateful applications
-
-## Understanding Kubernetes internals
-
-## Securing the Kubernetes API server
-
-## Securing cluster nodes and the network
-
-## Managing pods' computational resources
-
-## Automatic scaling of pods and cluster nodes
-
-## Advanced scheduling
-
-## Best practices for developing apps
-
-## Extending Kubernetes
-
 # Footnotes
 
 [^1]: It appears you can use code **au35luk** to get a <a target="_blank" href="https://github.com/luksa/kubernetes-in-action-2nd-edition#purchasing-the-book">35% discount <i class="fa fa-external-link-alt"></i></a>.
@@ -797,7 +746,3 @@ the book claims Minikube does not support this type of service. It does nowadays
 [^6]: _As a developer_ I am not including objects that I'm not likely to encounter in may day-to-day, such as [`TokenReview`](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-review-v1/) or [`EndpointSlice`](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/). These will typically be objects configured by an administrator role, or perhaps are objects managed by the underlying K8S provider, such as GKE.
 [^7]: I've never used a _VPA_. That said, they might help size your nodes adequately, or have you consider making your pods more efficient.
 [^8]: For more advanced routing you should probably make use of a service mesh such as Istio (see [VirtualService](https://istio.io/latest/docs/reference/config/networking/virtual-service/#VirtualService)), or you can explore the [Gateway API](https://gateway-api.sigs.k8s.io/) that recently [graduated to beta status](https://kubernetes.io/blog/2022/07/13/gateway-api-graduates-to-beta/)!
-
-The [Open Container Initiative](https://opencontainers.org/) standardizes the formats of container images and runtimes such that container images bundled by one vendor can be executed by the runtime of a different vendor. Kubernetes supports any container runtime that conforms to its [Container Runtime Interface](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md#specifications-design-documents-and-proposals). The Docker runtime was usually the one in use but as of v1.20 was [deprecated](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/), with removal finally occurring in v1.24. [You do not need to panic. It's not as dramatic as it sounds.](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
-
-Apparently, back then with generators, `kubectl run` would create a [`ReplicationController`](https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/) to manage the pod's instances. While not outright deprecated, _ReplicationController_ are no longer recommended - use [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) instead.
