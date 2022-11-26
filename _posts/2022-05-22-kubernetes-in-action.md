@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Kubernetes In Action
-date: 2022-05-22 11:00:00 -0400
+date: 2022-11-26 09:00:00 -0500
 author: George Aristy
 categories:
 - books
@@ -426,6 +426,8 @@ with a big distinction: each pod managed by a _StatefulSet_ has a unique persist
 storage _volumes_ (these are described further down). This makes the _StatefulSet_ particularly useful for distributed applications
 such as CouchDB, Redis, Hyperledger Fabric, and many others.
 
+**Note:** a [Headless Service](#service) is required for `StatefulSet`s.
+
 > **Note:** `kubectl` does not have a command to create statefulsets.
 {: .prompt-tip }
 
@@ -629,7 +631,10 @@ There are four types of services:
 * `ExternalName`: these map DNS names from within the cluster to external names. In other words, the cluster's DNS
   service will return `CNAME` records instead of `A` records for queries targeting the service's name.
 
-> TODO talk about headless services
+There is a special kind of `Service` called a
+[Headless Service](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services) that does not
+perform load-balancing and does not provide a single address for the backing Pods. Instead, it serves to list IP addresses
+of all the Pods it selects. This type of `Service` are required for [`StatefulSets`](#statefulset).
 
 > **Hands On**
 > 
@@ -734,8 +739,6 @@ have to use `Service`s of type `NodePort` or `LoadBalancer`.
 > </div>
 > </details>
 {: .prompt-tip }
-
-> TODO talk about controllers vs resources in general. Will probably lead in to CRDs.
 
 # Footnotes
 
