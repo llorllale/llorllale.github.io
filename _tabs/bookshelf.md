@@ -15,6 +15,10 @@ A collection of books I've read over time.
 
 ## 2022
 
+### Q2
+
+* [Kubernetes In Action](/posts/kubernetes-in-action)
+
 ### Q1
 
 * [Getting to Yes: Negotiating Agreement Without Giving In](/posts/getting-to-yes)

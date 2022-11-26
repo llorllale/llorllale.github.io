@@ -14,6 +14,7 @@ tags:
 - tdd
 - extreme-programming
 - xp
+- book
 ---
 
 ![cover](/assets/img/books/test-driven-development/front-cover.jpg){: .left height="300" width="200" }

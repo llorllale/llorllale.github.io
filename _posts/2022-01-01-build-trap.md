@@ -7,7 +7,7 @@ categories:
 - books
 - product-management
 tags:
-- books
+- book
 - product-management
 ---
 
