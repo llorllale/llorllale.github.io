@@ -30,7 +30,7 @@ allowing them to communicate with each other on `localhost` via the `loopback` i
 the workloads running inside the containers, this IP network looks like any other and no changes are necessary.
 
 ![k8s-pod-container-network](/assets/img/k8s-networking/k8s-pod-container-network.svg)
-_Simplified view of inter-Pod and intra-Pod network communication._
+_Conceptual view of inter-Pod and intra-Pod network communication._
 
 Recall from a previous article that as far as K8s components go, the
 [kubelet and the kube-proxy](/posts/kubernetes-in-action/#node-components) are responsible for creating pods and applying 
@@ -53,7 +53,7 @@ Let's dive into how everything is set up such that a message from a container in
 pod across the network in a different host in a Linux-based cluster.
 
 > I will be using a simple K8s cluster I set up with [`kind`](https://github.com/kubernetes-sigs/kind) in the walkthrough below.
-> `kind` creates docker a container per K8s node. You may choose a similar sandbox, machine instances in the cloud, or any
+> `kind` creates a docker container per K8s node. You may choose a similar sandbox, machine instances in the cloud, or any
 > other setup that simulates at least two host machines connected to the same network.
 {: .prompt-info }
 
@@ -90,7 +90,7 @@ With this we have one or more processes that can communicate over `localhost`. T
 > Create a `net` namespace with a client and a server:
 >
 > <details>
->   <summary markdown="span">Example</summary>
+>   <summary markdown="span">On a host we'll call "client"</summary>
 >   <div markdown="1">
 >
 > ```shell
@@ -105,12 +105,15 @@ With this we have one or more processes that can communicate over `localhost`. T
 >    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 > 
 > # initialize `loopback` (`lo` is shorthand for "loopback")
-> root@kind-control-plane:/# ip netns exec client ip link set dev lo up
-> root@kind-control-plane:/# ip netns exec client python3 -m http.server 8080
-> Serving HTTP on :: port 8080 (http://[::]:8080/) ...
+> root@kind-control-plane:/# ip netns exec client ip link set lo up
 > 
-> # in a separate terminal session:
-> root@kind-control-plane:/# ip netns exec client curl localhost:8080
+> # start the server
+> root@kind-control-plane:/# ip netns exec client nohup python3 -m http.server 8080 &
+> [1] 29509
+> root@kind-control-plane:/# nohup: ignoring input and appending output to 'nohup.out'
+> 
+> # invoke the server
+> root@kind-control-plane:/# ip netns exec client curl -m 2 localhost:8080
 > <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 > <html>
 > <head>
@@ -140,7 +143,7 @@ with it.
 > **Hands On**
 >
 > <details>
->   <summary markdown="span">Example</summary>
+>   <summary markdown="span">On the same "client" host</summary>
 >   <div markdown="1">
 >
 > ```shell
@@ -150,9 +153,10 @@ with it.
 > server
 > client
 > 
-> # now stop the server you had running before and restart it, this time in the new `server` namespace
-> root@kind-control-plane:/# ip netns exec server python3 -m http.server 8080
-> Serving HTTP on :: port 8080 (http://[::]:8080/) ...
+> # stop the server you had running before and restart it in the new `server` namespace
+> root@kind-control-plane:/# ip netns exec server nohup python3 -m http.server 8080 &
+> [1] 29538
+> root@kind-control-plane:/# nohup: ignoring input and appending output to 'nohup.out'
 > 
 > # attempt to call this server from the client namespace
 > root@kind-control-plane:/# ip netns exec client curl localhost:8080 
@@ -164,7 +168,8 @@ with it.
 
 ![disconnected-pods](/assets/img/k8s-networking/disconnected-pods.svg)
 
-We don't have an address for `server` from within the `client` namespace yet. All `client` has is `localhost` (dev `lo`) which is
+We don't have an address for `server` from within the `client` namespace yet. These two network namespaces are completely
+disconnected from each other. All `client` and `server` have is `localhost` (dev `lo`) which is
 always assigned `127.0.0.1`. We need another interface between these two namespaces for communication to happen.
 
 Linux has the concept of _Virtual Ethernet Devices_ ([veth](https://man7.org/linux/man-pages/man4/veth.4.html)) that act
@@ -175,59 +180,91 @@ a _veth_ device and connect our two namespaces like this:
 ![pods-veth](/assets/img/k8s-networking/pods-veth.svg)
 
 However, consider that `veth` are _point-to-point_ devices with just two ends and, remembering our requirement that all
-Pods must communicate with each other without NAT, you will need  $$ n(n-1)/2 $$ _veth_ pairs, where $$ n $$ is the
+Pods must communicate with each other without NAT, we would need  $$ n(n-1)/2 $$ _veth_ pairs, where $$ n $$ is the
 number of namespaces. This becomes unwieldy pretty quickly. We will use a
-[bridge](https://wiki.linuxfoundation.org/networking/bridge) to solve this problem. A bridge lets us connect any
+[bridge](https://wiki.linuxfoundation.org/networking/bridge) instead to solve this problem. A bridge lets us connect any
 number of devices to it and will happily route traffic between them, turning our architecture into a hub-and-spoke and
 reducing the number of _veth_ pairs to just $$ n $$.
 
 > **Hands On**
 >
 > <details>
->   <summary markdown="span">Example</summary>
+>   <summary markdown="span">On the "client" host</summary>
 >   <div markdown="1">
 >
 > ```shell
 > # create a bridge
 > root@kind-control-plane:/# ip link add bridge type bridge
 > 
-> # bring the bridge up
-> root@kind-control-plane:/# ip link set bridge up
-> 
 > # create veth pairs
 > root@kind-control-plane:/# ip link add veth-client type veth peer name veth-clientbr
 > root@kind-control-plane:/# ip link add veth-server type veth peer name veth-serverbr
 > 
-> # attach one end of the veth devices to their respective namespaces
+> # connect one end of the veth devices to the bridge
+> root@kind-control-plane:/# ip link set veth-clientbr master bridge
+> root@kind-control-plane:/# ip link set veth-serverbr master bridge
+> 
+> # attach the other end of the veth devices to their respective namespaces
 > root@kind-control-plane:/# ip link set veth-client netns client 
 > root@kind-control-plane:/# ip link set veth-server netns server 
 > 
-> # discover the new devices in the client and server namespaces, and bring them up
-> root@kind-control-plane:/# ip netns exec client ip addr
-> 1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN group default qlen 1000
-> link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-> 29: veth-client@if28: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
-> link/ether b2:7f:b1:48:de:18 brd ff:ff:ff:ff:ff:ff link-netnsid 0
-> root@kind-control-plane:/# ip netns exec client ip link set dev veth-client up
-> root@kind-control-plane:/# ip netns exec server ip addr
-> 1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN group default qlen 1000
-> link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-> 31: veth-server@if30: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
-> link/ether da:39:69:ca:49:83 brd ff:ff:ff:ff:ff:ff link-netnsid 0
-> root@kind-control-plane:/# ip netns exec server ip link set dev veth-server up
-> 
-> # now connect the other ends of the veth devices to the bridge and bring their devices up
-> root@kind-control-plane:/# ip link set veth-clientbr master bridge
-> root@kind-control-plane:/# ip link set veth-clientbr up
-> root@kind-control-plane:/# ip link set veth-serverbr master bridge
-> root@kind-control-plane:/# ip link set veth-serverbr up
-> 
-> # now let's assign IP addresses to the interfaces inside the client and server namespaces
+> # assign IP addresses to the bridge and our new interfaces inside the client and server namespaces
 > root@kind-control-plane:/# ip netns exec client ip addr add 10.0.0.1/24 dev veth-client
 > root@kind-control-plane:/# ip netns exec server ip addr add 10.0.0.2/24 dev veth-server
-> 
-> # let's also assign an IP address to the bridge
 > root@kind-control-plane:/# ip addr add 10.0.0.0/24 dev bridge
+>
+> # bring our devices up
+> root@kind-control-plane:/# ip netns exec client ip link set veth-client up
+> root@kind-control-plane:/# ip netns exec server ip link set veth-server up
+> root@kind-control-plane:/# ip link set veth-clientbr up
+> root@kind-control-plane:/# ip link set veth-serverbr up
+> root@kind-control-plane:/# ip link set bridge up
+> 
+> # confirm state of our interfaces:
+> # state of client interfaces
+> root@kind-control-plane:/# ip netns exec client ip addr
+> 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+>     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+>     inet 127.0.0.1/8 scope host lo
+>        valid_lft forever preferred_lft forever
+>     inet6 ::1/128 scope host
+>        valid_lft forever preferred_lft forever
+> 16: veth-client@if15: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+>     link/ether 5e:0e:50:4b:f5:32 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+>     inet 10.0.0.1/24 scope global veth-client
+>        valid_lft forever preferred_lft forever
+>     inet6 fe80::5c0e:50ff:fe4b:f532/64 scope link
+>        valid_lft forever preferred_lft forever
+> 
+> # state of server interfaces
+> root@kind-control-plane:/# ip netns exec server ip addr
+> ...
+> 18: veth-server@if17: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+>     link/ether 46:d0:61:5d:7c:9a brd ff:ff:ff:ff:ff:ff link-netnsid 0
+>     inet 10.0.0.2/24 scope global veth-server
+>        valid_lft forever preferred_lft forever
+>     inet6 fe80::44d0:61ff:fe5d:7c9a/64 scope link
+>        valid_lft forever preferred_lft forever
+> 
+> # state of host interfaces
+> root@kind-control-plane:/# ip addr     
+> ...
+> 11: eth0@if12: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
+>     link/ether 02:42:ac:12:00:02 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+>     inet 172.18.0.2/16 brd 172.18.255.255 scope global eth0
+>        valid_lft forever preferred_lft forever
+>     inet6 fc00:f853:ccd:e793::2/64 scope global nodad
+>        valid_lft forever preferred_lft forever
+>     inet6 fe80::42:acff:fe12:2/64 scope link
+>        valid_lft forever preferred_lft forever
+> 14: bridge: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+>     link/ether ba:21:cf:c1:62:52 brd ff:ff:ff:ff:ff:ff
+>     inet 10.0.0.0/24 scope global bridge
+>        valid_lft forever preferred_lft forever
+> 15: veth-clientbr@if16: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master bridge state UP group default qlen 1000
+>     link/ether ba:21:cf:c1:62:52 brd ff:ff:ff:ff:ff:ff link-netns client
+> 17: veth-serverbr@if18: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master bridge state UP group default qlen 1000
+>     link/ether c2:52:97:04:03:2c brd ff:ff:ff:ff:ff:ff link-netns server
 > 
 > # test connectivity
 > root@kind-control-plane:/# ip netns exec client curl -v 10.0.0.2:8080
@@ -246,19 +283,6 @@ reducing the number of _veth_ pairs to just $$ n $$.
 > <hr>
 > </body>
 > </html>
-> 
-> # you can also ping the bridge device itself:
-> root@kind-control-plane:/# ip netns exec client ping 10.0.0.0 -c 5
-> PING 10.0.0.0 (10.0.0.0) 56(84) bytes of data.
-> 64 bytes from 10.0.0.0: icmp_seq=1 ttl=64 time=0.079 ms
-> 64 bytes from 10.0.0.0: icmp_seq=2 ttl=64 time=0.080 ms
-> 64 bytes from 10.0.0.0: icmp_seq=3 ttl=64 time=0.098 ms
-> 64 bytes from 10.0.0.0: icmp_seq=4 ttl=64 time=0.041 ms
-> 64 bytes from 10.0.0.0: icmp_seq=5 ttl=64 time=0.074 ms
-> 
-> --- 10.0.0.0 ping statistics ---
-> 5 packets transmitted, 5 received, 0% packet loss, time 4100ms
-> rtt min/avg/max/mdev = 0.041/0.074/0.098/0.018 ms
 > ```
 >   </div>
 > </details>
@@ -274,7 +298,7 @@ We have just connected two network namespaces on the same host.
 
 ## Connecting network namespaces on different hosts
 
-The only way in and out of our host in our example above is via the `eth0` interface. For outbound traffic, the packets
+The only way in and out of our hosts in our example above is via their `eth0` interface. For outbound traffic, the packets
 first need to reach `eth0` before being forwarded to the physical network. For inbound packets, `eth0` needs to forward
 those to the bridge where they will be routed to the respective namespace interfaces. Let's first separate our two
 namespaces before going further.
@@ -289,16 +313,16 @@ Let's first clean up everything we've done so far[^7]:
 >   <summary markdown="span">Steps</summary>
 >   <div markdown="1">
 >
->   ```shell
->   # delete the namespaces
->   root@kind-control-plane:/# ip netns del client
->   root@kind-control-plane:/# ip netns del server
-> 
->   # delete the veth and bridge devices
->   root@kind-control-plane:/# ip link del veth-client
->   root@kind-control-plane:/# ip link del veth-server
->   root@kind-control-plane:/# ip link del bridge
->   ```
+> ```shell
+> # delete the namespaces
+> root@kind-control-plane:/# ip netns del client
+> root@kind-control-plane:/# ip netns del server
+>
+> # delete the veth and bridge devices
+> root@kind-control-plane:/# ip link del veth-client
+> root@kind-control-plane:/# ip link del veth-server
+> root@kind-control-plane:/# ip link del bridge
+> ```
 >   </div>
 > </details>
 {: .prompt-info }
@@ -313,38 +337,19 @@ Let's now set up our namespaces in different hosts.
 >   <summary markdown="span">On the "client" host</summary>
 >   <div markdown="1">
 >
->   ```shell
->   # configuration
->   root@kind-control-plane:/# ip netns add client
->   root@kind-control-plane:/# ip link add bridge
->   root@kind-control-plane:/# ip link add veth-client type veth peer name veth-clientbr
->   root@kind-control-plane:/# ip link set veth-client netns client
->   root@kind-control-plane:/# ip link set veth-clientbr master bridge
->   root@kind-control-plane:/# ip addr add 10.0.0.0/24 dev bridge
->   root@kind-control-plane:/# ip netns exec client ip addr add 10.0.0.1/24 dev veth-client
->   root@kind-control-plane:/# ip netns exec client ip link set lo up
->   root@kind-control-plane:/# ip netns exec client ip link set veth-client up
->   root@kind-control-plane:/# ip link set bridge up
->   root@kind-control-plane:/# ip link set veth-clientbr up
-> 
->   # confirm route to host
->   root@kind-control-plane:/# ip netns exec client ping -c 1 172.18.0.2
->   PING 172.18.0.2 (172.18.0.2) 56(84) bytes of data.
->   64 bytes from 172.18.0.2: icmp_seq=1 ttl=64 time=0.087 ms
->
->   --- 172.18.0.2 ping statistics ---
->   1 packets transmitted, 1 received, 0% packet loss, time 0ms
->   rtt min/avg/max/mdev = 0.087/0.087/0.087/0.000 ms
-> 
->   # confirm route to internet
->   root@kind-control-plane:/# ip netns exec client curl -m 2 google.com
->   <HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
->   <TITLE>301 Moved</TITLE></HEAD><BODY>
->   <H1>301 Moved</H1>
->   The document has moved
->   <A HREF="http://www.google.com/">here</A>.
->   </BODY></HTML>
->   ```
+> ```shell
+> root@kind-control-plane:/# ip netns add client
+> root@kind-control-plane:/# ip link add bridge type bridge
+> root@kind-control-plane:/# ip link add veth-client type veth peer name veth-clientbr
+> root@kind-control-plane:/# ip link set veth-client netns client
+> root@kind-control-plane:/# ip link set veth-clientbr master bridge
+> root@kind-control-plane:/# ip addr add 10.0.0.0/24 dev bridge
+> root@kind-control-plane:/# ip netns exec client ip addr add 10.0.0.1/24 dev veth-client
+> root@kind-control-plane:/# ip netns exec client ip link set lo up
+> root@kind-control-plane:/# ip netns exec client ip link set veth-client up
+> root@kind-control-plane:/# ip link set bridge up
+> root@kind-control-plane:/# ip link set veth-clientbr up
+> ```
 >   </div>
 > </details>
 >
@@ -352,43 +357,24 @@ Let's now set up our namespaces in different hosts.
 >   <summary markdown="span">On the "server" host</summary>
 >   <div markdown="1">
 >
->   ```shell
->   # configuration
->   root@kind-worker:/# ip netns add server
->   root@kind-worker:/# ip link add bridge
->   root@kind-worker:/# ip link add veth-server type veth peer name veth-serverbr
->   root@kind-worker:/# ip link set veth-server netns server
->   root@kind-worker:/# ip link set veth-serverbr master bridge
->   root@kind-worker:/# ip addr add 10.0.0.0/24 dev bridge
->   root@kind-worker:/# ip netns exec server ip addr add 10.0.0.2/24 dev veth-server
->   root@kind-worker:/# ip netns exec server ip link set lo up
->   root@kind-worker:/# ip netns exec server ip link set veth-server up
->   root@kind-worker:/# ip link set bridge up
->   root@kind-worker:/# ip link set veth-serverbr up
+> ```shell
+> root@kind-worker:/# ip netns add server
+> root@kind-worker:/# ip link add bridge type bridge
+> root@kind-worker:/# ip link add veth-server type veth peer name veth-serverbr
+> root@kind-worker:/# ip link set veth-server netns server
+> root@kind-worker:/# ip link set veth-serverbr master bridge
+> root@kind-worker:/# ip addr add 10.0.0.0/24 dev bridge
+> root@kind-worker:/# ip netns exec server ip addr add 10.0.0.2/24 dev veth-server
+> root@kind-worker:/# ip netns exec server ip link set lo up
+> root@kind-worker:/# ip netns exec server ip link set veth-server up
+> root@kind-worker:/# ip link set bridge up
+> root@kind-worker:/# ip link set veth-serverbr up
 > 
->   # run the server
->   root@kind-worker:/# ip netns exec server nohup python3 -m http.server 8080 &
->   [1] 1314
->   nohup: ignoring input and appending output to 'nohup.out'
-> 
->   # confirm route host -> server
->   root@kind-worker:/# curl -m 2 10.0.0.2:8080
->   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
->   <html>
->   <head>
->   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
->   <title>Directory listing for /</title>
->   </head>
->   <body>
->   <h1>Directory listing for /</h1>
->   <hr>
->   <ul>
->   ...
->   </ul>
->   <hr>
->   </body>
->   </html>
->   ```
+> # run the server
+> root@kind-worker:/# ip netns exec server nohup python3 -m http.server 8080 &
+> [1] 1314
+> nohup: ignoring input and appending output to 'nohup.out'
+> ```
 >   </div>
 > </details>
 {: .prompt-info}
@@ -398,7 +384,7 @@ _Namespaces on different hosts. The host interfaces (`eth0`) are on the same net
 
 Now that everything is set up, let's first tackle outbound traffic.
 
-### Connecting network namespaces to the physical network
+### From our network namespaces to the physical network
 
 First let's see if we can reach `eth0` on each host:
 
@@ -466,13 +452,11 @@ Google's side has been reduced to a simple machine instance to simplify the illu
 
 ![pods-outbound.svg](/assets/img/k8s-networking/pods-outbound.svg)
 
-Next up, let's try to communicate to a server running inside one of our namespaces from outside.
+Next up, let's try to communicate to our server from the `client` namespace.
 
-### Inbound
+### From the physical network to our network namespaces
 
-
-
-We can try to reach `server` from `client` now that everything is set up and verified and see that it doesn't work:
+If we try to reach `server` from `client` we can see that it doesn't work:
 
 ```shell
 root@kind-control-plane:/# ip netns exec client curl -m 2 10.0.0.2:8080
@@ -482,12 +466,11 @@ curl: (28) Connection timed out after 2001 milliseconds
 Let's dig in with `tcpdump`.
 
 Open a terminal window and, since we aren't sure what path the packets are flowing through, run `tcpdump -nn -e -l -i any`
-on host `172.18.0.2`.
-**Warning:** the output will be very verbose because `tcpdump` will listen on _all_ interfaces.
+on host `172.18.0.2`. **Friendly warning:** the output will be very verbose because `tcpdump` will listen on _all_ interfaces.
 
-On the same host `172.18.0.2` try to curl the `server` from the `client` namespace again with
-`ip netns exec client curl 10.0.0.2:8080`. After it times out again, stop `tcpdump` by pressing `Ctrl+C` and review
-the output. Search for `10.0.0.2`, our destination address. You should see lines like the following:
+On the same host `172.18.0.2`, try to curl the server from the `client` namespace again with
+`ip netns exec client curl -m 2 10.0.0.2:8080`. After it times out again, stop `tcpdump` by pressing `Ctrl+C` and review
+the output. Search for `10.0.0.2`, our destination address. You should spot some lines like the following:
 
 ```
 15:05:35.754605 bridge Out ifindex 5 a6:93:c7:0c:96:b2 ethertype ARP (0x0806), length 48: Request who-has 10.0.0.2 tell 10.0.0.0, length 28
@@ -504,11 +487,11 @@ namespaces. It is possible to
 at [Layer 2](https://en.wikipedia.org/wiki/Data_link_layer), but we are not doing that today. Kubernetes' networking model
 is built on Layer 3 and up, and so must our solution.
 
-We will configure IP routing[^2] rules to route `client` traffic to `server`. Let's configure a manual route for `10.0.0.2`
+We will configure IP routing[^2] rules to route `client` traffic to `server`. Let's first configure a manual route for `10.0.0.2`
 on the client host:
 
 ```shell
-# on host 172.28.0.2
+# on client host
 root@kind-control-plane:/# ip route add 10.0.0.2 via 172.18.0.4
 
 # validate
@@ -530,7 +513,7 @@ root@kind-control-plane:/# curl 10.0.0.2:8080
 </html>
 ```
 
-As you can see, manually routing traffic destined for `10.0.0.2` via `172.18.0.4` (the "server" host) works[^4].
+As you can see, `curl`'ing our server API in the `server` namespace from the client _host_ now works[^4].
 
 Let's try `curl`'ing the server from the `client` _namespace_ again:
 
@@ -573,10 +556,12 @@ root@kind-control-plane:/# ip netns exec client curl -m 2 10.0.0.2:8080
 </html>
 ```
 
-Congratulations, we have just manually created two Pods (`net` namespaces) on different hosts, with one container
+**Congratulations** - we have just manually created two Pods (`net` namespaces) on different hosts, with one container
 (aka "process"; `curl` in our case) in one Pod invoking an API in a container in the other Pod without NAT.
 
-
+![pod-pod-hosts](/assets/img/k8s-networking/pod2pod-diff-hosts.svg)
+_A process inside a `client` namespace connecting to an open socket on a `server` namespace in another host. The client
+process does not perform any NAT._
 
 
 <br/>
@@ -585,9 +570,7 @@ Congratulations, we have just manually created two Pods (`net` namespaces) on di
 - TODO macvlan instead of veth+bridge: https://unix.stackexchange.com/a/546090/311703
 - TODO discuss CNI
 - TODO warn about risks while performing commands; better to try in a VM or container or something
-- TODO remove all `sudo` since we are now doing the whole exercise in a container/VM
 - TODO warn that it's typically not possible to add a wireless interface to a bridge
-- TODO when pinging `eth0`, can we instead curl a server running on the host to keep it all uniform?
 - TODO say that there are several ways of configuring all this
 - TODO make sure echo 1 > /proc/sys/net/ipv4/ip_forward
 - TODO talk about Services and virtual IPs
