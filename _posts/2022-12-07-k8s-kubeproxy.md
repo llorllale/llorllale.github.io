@@ -563,6 +563,8 @@ root@kind-control-plane:/# ip netns exec client curl -m 2 10.0.0.2:8080
 _A process inside a `client` namespace connecting to an open socket on a `server` namespace in another host. The client
 process does not perform any NAT._
 
+# Tying it all together
+
 
 <br/>
 <br/>
