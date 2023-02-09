@@ -21,7 +21,7 @@ and in this article we will explore how Kubernetes configures the cluster to han
 [east-west traffic](https://kubernetes.io/docs/concepts/cluster-administration/networking/). We'll reserve discussion
 on north-south traffic for a later article.
 
-# Introduction
+# Concepts
 
 By default, all pods in a K8s cluster can communicate with each other without
 [NAT](https://en.wikipedia.org/wiki/Network_address_translation) ([source](https://kubernetes.io/docs/concepts/services-networking/))[^1],
@@ -34,27 +34,38 @@ _Conceptual view of inter-Pod and intra-Pod network communication._
 
 Recall from a previous article that as far as K8s components go, the
 [kubelet and the kube-proxy](/posts/kubernetes-in-action/#node-components) are responsible for creating pods and applying 
-network configurations on the cluster's nodes. When the pod is being created or terminated, part of the `kubelet`'s job
+network configurations on the cluster's nodes.
+
+When the pod is being created or terminated, part of the `kubelet`'s job
 is to set up or cleanup the pod's sandbox on the node it is running on. The `kubelet` relies on the
-[`Container Runtime Interface`](https://github.com/kubernetes/cri-api) (CRI) implementation to handle the details of creating
-and destroying sandboxes. The CRI is composed of several interfaces, but for the topic of this article we will focus on the
-[`PodSandboxManager`](https://github.com/kubernetes/cri-api/blob/adbbc6d75b383d6b823c24bba946029458d6681b/pkg/apis/services.go#L67-L85)
-interface. On the other hand, `kube-proxy` configures routing rules to proxy traffic directed at
-[`Services`](https://kubernetes.io/docs/concepts/services-networking/service/) and to perform simple load-balancing between
+[Container Runtime Interface](https://github.com/kubernetes/cri-api) (CRI) implementation to handle the details of creating
+and destroying sandboxes. The CRI is composed of several interfaces; the interesting ones for us are the
+[`RuntimeService`](https://github.com/kubernetes/cri-api/blob/adbbc6d75b383d6b823c24bba946029458d6681b/pkg/apis/services.go#L106-L118)
+interface (client-side API; integration point `kubelet`->CRI) and the
+[`RuntimeServiceServer`](https://github.com/kubernetes/cri-api/blob/adbbc6d75b383d6b823c24bba946029458d6681b/pkg/apis/runtime/v1/api.pb.go#L10453-L10543)
+interface (server-side API; integration point `RuntimeService`->CRI implementation). These APIs are both big
+and fat, but for this article we are only interested in the `*PodSandbox` set of methods (e.g. `RunPodSandbox`).
+Underneath the CRI's hood, however, is the [Container Network Interface](https://github.com/containernetworking/cni) that
+creates and configures the pod's [network namespace](https://en.wikipedia.org/wiki/Linux_namespaces#Network_(net)).
+
+The `kube-proxy` configures routing rules to proxy traffic directed at
+[`Services`](https://kubernetes.io/docs/concepts/services-networking/service/) and performs simple load-balancing between
 the corresponding [`Endpoints`](https://kubernetes.io/docs/concepts/services-networking/service/#endpoints)[^6].
-A third component - [`coreDNS`](https://github.com/coredns/coredns) - resolves network names by looking them up in 
+
+Finally, a third component, [`coreDNS`](https://github.com/coredns/coredns), resolves network names by looking them up in 
 `etcd`.
 
 ![k8s-pod-sandbox-network](/assets/img/k8s-networking/k8s-cri-network.svg)
 _Components involved in the network configuration for a pod. Blue circles are pods and orange rectangles are daemons.
 Note that `etcd` is shown here as a database service, but it is also deployed as a pod._
 
-Let's dive into how everything is set up such that a message from a container in a pod can reach a container in another
-pod across the network in a different host in a Linux-based cluster.
+In the next section we will understand how pod networking works by manually creating our own pods and have a client in
+one pod invoke an API in a different pod.
 
 > I will be using a simple K8s cluster I set up with [`kind`](https://github.com/kubernetes-sigs/kind) in the walkthrough below.
 > `kind` creates a docker container per K8s node. You may choose a similar sandbox, machine instances in the cloud, or any
-> other setup that simulates at least two host machines connected to the same network.
+> other setup that simulates at least two host machines connected to the same network. Also note that Linux hosts are used
+> for this walkthrough.
 {: .prompt-info }
 
 # Create your own Pod Network
@@ -77,13 +88,7 @@ Each of these virtual devices may be assigned exclusive or overlapping IP addres
 
 ### localhost
 
-Processes running inside a `net` namespace can send messages to each other over `localhost`.
-
-![pod-sandbox](/assets/img/k8s-networking/pod-sandbox.svg)
-_Traffic from a client to a server inside a network namespace. <font color="blue"><strong>Blue</strong></font> is traffic on `localhost`. Notice the host's interface (`eth0`) is bypassed entirely for this traffic._
-
-With this we have one or more processes that can communicate over `localhost`. This is exactly how K8s Pods work, and these
-"processes" are K8s containers.
+Processes running inside the same `net` namespace can send messages to each other over `localhost`.
 
 > **Hands On**
 >
@@ -133,6 +138,12 @@ With this we have one or more processes that can communicate over `localhost`. T
 >   </div>
 > </details>
 {: .prompt-tip }
+
+![pod-sandbox](/assets/img/k8s-networking/pod-sandbox.svg)
+_Traffic from a client to a server inside a network namespace. <font color="blue"><strong>Blue</strong></font> is traffic on `localhost`. Notice the host's interface (`eth0`) is bypassed entirely for this traffic._
+
+With this we have one or more processes that can communicate over `localhost`. This is exactly how K8s Pods work, and these
+"processes" are K8s containers.
 
 ## Connecting network namespaces on the same host
 
@@ -563,8 +574,66 @@ root@kind-control-plane:/# ip netns exec client curl -m 2 10.0.0.2:8080
 _A process inside a `client` namespace connecting to an open socket on a `server` namespace in another host. The client
 process does not perform any NAT._
 
-# Tying it all together
+## Tying it all together
 
+We now know how pods are implemented under the hood. We have learned that Kubernetes "pods" are namespaces and that
+Kubernetes "containers" are processes running within those namespaces. These pods are connected to each other within
+each host with virtual networking devices (`veth`, `bridge`), and with simple IP routing rules for traffic to cross
+from one pod to another over the physical network.
+
+Where and how does Kubernetes do all this?
+
+### The Container Runtime Interface (CRI)
+
+Back in the [concepts section](#concepts) we said the `kubelet` uses the
+[Container Runtime Interface](https://github.com/kubernetes/cri-api) to create the pod "sandboxes".
+
+The `kubelet` creates pod sandboxes
+[here](https://github.com/kubernetes/kubernetes/blob/67b38ffe6ea3350f3cefd72caacd3f7ee9b1af42/pkg/kubelet/kuberuntime/kuberuntime_sandbox.go#L68-L73).
+Note that `runtimeService` is of type
+[`RuntimeService`](https://github.com/kubernetes/cri-api/blob/adbbc6d75b383d6b823c24bba946029458d6681b/pkg/apis/services.go#L106-L118),
+belonging to the CRI API. It embeds the `PodSandboxManager` type, which is responsible for actually creating the sandboxes
+(`RunPodSandbox` method). Kubernetes has an internal implementation of `RuntimeService` in
+[`remoteRuntimeService`](https://github.com/kubernetes/kubernetes/blob/805be30745defc72cb6137a25b3e821db4056837/pkg/kubelet/cri/remote/remote_runtime.go#L45-L52),
+but this is just a thin wrapper around the CRI API's
+[`RuntimeServiceClient`](https://github.com/kubernetes/cri-api/blob/adbbc6d75b383d6b823c24bba946029458d6681b/pkg/apis/runtime/v1/api.pb.go#L10076-L10168)
+(GitHub won't automatically open the file due to its size). Look closely and you'll notice that `RuntimeServiceClient`
+is implemented by
+[`runtimeServiceClient`](https://github.com/kubernetes/cri-api/blob/adbbc6d75b383d6b823c24bba946029458d6681b/pkg/apis/runtime/v1/api.pb.go#L10170-L10172),
+which uses a [gRPC](https://grpc.io/) connection to invoke the container runtime service. gRPC is (normally) transported
+over TCP sockets ([Layer 3](https://en.wikipedia.org/wiki/Transport_layer)). The `kubelet` runs on each node and, if
+it needs to create a pod on that node, why would it need to communicate with the CRI service over TCP?
+
+Go (the _lingua franca_ of cloud-native development, including Kubernetes) has a builtin
+[`plugin`](https://pkg.go.dev/plugin) system but it has some serious drawbacks in terms of maintainability.
+Eli Bendersky gives a good outline of how they work with pros and cons [here](https://eli.thegreenplace.net/2021/plugins-in-go/)
+that is worth a read. Towards the end you'll notice a bias towards RPC-based plugins; this is exactly what the CRI's designers
+chose as their architecture. So although the `kubelet` and the CRI service are running on the same node, the gRPC messages
+can be transported locally via `localhost` (for TCP) or [Unix domain sockets](https://en.wikipedia.org/wiki/Unix_domain_socket)
+or some other channel available on the host.
+
+So we now have Kubernetes invoking the standard CRI API that in turn invokes a "remote", CRI-compliant gRPC service.
+This service is the CRI implementation that can be swapped out. Kubernetes' docs list
+[a few common ones](https://kubernetes.io/docs/setup/production-environment/container-runtimes/):
+
+* [containerd](https://github.com/containerd/containerd)
+* [CRI-O](https://github.com/cri-o/cri-o)
+* [Docker Engine](https://github.com/moby/moby)
+* [Mirantis Container Runtime](https://github.com/Mirantis/cri-dockerd)
+
+The details of what happens next vary by implementation, and is all abstracted away from the Kubernetes runtime.
+Take `containerd` as an example. `containerd` has a plugin architecture that is resolved at compile time[^8]. `containerd`'s
+[implementation](https://github.com/containerd/containerd/blob/a338abc902d9f204dcb9df7212d39fd7d07ac06d/pkg/cri/server/service.go#L78-L128)
+of `RuntimeServiceServer` (part of [Concepts](#concepts)) has its
+[`RunPodSandbox`](https://github.com/containerd/containerd/blob/3ee6dd5c1bca441d1ec4988cbaebadbfbcfde525/pkg/cri/server/sandbox_run.go#L56-L407)
+method (also part of [Concepts](#concepts)) rely on a "CNI" plugin to set up the pod's network namespace. What is the CNI?
+
+### The Container Network Interface (CNI)
+
+The [CNI](https://github.com/containernetworking/cni) is used by the CRI to create and configure the network namespaces
+used by the pods[^9]. CNI implementations are invoked by executing their respective binaries and providing network
+configuration via `stdin` (see the spec's
+[execution protocol](https://github.com/containernetworking/cni/blob/main/SPEC.md#section-2-execution-protocol))[^10].
 
 <br/>
 <br/>
@@ -587,3 +656,7 @@ process does not perform any NAT._
 [^5]: In reality, Kubernetes does this in a more efficient way by configuring IP routes for IP _ranges_ (segments) instead of specific addresses. You can verify IP routes on a host with `ip route list`. In my case, I could see that Kubernetes has routed `10.244.1.0/24` via `172.18.0.4` (our "server" host) and `10.244.2.0/24` via `172.18.0.3` (a third node not relevant to our discussion).
 [^6]: Note that `kube-proxy` is itself not actually in the request path (_data plane_).
 [^7]: Don't worry too much: the changes done so far are not persistent across system restarts.
+[^8]: As described by Eli's [article](https://eli.thegreenplace.net/2021/plugins-in-go/) and the opposite of the `kubelet`->`CRI` integration. `containerd`'s CRI service is a plugin that is registered [here](https://github.com/containerd/containerd/blob/b27ef6f1694aace5676306028477b12c57b84fd8/pkg/cri/cri.go#L40-L54).
+[^9]: At the moment the CNI's scope is limited to network-related configurations during creation and deletion of a pod. The [README](https://github.com/containernetworking/cni#what-might-cni-do-in-the-future) notes that future extensions could be possible to enable dynamic scenarios such as [NetworkPolicies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) ([cilium](https://github.com/cilium/cilium) already supports network policies).
+[^10]: Yet another way to implement a plugin architecture.
+
