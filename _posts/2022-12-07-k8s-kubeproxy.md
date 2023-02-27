@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Understanding Kubernetes' Cluster Networking"
-date: 2022-12-30 14:00:00 -0500
+date: 2022-02-27 13:00:00 -0500
 author: George Aristy
 math: on
 tags:
@@ -46,7 +46,7 @@ interface (client-side API; integration point `kubelet`->CRI) and the
 interface (server-side API; integration point `RuntimeService`->CRI implementation). These APIs are both big
 and fat, but for this article we are only interested in the `*PodSandbox` set of methods (e.g. `RunPodSandbox`).
 Underneath the CRI's hood, however, is the [Container Network Interface](https://github.com/containernetworking/cni) that
-creates and configures the pod's [network namespace](https://en.wikipedia.org/wiki/Linux_namespaces#Network_(net)).
+creates and configures the pod's [network namespace](https://en.wikipedia.org/wiki/Linux_namespaces#Network_(net))[^11].
 
 The `kube-proxy` configures routing rules to proxy traffic directed at
 [`Services`](https://kubernetes.io/docs/concepts/services-networking/service/) and performs simple load-balancing between
@@ -601,8 +601,10 @@ but this is just a thin wrapper around the CRI API's
 is implemented by
 [`runtimeServiceClient`](https://github.com/kubernetes/cri-api/blob/adbbc6d75b383d6b823c24bba946029458d6681b/pkg/apis/runtime/v1/api.pb.go#L10170-L10172),
 which uses a [gRPC](https://grpc.io/) connection to invoke the container runtime service. gRPC is (normally) transported
-over TCP sockets ([Layer 3](https://en.wikipedia.org/wiki/Transport_layer)). The `kubelet` runs on each node and, if
-it needs to create a pod on that node, why would it need to communicate with the CRI service over TCP?
+over TCP sockets ([Layer 3](https://en.wikipedia.org/wiki/Transport_layer)).
+
+The `kubelet` runs on each node and, if it needs to create a pod on that node, why would it need to communicate with
+the CRI service over TCP?
 
 Go (the _lingua franca_ of cloud-native development, including Kubernetes) has a builtin
 [`plugin`](https://pkg.go.dev/plugin) system but it has some serious drawbacks in terms of maintainability.
@@ -622,11 +624,15 @@ This service is the CRI implementation that can be swapped out. Kubernetes' docs
 * [Mirantis Container Runtime](https://github.com/Mirantis/cri-dockerd)
 
 The details of what happens next vary by implementation, and is all abstracted away from the Kubernetes runtime.
-Take `containerd` as an example. `containerd` has a plugin architecture that is resolved at compile time[^8]. `containerd`'s
+Take `containerd` as an example (it's the CRI used in [kind](https://github.com/kubernetes-sigs/kind), the K8S distribution
+I chose for the [walkthrough](#create-your-own-pod-network) above).
+`containerd` has a plugin architecture that is resolved at compile time[^8]. `containerd`'s
 [implementation](https://github.com/containerd/containerd/blob/a338abc902d9f204dcb9df7212d39fd7d07ac06d/pkg/cri/server/service.go#L78-L128)
 of `RuntimeServiceServer` (part of [Concepts](#concepts)) has its
 [`RunPodSandbox`](https://github.com/containerd/containerd/blob/3ee6dd5c1bca441d1ec4988cbaebadbfbcfde525/pkg/cri/server/sandbox_run.go#L56-L407)
-method (also part of [Concepts](#concepts)) rely on a "CNI" plugin to set up the pod's network namespace. What is the CNI?
+method (also part of [Concepts](#concepts)) rely on a "CNI" plugin to set up the pod's network namespace.
+
+What is the CNI?
 
 ### The Container Network Interface (CNI)
 
@@ -634,18 +640,78 @@ The [CNI](https://github.com/containernetworking/cni) is used by the CRI to crea
 used by the pods[^9]. CNI implementations are invoked by executing their respective binaries and providing network
 configuration via `stdin` (see the spec's
 [execution protocol](https://github.com/containernetworking/cni/blob/main/SPEC.md#section-2-execution-protocol))[^10].
+On unix hosts, `containerd` by default looks for a standard CNI config file inside the `/etc/cni/net.d` directory and for the
+plugin binaries it looks in `/opt/cni/bin` (see
+[code](https://github.com/containerd/containerd/blob/3bc8fc4d3067c32d2580e716af095a837c0fbe9a/pkg/cri/config/config_unix.go#L68-L69)).
+Each node in my `kind` cluster has only one config file: `/etc/cni/net.d/10-kindnet.conflist`. Here are the contents of
+this file in my `control-plane` node:
+
+<details>
+  <summary markdown="span">Click to expand</summary>
+  <div markdown="1">
+
+```json
+{
+  "cniVersion": "0.3.1",
+  "name": "kindnet",
+  "plugins": [
+    {
+      "type": "ptp",
+      "ipMasq": false,
+      "ipam": {
+        "type": "host-local",
+        "dataDir": "/run/cni-ipam-state",
+        "routes": [
+          {
+            "dst": "0.0.0.0/0"
+          }
+        ],
+        "ranges": [
+          [
+            {
+              "subnet": "10.244.0.0/24"
+            }
+          ]
+        ]
+      },
+      "mtu": 1500
+    },
+    {
+      "type": "portmap",
+      "capabilities": {
+        "portMappings": true
+      }
+    }
+  ]
+}
+```
+  </div>
+</details>
+
+The same config file on the worker nodes have identical content except for `subnet`, which varies from host to host.
+I won't go in depth about how the CNI spec and plugins work (that deserves its own article). You can read version `0.3.1`
+of the spec [here](https://github.com/containernetworking/cni/blob/spec-v0.3.1/SPEC.md). What's conceptually important for us
+is that there are three plugins being executed (two of them are chained) with this configuration. These plugins are:
+
+* [ptp](https://www.cni.dev/plugins/current/main/ptp/): creates a point-to-point link between a container and the host by using a veth device.
+* [host-local](https://www.cni.dev/plugins/current/ipam/host-local/): allocates IPv4 and IPv6 addresses out of a specified address range.
+* [portmap](https://www.cni.dev/plugins/current/meta/portmap/): will forward traffic from one or more ports on the host to the container.
+
+Do any of these sounds familiar to you? They should![^12] These are the things we painstakingly configured step-by-step
+in our walkthrough above. With this information in mind, go back to the component diagram in [Concepts](#concepts)
+and map each of these concepts to the boxes in the diagram.
 
 <br/>
 <br/>
 
 - TODO macvlan instead of veth+bridge: https://unix.stackexchange.com/a/546090/311703
-- TODO discuss CNI
 - TODO warn about risks while performing commands; better to try in a VM or container or something
 - TODO warn that it's typically not possible to add a wireless interface to a bridge
 - TODO say that there are several ways of configuring all this
 - TODO make sure echo 1 > /proc/sys/net/ipv4/ip_forward
 - TODO talk about Services and virtual IPs
 - TODO don't forget about DNS
+- TODO also explain that you need iptables FORWARD rules in the step-by-step walkthrough
 
 ---
 
@@ -659,4 +725,6 @@ configuration via `stdin` (see the spec's
 [^8]: As described by Eli's [article](https://eli.thegreenplace.net/2021/plugins-in-go/) and the opposite of the `kubelet`->`CRI` integration. `containerd`'s CRI service is a plugin that is registered [here](https://github.com/containerd/containerd/blob/b27ef6f1694aace5676306028477b12c57b84fd8/pkg/cri/cri.go#L40-L54).
 [^9]: At the moment the CNI's scope is limited to network-related configurations during creation and deletion of a pod. The [README](https://github.com/containernetworking/cni#what-might-cni-do-in-the-future) notes that future extensions could be possible to enable dynamic scenarios such as [NetworkPolicies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) ([cilium](https://github.com/cilium/cilium) already supports network policies).
 [^10]: Yet another way to implement a plugin architecture.
+[^11]: Despite the CNI [featuring prominently in K8S docs](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/), Kubernetes does not actually interface with the CNI directly as others have pointed out [here](https://github.com/containernetworking/cni/issues/906). Kubernetes' source code does not depend on the CNI API.
+[^12]: Assuming I've done a decent job in this article :).
 
