@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Understanding Kubernetes' Cluster Networking"
-date: 2022-02-27 13:00:00 -0500
+date: 2023-03-03 13:00:00 -0500
 author: George Aristy
 math: on
 tags:
@@ -701,6 +701,280 @@ Do any of these sounds familiar to you? They should![^12] These are the things w
 in our walkthrough above. With this information in mind, go back to the component diagram in [Concepts](#concepts)
 and map each of these concepts to the boxes in the diagram.
 
+# Services
+
+No discussion of Kubernetes' cluster network can conclude without mentioning [Services](https://kubernetes.io/docs/concepts/services-networking/service/).
+
+Conceptually, a Kubernetes _Service_ is merely a [Virtual IP](https://en.wikipedia.org/wiki/Virtual_IP_address) assigned
+to a set of pods, and to which a stable [DNS name](https://en.wikipedia.org/wiki/Domain_Name_System) is assigned.
+Kubernetes also provides simple load balancing out of the box for some types of services (`ClusterIP`, `NodePort`).
+
+Each service is mapped to a set of IPs belonging to the pods exposed by the service. These set of IPs is called
+[EndpointSlice](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/) and is constantly updated
+to reflect the IPs currently in use by the backend pods[^13]. Which pods? The ones matching the service's _selector_.
+
+<details>
+  <summary markdown="span">Example Service with label 'myLabel' set to value 'MyApp'</summary>
+  <div markdown="1">
+
+  ```yaml
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: my-service
+  spec:
+    selector:
+      myLabel: MyApp
+    ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 9376
+  ```
+  </div>
+</details>
+
+When a user creates a new Service:
+
+1. `kube-apiserver` assigns it the next free IP by incrementing a counter stored in `etcd` ([Service REST storage](https://github.com/kubernetes/kubernetes/blob/12c71fdf1cf96d756ff84382adf3764af0a76d57/pkg/registry/core/service/storage/storage.go#L350) -> [allocator](https://github.com/kubernetes/kubernetes/blob/1706de24d2ddc767e7cb936f60dd658880f27891/pkg/registry/core/service/storage/alloc.go#L81) -> [Range allocator](https://github.com/kubernetes/kubernetes/blob/ea99593fa1ef102d8a08b0884477693137ae7aec/pkg/registry/core/service/ipallocator/bitmap.go#L222) -> [etcd storage](https://github.com/kubernetes/kubernetes/blob/1b72a0f5a760649605cd833359b6dd005bb99d09/pkg/registry/core/service/allocator/storage/storage.go#L152-L176))
+2. `kube-apiserver` stores the service in `etcd` ([Store.Create](https://github.com/kubernetes/apiserver/blob/27cf1d8797a919a081977c11bdcc6821de1ee341/pkg/registry/generic/registry/store.go#L436)).
+3. This event is pushed to all [watches](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes)[^14]
+4. `coreDNS`:
+   1. Event is caught and the service's name, namespace, and (virtual) cluster IP is cached. (breadcrumbs: [InitKubeCache](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L263) -> [dnsController.Run](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/kubernetes/controller.go#L409) -> [controller.Run](https://github.com/kubernetes/client-go/blob/2a6c116e406126324eee341e874612a5093bdbb0/tools/cache/controller.go#L153) -> [Reflector.Run](https://github.com/kubernetes/client-go/blob/ff6bf679aa6412abda395851a36acbea866fb724/tools/cache/reflector.go#L223) -> [Reflector.ListAndWatch](https://github.com/kubernetes/client-go/blob/ff6bf679aa6412abda395851a36acbea866fb724/tools/cache/reflector.go#L329) -> [watchHandler](https://github.com/kubernetes/client-go/blob/ff6bf679aa6412abda395851a36acbea866fb724/tools/cache/reflector.go#L491-L561))
+   2. Responds to requests for A records by reading from the cache. (breadcrumbs: [ServeDNS](https://github.com/coredns/coredns/blob/66dc74caebd4f4bdb8bd38d03b52611488424594/plugin/kubernetes/handler.go#L33) -> [A()](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/backend_lookup.go#L18) -> [checkForApex](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/backend_lookup.go#L517) -> [Services()](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L152) -> [Records()](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L399) -> [findServices](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L501-L594) -> [SvcIndex](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/kubernetes/controller.go#L483) -> [ByIndex](https://github.com/kubernetes/client-go/blob/64585cf823c1b57f8c98505a2ae124a23ff83dc5/tools/cache/store.go#L217) (client-go))
+5. [EndpointSlice](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/) Controller: event is caught and a new EndpointSlice is assigned to the service ([Controller.syncService](https://github.com/kubernetes/kubernetes/blob/6adf60fdf4fd0428cc7f101fbbb608cd02d99cf5/pkg/controller/endpointslice/endpointslice_controller.go#L307-L390))
+6. `kube-proxy`: event is caught and `iptables` is configured on worker nodes. (breadcrumbs: [ProxyServer.Run](https://github.com/kubernetes/kubernetes/blob/bc6c7fa91201348d010b638fbadf32007c0ac546/cmd/kube-proxy/app/server.go#L748-L752) -> [NewServiceConfig](https://github.com/kubernetes/kubernetes/blob/2ea105df63ab0e1d0ec4d94652e32990fc06f66a/pkg/proxy/config/config.go#L169-L176) -> [ServiceConfig.handleAddService](https://github.com/kubernetes/kubernetes/blob/2ea105df63ab0e1d0ec4d94652e32990fc06f66a/pkg/proxy/config/config.go#L206-L209) -> [Proxier.OnServiceAdd](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L514-L516) -> [Proxier.OnServiceUpdate](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L522) -> [Proxier.Sync](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L485) -> [Proxier.syncProxyRules](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L789))
+
+All steps from 4 onwards are executing concurrently by independent processes. 
+The final state is depicted in the diagram in the [Concepts](#concepts) section.
+
+Note that we have incidentally glossed over Kubernetes' distributed and event-driven architecture. We'll expand on this topic
+in a future article.
+
+We snuck in a new concept in step 6: `iptables`. Let's expand on that next.
+
+## iptables
+
+> Iptables is used to set up, maintain, and inspect the tables of IP packet filter rules in the Linux kernel.
+> Several different tables may be defined. Each table contains a number of built-in chains and may also contain
+> user-defined chains.
+> 
+> Each chain is a list of rules which can match a set of packets.  Each rule specifies what to do with a packet
+> that matches. This is called a `target', which may be a jump to a user-defined chain in the same table.
+> 
+> -- `iptables` manpage
+
+System and network administrators use `iptables` to configure IP routing rules on _Linux_ hosts. Windows hosts expose
+an analogous API called
+[Host Compute Network service API](https://learn.microsoft.com/en-us/windows-server/networking/technologies/hcn/hcn-top)
+and is represented by the
+[HostNetworkService](https://github.com/kubernetes/kubernetes/blob/5eb6f82c1ade7ceac0e9f26283d35ec806e47b9f/pkg/proxy/winkernel/hns.go#L33-L44)
+interface inside `kube-proxy`. It is because of this difference in OS-dependent implementations of the network stack
+that we simply labelled them as "OS IP rules" in the [Concepts](#concepts) section's diagram.
+
+`kube-proxy` uses `iptables` to configure Linux hosts to distribute traffic directed at a Service's `clusterIP`
+(ie. a _virtual_ IP) to the backend pods selected by the service using [NAT](https://en.wikipedia.org/wiki/Network_address_translation).
+So yes, there is definitely network address translation in a Kubernetes cluster, but it's hidden from your workloads.
+
+`kube-proxy` adds a rule to the `PREROUTING` chain that targets a custom chain `KUBE-SERVICES`
+([kubeServicesChain](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L61),
+[iptablesJumpChains](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L354-L367),
+[syncProxyRules](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L857-L882)).
+The end result looks like this:
+
+```shell
+root@kind-control-plane:/# iptables -t nat -L PREROUTING -n -v
+Chain PREROUTING (policy ACCEPT 18999 packets, 3902K bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+18955 3898K KUBE-SERVICES  all  --  *      *       0.0.0.0/0            0.0.0.0/0            /* kubernetes service portals */
+```
+
+Initially the `KUBE-SERVICES` chain contains rules just for the `NodePort` custom chain and several built-in services:
+
+```shell
+root@kind-control-plane:/# iptables -t nat -L KUBE-SERVICES -n -v
+Chain KUBE-SERVICES (2 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 KUBE-SVC-TCOU7JCQXEZGVUNU  udp  --  *      *       0.0.0.0/0            10.96.0.10           /* kube-system/kube-dns:dns cluster IP */ udp dpt:53
+    0     0 KUBE-SVC-ERIFXISQEP7F7OF4  tcp  --  *      *       0.0.0.0/0            10.96.0.10           /* kube-system/kube-dns:dns-tcp cluster IP */ tcp dpt:53
+    0     0 KUBE-SVC-JD5MR3NA4I4DYORP  tcp  --  *      *       0.0.0.0/0            10.96.0.10           /* kube-system/kube-dns:metrics cluster IP */ tcp dpt:9153
+    0     0 KUBE-SVC-NPX46M4PTMTKRN6Y  tcp  --  *      *       0.0.0.0/0            10.96.0.1            /* default/kubernetes:https cluster IP */ tcp dpt:443
+  417 25020 KUBE-NODEPORTS  all  --  *      *       0.0.0.0/0            0.0.0.0/0            /* kubernetes service nodeports; NOTE: this must be the last rule in this chain */ ADDRTYPE match dst-type LOCAL
+```
+
+New rules are appended for each service by the Proxier's `syncProxyRules` method. For example, rules for services of
+type `ClusterIP` are written
+[here](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L1095-L1103).
+For example, the following shows a rule targeting a custom chain `KUBE-SVC-BM6F4AVTDKG47F3K` for a service named `mysvc`:
+
+```shell
+root@kind-control-plane:/# iptables -t nat -L KUBE-SERVICES -n -v
+Chain KUBE-SERVICES (2 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 KUBE-SVC-BM6F4AVTDKG47F3K  tcp  --  *      *       0.0.0.0/0            10.96.62.22          /* default/mysvc cluster IP */ tcp dpt:8080
+    0     0 KUBE-SVC-TCOU7JCQXEZGVUNU  udp  --  *      *       0.0.0.0/0            10.96.0.10           /* kube-system/kube-dns:dns cluster IP */ udp dpt:53
+    0     0 KUBE-SVC-ERIFXISQEP7F7OF4  tcp  --  *      *       0.0.0.0/0            10.96.0.10           /* kube-system/kube-dns:dns-tcp cluster IP */ tcp dpt:53
+    0     0 KUBE-SVC-JD5MR3NA4I4DYORP  tcp  --  *      *       0.0.0.0/0            10.96.0.10           /* kube-system/kube-dns:metrics cluster IP */ tcp dpt:9153
+    0     0 KUBE-SVC-NPX46M4PTMTKRN6Y  tcp  --  *      *       0.0.0.0/0            10.96.0.1            /* default/kubernetes:https cluster IP */ tcp dpt:443
+  417 25020 KUBE-NODEPORTS  all  --  *      *       0.0.0.0/0            0.0.0.0/0            /* kubernetes service nodeports; NOTE: this must be the last rule in this chain */ ADDRTYPE match dst-type LOCAL
+```
+
+If we inspect `KUBE-SVC-BM6F4AVTDKG47F3K` we see something interesting:
+
+```shell
+root@kind-control-plane:/# iptables -t nat -L KUBE-SVC-BM6F4AVTDKG47F3K -n -v
+Chain KUBE-SVC-BM6F4AVTDKG47F3K (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 KUBE-MARK-MASQ  tcp  --  *      *      !10.244.0.0/16        10.96.62.22          /* default/mysvc cluster IP */ tcp dpt:8080
+    0     0 KUBE-SEP-CMSFOBEB7HHZOTBZ  all  --  *      *       0.0.0.0/0            0.0.0.0/0            /* default/mysvc -> 10.244.1.2:8080 */ statistic mode random probability 0.33333333349
+    0     0 KUBE-SEP-VVWLMARALSB3FCZF  all  --  *      *       0.0.0.0/0            0.0.0.0/0            /* default/mysvc -> 10.244.2.2:8080 */ statistic mode random probability 0.50000000000
+    0     0 KUBE-SEP-XGAC3VXZG7B73WCD  all  --  *      *       0.0.0.0/0            0.0.0.0/0            /* default/mysvc -> 10.244.2.3:8080 */
+```
+
+Ignoring the masq for now, we see three rules targeting chains for _service endpoints_. `kube-proxy` adds these entries
+as it handles incoming events for endpointslices
+(see [NewProxier()](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L267)).
+Each rule has a helpful comment indicating the target service endpoint.
+
+Note how these rules have a probability assigned to them. Rules in `iptables` chains are processed sequentially.
+There are three _service endpoint_ rules, and the first is assigned a probability of `0.33`. Next, if the dice roll
+failed on the first one, we roll it again for the second rule, this time with a probability of 50%. If that fails,
+we fall back to the third rule with a probability of 100%. In this way we have an even distribution of traffic amongst
+the three endpoints. The probabilities are set
+[here](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L1635-L1641).
+Note how the probability curve is fixed as a flat distribution, and also note how `kube-proxy` is not balancing this
+traffic itself. As noted in [Concepts](#concepts), `kube-proxy` is not itself in the _data plane_.
+
+In our example above, `mysvc` is selecting three pods with endpoints `10.244.1.2:8080`, `10.244.2.2:8080`, and `10.244.2.3:8080`.
+
+This is the service definition:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: test
+  name: mysvc
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: test
+```
+
+And these are the IPs assigned to the selected pods (take note of the nodes as well):
+
+```shell
+$ k get po -l app=test -o wide
+NAME                    READY   STATUS    RESTARTS   AGE    IP           NODE           NOMINATED NODE   READINESS GATES
+test-75d6d47c7f-jcdzz   1/1     Running   0          4d7h   10.244.2.2   kind-worker2   <none>           <none>
+test-75d6d47c7f-lgqcq   1/1     Running   0          4d7h   10.244.1.2   kind-worker    <none>           <none>
+test-75d6d47c7f-pjrjp   1/1     Running   0          4d7h   10.244.2.3   kind-worker2   <none>           <none>
+```
+
+If we inspect one of the service endpoint chains we see something else interesting:
+
+```shell
+root@kind-control-plane:/# iptables -t nat -L KUBE-SEP-CMSFOBEB7HHZOTBZ -n -v
+Chain KUBE-SEP-CMSFOBEB7HHZOTBZ (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 KUBE-MARK-MASQ  all  --  *      *       10.244.1.2           0.0.0.0/0            /* default/mysvc */
+    0     0 DNAT       tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            /* default/mysvc */ tcp to:10.244.1.2:8080
+```
+
+We see a `DNAT` (_destination_ NAT) rule that _translates_ the destination address to `10.244.1.2:8080`.
+We already know that this destination is hosted on node `kind-worker`, so investigating on that node we see:
+
+```shell
+# list devices and their assigned IP ranges
+root@kind-worker:/# ip addr        
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: veth4e573577@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 5a:b9:16:0d:a6:18 brd ff:ff:ff:ff:ff:ff link-netns cni-b5e04919-09af-0a9f-6945-a9929d71d789
+    inet 10.244.1.1/32 scope global veth4e573577                                                             <------ 10.244.1.2 IS IN THIS RANGE
+       valid_lft forever preferred_lft forever
+13: eth0@if14: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:ac:12:00:03 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 172.18.0.3/16 brd 172.18.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fc00:f853:ccd:e793::3/64 scope global nodad 
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:acff:fe12:3/64 scope link 
+       valid_lft forever preferred_lft forever
+# show device
+root@kind-worker:/# ip link list veth4e573577
+2: veth4e573577@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default 
+    link/ether 5a:b9:16:0d:a6:18 brd ff:ff:ff:ff:ff:ff link-netns cni-b5e04919-09af-0a9f-6945-a9929d71d789   <------ NETWORK NAMESPACE
+# list network namespaces
+root@kind-worker:/# ip netns list
+cni-b5e04919-09af-0a9f-6945-a9929d71d789
+# list all processes running in the target namespace
+root@kind-worker:/# ps $(ip netns pids cni-b5e04919-09af-0a9f-6945-a9929d71d789)
+    PID TTY      STAT   TIME COMMAND
+ 505179 ?        Ss     0:00 /pause
+ 505237 ?        Ss     0:00 nginx: master process nginx -g daemon off;
+ 505278 ?        S      0:00 nginx: worker process
+ 505279 ?        S      0:00 nginx: worker process
+ 505280 ?        S      0:00 nginx: worker process
+ 505281 ?        S      0:00 nginx: worker process
+ 505282 ?        S      0:00 nginx: worker process
+ 505283 ?        S      0:00 nginx: worker process
+ 505284 ?        S      0:00 nginx: worker process
+ 505285 ?        S      0:00 nginx: worker process
+ 505286 ?        S      0:00 nginx: worker process
+ 505287 ?        S      0:00 nginx: worker process
+ 505288 ?        S      0:00 nginx: worker process
+ 505289 ?        S      0:00 nginx: worker process
+ 505290 ?        S      0:00 nginx: worker process
+ 505291 ?        S      0:00 nginx: worker process
+ 505292 ?        S      0:00 nginx: worker process
+ 505293 ?        S      0:00 nginx: worker process
+```
+
+We are back in `net` namespace land!
+
+In our case, we are running nginx on a simple deployment:
+
+<details>
+  <summary markdown="span">Spec</summary>
+  <div markdown="1">
+
+  ```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   labels:
+      app: test
+   name: test
+   namespace: default
+spec:
+   replicas: 3
+   selector:
+      matchLabels:
+         app: test
+   template:
+      metadata:
+         labels:
+            app: test
+      spec:
+         containers:
+            - image: nginx
+              name: nginx
+  ```
+  </div>
+</details>
+
+
+
 <br/>
 <br/>
 
@@ -727,4 +1001,6 @@ and map each of these concepts to the boxes in the diagram.
 [^10]: Yet another way to implement a plugin architecture.
 [^11]: Despite the CNI [featuring prominently in K8S docs](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/), Kubernetes does not actually interface with the CNI directly as others have pointed out [here](https://github.com/containernetworking/cni/issues/906). Kubernetes' source code does not depend on the CNI API.
 [^12]: Assuming I've done a decent job in this article :).
+[^13]: Update is done by the [EndpointSlice Controller](https://github.com/kubernetes/kubernetes/blob/6adf60fdf4fd0428cc7f101fbbb608cd02d99cf5/pkg/controller/endpointslice/endpointslice_controller.go#L78-L170). We'll talk about this and other controllers in a future article.
+[^14]: We will cover watches in more detail in a future article.
 
