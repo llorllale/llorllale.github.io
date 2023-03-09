@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Understanding Kubernetes' Cluster Networking"
-date: 2023-03-08 13:00:00 -0500
+date: 2023-03-08 23:00:00 -0500
 author: George Aristy
 math: on
 tags:
@@ -26,7 +26,7 @@ on north-south traffic for a later article.
 
 <br/>
 
-> This article is a bit heavy-handed on annotations, command-line instructions, and pointers to implementations in
+> This article is long and a bit heavy-handed on annotations, command-line instructions, and pointers to implementations in
 > Kubernetes and associated components. There are dozens of footnotes. We are diving into fairly deep waters here.
 > I tried my best to keep a coherent flow going.
 {: .prompt-warning }
@@ -1007,7 +1007,6 @@ select one of the backend Pod IP addresses and forwards traffic to that Pod.
 <br/>
 <br/>
 
-- TODO warn that it's typically not possible to add a wireless interface to a bridge
 - TODO say that there are several ways of configuring all this
 - TODO make sure echo 1 > /proc/sys/net/ipv4/ip_forward
 - TODO also explain that you need iptables FORWARD rules in the step-by-step walkthrough
