@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Understanding Kubernetes' Cluster Networking"
-date: 2023-03-03 13:00:00 -0500
+date: 2023-03-08 13:00:00 -0500
 author: George Aristy
 math: on
 tags:
@@ -9,8 +9,11 @@ tags:
 - k8s
 - iptables
 - networking
-- proxy
 - kube-proxy
+- kubelet
+- containerd
+- cni
+- cri
 ---
 
 ![cover](/assets/img/Kubernetes-icon-color.svg){: .left width="100" }
@@ -20,6 +23,13 @@ applications.
 and in this article we will explore how Kubernetes configures the cluster to handle
 [east-west traffic](https://kubernetes.io/docs/concepts/cluster-administration/networking/). We'll reserve discussion
 on north-south traffic for a later article.
+
+<br/>
+
+> This article is a bit heavy-handed on annotations, command-line instructions, and pointers to implementations in
+> Kubernetes and associated components. There are dozens of footnotes. We are diving into fairly deep waters here.
+> I tried my best to keep a coherent flow going.
+{: .prompt-warning }
 
 # Concepts
 
@@ -83,7 +93,7 @@ to PID 123, or none at all.
 There are different kinds of namespaces; we are interested in the [Network (net)](https://en.wikipedia.org/wiki/Linux_namespaces#Network_(net))
 namespace.
 
-Each namespace has a logical network interface attached to it, and each _may_ have a virtual network device attached to it.
+Each namespace has a virtual `loopback` interface and _may_ have additional virtual network devices attached.
 Each of these virtual devices may be assigned exclusive or overlapping IP address ranges.
 
 ### localhost
@@ -314,7 +324,7 @@ first need to reach `eth0` before being forwarded to the physical network. For i
 those to the bridge where they will be routed to the respective namespace interfaces. Let's first separate our two
 namespaces before going further.
 
-### Moving our network namespaces unto different hosts
+### Moving our network namespaces onto different hosts
 
 Let's first clean up everything we've done so far[^7]:
 
@@ -336,7 +346,7 @@ Let's first clean up everything we've done so far[^7]:
 > ```
 >   </div>
 > </details>
-{: .prompt-info }
+{: .prompt-tip }
 
 Let's now set up our namespaces in different hosts.
 
@@ -388,7 +398,7 @@ Let's now set up our namespaces in different hosts.
 > ```
 >   </div>
 > </details>
-{: .prompt-info}
+{: .prompt-tip}
 
 ![pod-different-hosts](/assets/img/k8s-networking/pods-diffhosts.svg)
 _Namespaces on different hosts. The host interfaces (`eth0`) are on the same network._
@@ -410,7 +420,7 @@ ping: connect: Network is unreachable
 ```
 
 The host isn't reachable from the namespaces yet. _We haven't configured an IP route[^2] to forward packets destined to
-`172.18.0.2`._ Let's set up a default route via the bridge in both namespaces and test:
+`eth0` in neither host._ Let's set up a default route via the bridge in both namespaces and test:
 
 ```shell
 # on client host
@@ -458,8 +468,8 @@ The document has moved
 </BODY></HTML>
 ```
 
-This flow looks similar to the following when viewed from the `client` flow (the network and machine configuration on
-Google's side has been reduced to a simple machine instance to simplify the illustration):
+This flow looks similar to the following when viewed from the `client` flow (Google's infrastructure has been vastly
+simplified):
 
 ![pods-outbound.svg](/assets/img/k8s-networking/pods-outbound.svg)
 
@@ -567,14 +577,14 @@ root@kind-control-plane:/# ip netns exec client curl -m 2 10.0.0.2:8080
 </html>
 ```
 
-**Congratulations** - we have just manually created two Pods (`net` namespaces) on different hosts, with one container
-(aka "process"; `curl` in our case) in one Pod invoking an API in a container in the other Pod without NAT.
+**Congratulations &#127881; &#127881;** - we have just manually created two Pods (`net` namespaces) on different hosts, with one "container"
+(`curl`) in one Pod invoking an API in a container in the other Pod without NAT.
 
 ![pod-pod-hosts](/assets/img/k8s-networking/pod2pod-diff-hosts.svg)
 _A process inside a `client` namespace connecting to an open socket on a `server` namespace in another host. The client
 process does not perform any NAT._
 
-## Tying it all together
+## How Kubernetes creates Pods
 
 We now know how pods are implemented under the hood. We have learned that Kubernetes "pods" are namespaces and that
 Kubernetes "containers" are processes running within those namespaces. These pods are connected to each other within
@@ -606,10 +616,10 @@ over TCP sockets ([Layer 3](https://en.wikipedia.org/wiki/Transport_layer)).
 The `kubelet` runs on each node and, if it needs to create a pod on that node, why would it need to communicate with
 the CRI service over TCP?
 
-Go (the _lingua franca_ of cloud-native development, including Kubernetes) has a builtin
+Go, the _lingua franca_ of cloud-native development (including Kubernetes), has a builtin
 [`plugin`](https://pkg.go.dev/plugin) system but it has some serious drawbacks in terms of maintainability.
 Eli Bendersky gives a good outline of how they work with pros and cons [here](https://eli.thegreenplace.net/2021/plugins-in-go/)
-that is worth a read. Towards the end you'll notice a bias towards RPC-based plugins; this is exactly what the CRI's designers
+that is worth a read. Towards the end of the article you'll notice a bias towards RPC-based plugins; this is exactly what the CRI's designers
 chose as their architecture. So although the `kubelet` and the CRI service are running on the same node, the gRPC messages
 can be transported locally via `localhost` (for TCP) or [Unix domain sockets](https://en.wikipedia.org/wiki/Unix_domain_socket)
 or some other channel available on the host.
@@ -697,7 +707,7 @@ is that there are three plugins being executed (two of them are chained) with th
 * [host-local](https://www.cni.dev/plugins/current/ipam/host-local/): allocates IPv4 and IPv6 addresses out of a specified address range.
 * [portmap](https://www.cni.dev/plugins/current/meta/portmap/): will forward traffic from one or more ports on the host to the container.
 
-Do any of these sounds familiar to you? They should![^12] These are the things we painstakingly configured step-by-step
+Do any of these concepts sound familiar to you? They should![^12] These are the things we painstakingly configured step-by-step
 in our walkthrough above. With this information in mind, go back to the component diagram in [Concepts](#concepts)
 and map each of these concepts to the boxes in the diagram.
 
@@ -735,19 +745,19 @@ to reflect the IPs currently in use by the backend pods[^13]. Which pods? The on
 
 When a user creates a new Service:
 
-1. `kube-apiserver` assigns it the next free IP by incrementing a counter stored in `etcd` ([Service REST storage](https://github.com/kubernetes/kubernetes/blob/12c71fdf1cf96d756ff84382adf3764af0a76d57/pkg/registry/core/service/storage/storage.go#L350) -> [allocator](https://github.com/kubernetes/kubernetes/blob/1706de24d2ddc767e7cb936f60dd658880f27891/pkg/registry/core/service/storage/alloc.go#L81) -> [Range allocator](https://github.com/kubernetes/kubernetes/blob/ea99593fa1ef102d8a08b0884477693137ae7aec/pkg/registry/core/service/ipallocator/bitmap.go#L222) -> [etcd storage](https://github.com/kubernetes/kubernetes/blob/1b72a0f5a760649605cd833359b6dd005bb99d09/pkg/registry/core/service/allocator/storage/storage.go#L152-L176))
-2. `kube-apiserver` stores the service in `etcd` ([Store.Create](https://github.com/kubernetes/apiserver/blob/27cf1d8797a919a081977c11bdcc6821de1ee341/pkg/registry/generic/registry/store.go#L436)).
-3. This event is pushed to all [watches](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes)[^14]
+1. `kube-apiserver` assigns it the next free IP by incrementing a counter stored in `etcd`[^16].
+2. `kube-apiserver` stores the service in `etcd`[^17].
+3. This event is pushed to all [watches](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes)[^14].
 4. `coreDNS`:
-   1. Event is caught and the service's name, namespace, and (virtual) cluster IP is cached. (breadcrumbs: [InitKubeCache](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L263) -> [dnsController.Run](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/kubernetes/controller.go#L409) -> [controller.Run](https://github.com/kubernetes/client-go/blob/2a6c116e406126324eee341e874612a5093bdbb0/tools/cache/controller.go#L153) -> [Reflector.Run](https://github.com/kubernetes/client-go/blob/ff6bf679aa6412abda395851a36acbea866fb724/tools/cache/reflector.go#L223) -> [Reflector.ListAndWatch](https://github.com/kubernetes/client-go/blob/ff6bf679aa6412abda395851a36acbea866fb724/tools/cache/reflector.go#L329) -> [watchHandler](https://github.com/kubernetes/client-go/blob/ff6bf679aa6412abda395851a36acbea866fb724/tools/cache/reflector.go#L491-L561))
-   2. Responds to requests for A records by reading from the cache. (breadcrumbs: [ServeDNS](https://github.com/coredns/coredns/blob/66dc74caebd4f4bdb8bd38d03b52611488424594/plugin/kubernetes/handler.go#L33) -> [A()](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/backend_lookup.go#L18) -> [checkForApex](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/backend_lookup.go#L517) -> [Services()](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L152) -> [Records()](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L399) -> [findServices](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L501-L594) -> [SvcIndex](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/kubernetes/controller.go#L483) -> [ByIndex](https://github.com/kubernetes/client-go/blob/64585cf823c1b57f8c98505a2ae124a23ff83dc5/tools/cache/store.go#L217) (client-go))
-5. [EndpointSlice](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/) Controller: event is caught and a new EndpointSlice is assigned to the service ([Controller.syncService](https://github.com/kubernetes/kubernetes/blob/6adf60fdf4fd0428cc7f101fbbb608cd02d99cf5/pkg/controller/endpointslice/endpointslice_controller.go#L307-L390))
-6. `kube-proxy`: event is caught and `iptables` is configured on worker nodes. (breadcrumbs: [ProxyServer.Run](https://github.com/kubernetes/kubernetes/blob/bc6c7fa91201348d010b638fbadf32007c0ac546/cmd/kube-proxy/app/server.go#L748-L752) -> [NewServiceConfig](https://github.com/kubernetes/kubernetes/blob/2ea105df63ab0e1d0ec4d94652e32990fc06f66a/pkg/proxy/config/config.go#L169-L176) -> [ServiceConfig.handleAddService](https://github.com/kubernetes/kubernetes/blob/2ea105df63ab0e1d0ec4d94652e32990fc06f66a/pkg/proxy/config/config.go#L206-L209) -> [Proxier.OnServiceAdd](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L514-L516) -> [Proxier.OnServiceUpdate](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L522) -> [Proxier.Sync](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L485) -> [Proxier.syncProxyRules](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L789))
+   1. Event is caught and the service's name, namespace, and (virtual) cluster IP is cached[^18].
+   2. Responds to requests for A records by reading from the cache[^19].
+5. [EndpointSlice](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/) Controller: event is caught and a new EndpointSlice is assigned to the service[^20].
+6. `kube-proxy`: event is caught and `iptables` is configured on worker nodes[^21].
 
 All steps from 4 onwards are executing concurrently by independent processes. 
 The final state is depicted in the diagram in the [Concepts](#concepts) section.
 
-Note that we have incidentally glossed over Kubernetes' distributed and event-driven architecture. We'll expand on this topic
+Note that we have incidentally glossed over Kubernetes' distributed and event-driven architecture. We'll expand on that topic
 in a future article.
 
 We snuck in a new concept in step 6: `iptables`. Let's expand on that next.
@@ -763,22 +773,19 @@ We snuck in a new concept in step 6: `iptables`. Let's expand on that next.
 > 
 > -- `iptables` manpage
 
-System and network administrators use `iptables` to configure IP routing rules on _Linux_ hosts. Windows hosts expose
-an analogous API called
-[Host Compute Network service API](https://learn.microsoft.com/en-us/windows-server/networking/technologies/hcn/hcn-top)
-and is represented by the
+System and network administrators use `iptables` to configure IP routing rules on _Linux_ hosts, and so does `kube-proxy`[^15].
+On _Windows_ hosts `kube-proxy` uses an analogous API called
+[Host Compute Network service API](https://learn.microsoft.com/en-us/windows-server/networking/technologies/hcn/hcn-top),
+internally represented by the
 [HostNetworkService](https://github.com/kubernetes/kubernetes/blob/5eb6f82c1ade7ceac0e9f26283d35ec806e47b9f/pkg/proxy/winkernel/hns.go#L33-L44)
-interface inside `kube-proxy`. It is because of this difference in OS-dependent implementations of the network stack
+interface. It is because of this difference in OS-dependent implementations of the network stack
 that we simply labelled them as "OS IP rules" in the [Concepts](#concepts) section's diagram.
 
 `kube-proxy` uses `iptables` to configure Linux hosts to distribute traffic directed at a Service's `clusterIP`
 (ie. a _virtual_ IP) to the backend pods selected by the service using [NAT](https://en.wikipedia.org/wiki/Network_address_translation).
 So yes, there is definitely network address translation in a Kubernetes cluster, but it's hidden from your workloads.
 
-`kube-proxy` adds a rule to the `PREROUTING` chain that targets a custom chain `KUBE-SERVICES`
-([kubeServicesChain](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L61),
-[iptablesJumpChains](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L354-L367),
-[syncProxyRules](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L857-L882)).
+`kube-proxy` adds a rule to the `PREROUTING` chain that targets a custom chain called `KUBE-SERVICES`[^22].
 The end result looks like this:
 
 ```shell
@@ -801,8 +808,7 @@ Chain KUBE-SERVICES (2 references)
   417 25020 KUBE-NODEPORTS  all  --  *      *       0.0.0.0/0            0.0.0.0/0            /* kubernetes service nodeports; NOTE: this must be the last rule in this chain */ ADDRTYPE match dst-type LOCAL
 ```
 
-New rules are appended for each service by the Proxier's `syncProxyRules` method. For example, rules for services of
-type `ClusterIP` are written
+New rules are appended for each service by the Proxier's `syncProxyRules` method and are written
 [here](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L1095-L1103).
 For example, the following shows a rule targeting a custom chain `KUBE-SVC-BM6F4AVTDKG47F3K` for a service named `mysvc`:
 
@@ -836,7 +842,7 @@ as it handles incoming events for endpointslices
 Each rule has a helpful comment indicating the target service endpoint.
 
 Note how these rules have a probability assigned to them. Rules in `iptables` chains are processed sequentially.
-There are three _service endpoint_ rules, and the first is assigned a probability of `0.33`. Next, if the dice roll
+In this example there are three _service endpoint_ rules, and the first is assigned a probability of `0.33`. Next, if the dice roll
 failed on the first one, we roll it again for the second rule, this time with a probability of 50%. If that fails,
 we fall back to the third rule with a probability of 100%. In this way we have an even distribution of traffic amongst
 the three endpoints. The probabilities are set
@@ -973,21 +979,42 @@ spec:
   </div>
 </details>
 
+# Tying it all together
+
+Kubernetes is an event-driven, distributed platform that automates the deployment and networking
+aspects of your workloads. `kube-apiserver` is the platform's "event hub".
+
+`kubelet` runs on each node and listens for events from `kube-apiserver` where pods are added to the node it's running on.
+When a pod is created, be it with a controller or just an orphaned pod, `kubelet` uses the Container Runtime Interface (CRI)
+to create the pod's sandbox. The CRI in turn uses the Container Network Interface
+to configure the pod's network namespace on the node. The pod will have an IP that is reachable by any other pod in any
+other node.
+
+When a `ClusterIP` Service is created, `kube-apiserver` assigns a free _Virtual IP_ to it and persists the Service object
+to `etcd`. The event is caught by `coreDNS` which proceeds to cache the service_name -> cluster_ip mapping, and respond
+to DNS requests accordingly. The event is also caught by the EndpointSlice controller which then creates and attaches
+and EndpointSlice with the IPs of the selected Pods to the Service and saves the update to `etcd`.
+
+`kube-proxy` runs on each node and listens for events from `kube-apiserver` where Services and EndpointSlices are added
+and configures the local node's IP routing rules to point the Service's virtual IP to the backend Pods with an even
+distribution.
+
+During runtime, a client container queries `coreDNS` for the Service's address and directs its request to the Service's
+virtual IP. The local routing rules (`iptables` on Linux hosts, `Host Compute Service API` on Windows hosts) randomly
+select one of the backend Pod IP addresses and forwards traffic to that Pod.
 
 
 <br/>
 <br/>
 
-- TODO macvlan instead of veth+bridge: https://unix.stackexchange.com/a/546090/311703
-- TODO warn about risks while performing commands; better to try in a VM or container or something
 - TODO warn that it's typically not possible to add a wireless interface to a bridge
 - TODO say that there are several ways of configuring all this
 - TODO make sure echo 1 > /proc/sys/net/ipv4/ip_forward
-- TODO talk about Services and virtual IPs
-- TODO don't forget about DNS
 - TODO also explain that you need iptables FORWARD rules in the step-by-step walkthrough
 
 ---
+
+# Footnotes
 
 [^1]: You can use the [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/) resource (+ a suitable CNI plugin) to block traffic to/from Pods.
 [^2]: Wikipedia has a very nice description of the IP routing algorithm [here](https://en.wikipedia.org/wiki/IP_routing#Routing_algorithm).
@@ -1003,4 +1030,11 @@ spec:
 [^12]: Assuming I've done a decent job in this article :).
 [^13]: Update is done by the [EndpointSlice Controller](https://github.com/kubernetes/kubernetes/blob/6adf60fdf4fd0428cc7f101fbbb608cd02d99cf5/pkg/controller/endpointslice/endpointslice_controller.go#L78-L170). We'll talk about this and other controllers in a future article.
 [^14]: We will cover watches in more detail in a future article.
-
+[^15]: `iptables` is the default. There is a newer alternative using [IPVS](https://en.wikipedia.org/wiki/IP_Virtual_Server) that one can use by setting the `proxy-mode` appropriately (see `proxy-mode` in [options](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/#options) for `kube-proxy`). There used to be an older third mode called _userspace_ but support for that was [removed](https://github.com/kubernetes/kubernetes/pull/112133).
+[^16]: Breadcrumbs:  ([Service REST storage](https://github.com/kubernetes/kubernetes/blob/12c71fdf1cf96d756ff84382adf3764af0a76d57/pkg/registry/core/service/storage/storage.go#L350) -> [allocator](https://github.com/kubernetes/kubernetes/blob/1706de24d2ddc767e7cb936f60dd658880f27891/pkg/registry/core/service/storage/alloc.go#L81) -> [Range allocator](https://github.com/kubernetes/kubernetes/blob/ea99593fa1ef102d8a08b0884477693137ae7aec/pkg/registry/core/service/ipallocator/bitmap.go#L222) -> [etcd storage](https://github.com/kubernetes/kubernetes/blob/1b72a0f5a760649605cd833359b6dd005bb99d09/pkg/registry/core/service/allocator/storage/storage.go#L152-L176))
+[^17]: See ([Store.Create](https://github.com/kubernetes/apiserver/blob/27cf1d8797a919a081977c11bdcc6821de1ee341/pkg/registry/generic/registry/store.go#L436)).
+[^18]: Breadcrumbs: [InitKubeCache](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L263) -> [dnsController.Run](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/kubernetes/controller.go#L409) -> [controller.Run](https://github.com/kubernetes/client-go/blob/2a6c116e406126324eee341e874612a5093bdbb0/tools/cache/controller.go#L153) -> [Reflector.Run](https://github.com/kubernetes/client-go/blob/ff6bf679aa6412abda395851a36acbea866fb724/tools/cache/reflector.go#L223) -> [Reflector.ListAndWatch](https://github.com/kubernetes/client-go/blob/ff6bf679aa6412abda395851a36acbea866fb724/tools/cache/reflector.go#L329) -> [watchHandler](https://github.com/kubernetes/client-go/blob/ff6bf679aa6412abda395851a36acbea866fb724/tools/cache/reflector.go#L491-L561).
+[^19]: Breadcrumbs: [ServeDNS](https://github.com/coredns/coredns/blob/66dc74caebd4f4bdb8bd38d03b52611488424594/plugin/kubernetes/handler.go#L33) -> [A()](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/backend_lookup.go#L18) -> [checkForApex](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/backend_lookup.go#L517) -> [Services()](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L152) -> [Records()](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L399) -> [findServices](https://github.com/coredns/coredns/blob/c3228615e071de61b0c6f60d9a231c494726dda0/plugin/kubernetes/kubernetes.go#L501-L594) -> [SvcIndex](https://github.com/coredns/coredns/blob/c2dbb7141a7c95aa521a41b27bed3af25de8f546/plugin/kubernetes/controller.go#L483) -> [ByIndex](https://github.com/kubernetes/client-go/blob/64585cf823c1b57f8c98505a2ae124a23ff83dc5/tools/cache/store.go#L217) (client-go).
+[^20]: See [Controller.syncService](https://github.com/kubernetes/kubernetes/blob/6adf60fdf4fd0428cc7f101fbbb608cd02d99cf5/pkg/controller/endpointslice/endpointslice_controller.go#L307-L390).
+[^21]: Breadcrumbs: [ProxyServer.Run](https://github.com/kubernetes/kubernetes/blob/bc6c7fa91201348d010b638fbadf32007c0ac546/cmd/kube-proxy/app/server.go#L748-L752) -> [NewServiceConfig](https://github.com/kubernetes/kubernetes/blob/2ea105df63ab0e1d0ec4d94652e32990fc06f66a/pkg/proxy/config/config.go#L169-L176) -> [ServiceConfig.handleAddService](https://github.com/kubernetes/kubernetes/blob/2ea105df63ab0e1d0ec4d94652e32990fc06f66a/pkg/proxy/config/config.go#L206-L209) -> [Proxier.OnServiceAdd](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L514-L516) -> [Proxier.OnServiceUpdate](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L522) -> [Proxier.Sync](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L485) -> [Proxier.syncProxyRules](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L789).
+[^22]: Breadcrumbs: [kubeServicesChain](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L61) -> [iptablesJumpChains](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L354-L367) -> [syncProxyRules](https://github.com/kubernetes/kubernetes/blob/b9bc0e5ac8032bb63298a407c287e6055ef073de/pkg/proxy/iptables/proxier.go#L857-L882)).
