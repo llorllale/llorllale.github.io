@@ -984,6 +984,10 @@ spec:
 Kubernetes is an event-driven, distributed platform that automates the deployment and networking
 aspects of your workloads. `kube-apiserver` is the platform's "event hub".
 
+![k8s-create-pod-service](/assets/img/k8s-networking/k8s-create-pod-service.svg)
+_Blue arrows show where configuration data for Deployments flow. Red arrows show where configuration data for Services
+flow. Note that this is just a subset of all the machinery activated when a user creates either of these two resources._
+
 `kubelet` runs on each node and listens for events from `kube-apiserver` where pods are added to the node it's running on.
 When a pod is created, be it with a controller or just an orphaned pod, `kubelet` uses the Container Runtime Interface (CRI)
 to create the pod's sandbox. The CRI in turn uses the Container Network Interface
@@ -993,16 +997,15 @@ other node.
 When a `ClusterIP` Service is created, `kube-apiserver` assigns a free _Virtual IP_ to it and persists the Service object
 to `etcd`. The event is caught by `coreDNS` which proceeds to cache the service_name -> cluster_ip mapping, and respond
 to DNS requests accordingly. The event is also caught by the EndpointSlice controller which then creates and attaches
-and EndpointSlice with the IPs of the selected Pods to the Service and saves the update to `etcd`.
+an EndpointSlice with the IPs of the selected Pods to the Service and saves the update to `etcd`.
 
 `kube-proxy` runs on each node and listens for events from `kube-apiserver` where Services and EndpointSlices are added
 and configures the local node's IP routing rules to point the Service's virtual IP to the backend Pods with an even
 distribution.
 
 During runtime, a client container queries `coreDNS` for the Service's address and directs its request to the Service's
-virtual IP. The local routing rules (`iptables` on Linux hosts, `Host Compute Service API` on Windows hosts) randomly
+virtual IP. The local routing rules (`iptables` on Linux hosts, `Host Compute Service API` on Windows) randomly
 select one of the backend Pod IP addresses and forwards traffic to that Pod.
-
 
 <br/>
 <br/>
