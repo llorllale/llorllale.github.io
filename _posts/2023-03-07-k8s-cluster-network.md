@@ -1016,7 +1016,7 @@ select one of the backend Pod IP addresses and forwards traffic to that Pod.
 
 ---
 
-# Footnotes
+**Footnotes**
 
 [^1]: You can use the [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/) resource (+ a suitable CNI plugin) to block traffic to/from Pods.
 [^2]: Wikipedia has a very nice description of the IP routing algorithm [here](https://en.wikipedia.org/wiki/IP_routing#Routing_algorithm).
