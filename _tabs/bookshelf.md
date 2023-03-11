@@ -15,6 +15,10 @@ A collection of books I've read over time.
 
 ## 2022
 
+### Q3
+
+* [Learning Go](/posts/learning-go-book)
+
 ### Q2
 
 * [Kubernetes In Action](/posts/kubernetes-in-action)
