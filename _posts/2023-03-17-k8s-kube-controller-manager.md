@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Kubernetes' Controller Manager"
-date: 2023-03-10 08:50:00 -0500
+date: 2023-03-17 07:10:00 -0400
 author: George Aristy
 tags:
 - kubernetes
@@ -23,11 +23,11 @@ In this article we will take a brief look at the component that manages the main
 as well as the [cloud-controller-manager](https://kubernetes.io/docs/concepts/architecture/cloud-controller/) that manages
 the control loops specific to cloud environments.
 
+# Architecture
+
 ![components](/assets/img/k8s-controller-manager/components-of-kubernetes.svg)
 _Image taken from [Kubernetes docs](https://kubernetes.io/docs/concepts/architecture/cloud-controller/#design).<br/>
 "CM" represents `kube-controller-manager` and "CCM" represents `cloud-controller-manager`._
-
-# Architecture
 
 The controller manager is part of Kubernetes’
 [control plane](https://kubernetes.io/docs/concepts/overview/components/#control-plane-components)[^1] and runs on the
