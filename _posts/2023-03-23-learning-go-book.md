@@ -50,5 +50,30 @@ Written by [Jon Bodner](https://www.linkedin.com/in/jonbodner/),
   - Invoking a function with args of type interface will result in a heap allocation for each of the interface types (p147)
   - interfaces and nil (p147)
   - function types as a bridge to interfaces (p154)
+  - aliases versus types? (p189)
+  - using `go list` and `go get` to upgrade or downgrade dependency versions
+  - How channels behave (p209)
+  - writing to channels in a `select` `case` (p211)
+  - nuances on how `select` works - seems like the cases are evaluated and then "materialized" if they aren't blocked,
+    otherwise they don't have any effects. See example in p211. The first case, `case ch2 <- v` is never realized because
+    the other case is executed first. The sub goroutine is stuck "forever" (until the main goroutine ends)
+  - buffered, unbuffered channels, and backpressure (p217-218)
+  - how to time out code (p219). refer to time.After vs Context.Done()
+  - sync.Map - this is not the map you are looking for (p230)
+  - reason why Go implements monotonic time (p240)
+  - json.NewDecoder can decode multiple values (p245). Also I think it only reads just enough bytes (maybe slightly more) to decode a single type
+  - we shouldn't use the static functions of `http` package because other packages may have registered their own handlers
+    in the default serve mux. "keep your application under control by avoiding shared state" (p251)
+  - http.StripPrefix (p251)
+  - limit number of queued requests with buffered channels and a `select` (p262)
+  - "empty struct uses no memory" (p263)
+  - benchmarks! (p283)
+  - "short tests" (p295)
+  - use reflect to make functions and structs (p312-313)
+  - performance boost when using unsafe.Pointer (p317-319)
+
 - TODO Outdated?
   - converting arrays to slices (p46)
+
+- errata
+  - "goroutines are lightweight processes" (p205). refer to my own talk on the subject
