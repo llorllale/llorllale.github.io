@@ -265,6 +265,63 @@ _Learning Go_ exposes the early adopter to common sensible idioms used throughou
   </div>
 </details>
 
+<details>
+  <summary markdown="span">sync.Map Is Not The Map You Are Looking For (page 230)</summary>
+
+  <div markdown="1">
+
+  I generally find Go's community and (in some cases) its documentation rather dogmatic and prescriptive when compared
+  to others. The practical effect of this in the real world is it tends to lead the novice/mid-level engineer to the
+  incorrect conclusion that a certain API or pattern is the best fit for their use case. [sync.Map](https://pkg.go.dev/sync#Map)
+  is one of those cases where the documentation generally leads engineers to suboptimal solutions in terms of performance[^1]:
+
+  > Map is like a Go map[interface{}]interface{} but is safe for concurrent use by multiple goroutines without additional
+  > locking or coordination. Loads, stores, and deletes run in amortized constant time.
+  > 
+  > The Map type is specialized. Most code should use a plain Go map instead, with separate locking or coordination, for
+  > better type safety and to make it easier to maintain other invariants along with the map content.
+  > 
+  > The Map type is optimized for two common use cases: (1) when the entry for a given key is only ever written once but
+  > read many times, as in caches that only grow, or (2) when multiple goroutines read, write, and overwrite entries for
+  > disjoint sets of keys. In these two cases, use of a Map may significantly reduce lock contention compared to a Go
+  > map paired with a separate Mutex or RWMutex.
+
+  The first paragraph informs us that this map is safe for concurrent reads and writes. This map has had type parameters
+  ever since generics were introduced in Go 1.18, so this line is outdated.
+  
+  The second paragraph recommends use of the plain map with more common synchronization primitives (locks, channels).
+  One of the reasons for this recommendation - better type safety - is now outdated. It's a rather short paragraph.
+
+  The third paragraph is longer and is the one most likely to mislead the novice/mid-level engineer: as an authoritative
+  source, it gives the impression that if your use case matches the two enumerated there then you should use `sync.Map`
+  without further consideration. The second paragraph's recommendation is usually brushed away after reading this one.
+
+  A good engineer should have further considerations before deciding on whether to use `sync.Map`:
+
+  * Are [stampedes](https://en.wikipedia.org/wiki/Cache_stampede) a concern?
+  * Are external services impacted when populating the cache?
+  * How large is the cache expected to grow?
+  * How frequently are cache entries added?
+  * Are cache entries ever updated after being added?
+  * How expensive is it to create entries for the cache and how does it stack against the
+    [40ns it takes to transfer L2 caches between CPUs](https://youtu.be/C1EtfDnsdDs?t=67) as per the original author of
+    `sync.Map`? How many cores do your nodes have?
+
+  And I'm sure there are more.
+
+  In my experience, caches are usually held in memory somewhere and implemented because the cached data is "expensive"
+  to recreate frequently. Given this, scenario (1) is always served more optimally with judicious use of `sync.RWMutex` and a plain map
+  to protect against stampedes (a frequent concern), or with a plain map and `atomic.Pointer` to implement a
+  [read-copy-update](https://en.wikipedia.org/wiki/Read-copy-update) scheme if the cache is updated infrequently.
+
+  I have yet to come across scenario (2), but some of those questions still apply.
+
+  In conclusion, I think `sync.Map` is overused and I also think Go's API documentation should limit its prescriptive
+  language and just state the facts of how its APIs operate.
+
+  </div>
+</details>
+
 # Some of the things I learned
 
 A selection of some of the most interesting or surprising things I learned about Go.
@@ -518,7 +575,6 @@ team decided to simplify the mental model by this rule prohibiting this edge cas
   - writing to channels in a `select` `case` (p211)
   - buffered, unbuffered channels, and backpressure (p217-218)
   - how to time out code (p219). refer to time.After vs Context.Done()
-  - sync.Map - this is not the map you are looking for (p230)
   - reason why Go implements monotonic time (p240)
   - json.NewDecoder can decode multiple values (p245). Also I think it only reads just enough bytes (maybe slightly more) to decode a single type
   - we shouldn't use the static functions of `http` package because other packages may have registered their own handlers
@@ -536,3 +592,7 @@ team decided to simplify the mental model by this rule prohibiting this edge cas
 
 - errata
   - "goroutines are lightweight processes" (p205). refer to my own talk on the subject
+
+---
+
+[^1]: The other one I can think of is [database/sql](https://pkg.go.dev/database/sql) where the docs for [Conn](https://pkg.go.dev/database/sql#Conn) say "Prefer running queries from DB unless there is a specific need for a continuous single database connection". This leads some engineers to write service logic that _receives_ a [*sql.DB](https://pkg.go.dev/database/sql#DB) including its administrative methods (`SetConnMaxIdleTime`, `SetConnMaxLifetime`, etc).
