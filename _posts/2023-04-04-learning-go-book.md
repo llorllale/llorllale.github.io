@@ -701,6 +701,9 @@ func main() {
 }
 ```
 
+Note that this feature is typically used to decode sequences of objects of the same type in a loop using
+[Decoder.More()](https://pkg.go.dev/encoding/json#Decoder.More) as exit condition.
+
 **It can be more performant**
 
 Followup from above, `json.Decoder` only
