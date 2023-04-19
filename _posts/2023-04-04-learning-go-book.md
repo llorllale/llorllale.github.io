@@ -562,19 +562,72 @@ What would be the ramifications of that? Does the caller's reference to the inte
 Or should the changes be effected on a different copy than the caller's? Rather than opening up this can of worms, the Go
 team decided to simplify the mental model by this rule prohibiting this edge case.
 
+## Alias declarations
+
+(page 189)
+
+I was aware of aliases but never bothered to look closely at them since I haven't had the need to declare them myself,
+although I have used some from the standard library plenty of times. Some of these may surprise you:
+
+* `byte`, `rune`, and `any` are aliases (see [code](https://github.com/golang/go/blob/4fe46cee4ea4eb15e38675ff32222f07e6b15404/src/builtin/builtin.go#L85-L95))
+* [`os.PathError`](https://github.com/golang/go/blob/979956a7321e74f1441ae2a05c9dc6560d7fe84c/src/os/error.go#L46),
+  [`os.FileInfo`, `os.FileMode`](https://github.com/golang/go/blob/d4da735091986868015369e01c63794af9cc9b84/src/os/types.go#L20-L28),
+  and [`os.DirEntry`](https://github.com/golang/go/blob/3d913a926675d8d6fcdc3cfaefd3136dfeba06e1/src/os/dir.go#L82) are also aliases
+
+The difference between [alias declarations](https://go.dev/ref/spec#Alias_declarations) and [type definitions](https://go.dev/ref/spec#Type_definitions)
+is the former does not create a new type; it merely creates a new name that can also be used to refer to the type definition.
+
+The following example defines type `Person` and an alias to it, `Alice`. Outwardly the code seems to define a new method
+on `Alice`, but really the method is attached to `Person` and also invokable from a reference to `Alice`:
+
+```go
+type Person struct {
+	name string
+}
+
+func (p *Person) Name() string {
+	return p.name
+}
+
+type Alice = Person
+
+func (a *Alice) Greet() string {
+	return fmt.Sprintf("Hello, my name is %s!", a.name)
+}
+
+func main() {
+	a := &Alice{name: "Alice"}
+	fmt.Println(a.Name())
+
+	p := &Person{name: "Alice"}
+	fmt.Println(p.Name())
+	fmt.Println(p.Greet())
+}
+```
+
+Before you get any ideas though - there is no way to get around the hard restriction on modifying the structure of types
+in different packages:
+
+```go
+import "os"
+
+type ErrSneaky = os.PathError
+
+func (e ErrSneaky) DoEvil() { // error: Cannot define new methods on the non-local type 'fs.PathError'
+  // do something evil
+}
+```
+
 - idioms
   - grrr "accept interfaces, return structs" (p146)
 
 - TODO things I learned:
-  - iota (p137)
   - Invoking a function with args of type interface will result in a heap allocation for each of the interface types (p147)
   - interfaces and nil (p147)
   - function types as a bridge to interfaces (p154)
-  - aliases versus types? (p189)
   - How channels behave (p209)
   - writing to channels in a `select` `case` (p211)
   - buffered, unbuffered channels, and backpressure (p217-218)
-  - how to time out code (p219). refer to time.After vs Context.Done()
   - reason why Go implements monotonic time (p240)
   - json.NewDecoder can decode multiple values (p245). Also I think it only reads just enough bytes (maybe slightly more) to decode a single type
   - we shouldn't use the static functions of `http` package because other packages may have registered their own handlers
