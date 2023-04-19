@@ -618,6 +618,95 @@ func (e ErrSneaky) DoEvil() { // error: Cannot define new methods on the non-loc
 }
 ```
 
+## JSON Decoder
+
+(page 245)
+
+I have been using [json.Decoder](https://pkg.go.dev/encoding/json#Decoder) in my APIs since forever because of the way it collapses two
+actions into one.
+
+Compare this:
+
+```go
+func myHandler(w http.ResponseWriter, r *http.Request) {
+  payload, err := io.ReadAll(r.Body)
+  if err != nil {
+    // handle error
+  }
+  
+  request := &MyRequest{}
+  
+  err = json.Unmarshal(payload, request)
+  if err != nil {
+    // handle error
+  }
+  
+  // process request
+}
+```
+
+to this:
+
+```go
+func myHandler(w http.ResponseWriter, r *http.Request) {
+  request := &MyRequest{}
+  
+  err := json.NewDecoder(r.Body).Decode(request)
+  if err != nil {
+    // handle error
+  }
+  
+  // process request
+}
+```
+
+The benefits and features of `json.Decoder` do not stop there though:
+
+**It can decode multiple values**
+
+```go
+type Person struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+}
+
+type USD struct {
+	Dollars int `json:"dollars"`
+	Cents   int `json:"cents"`
+}
+
+func main() {
+	r := strings.NewReader(`
+		{"name": "Alice", "age": 32}
+		{"dollars": 10, "cents": 2}
+	`)
+
+	decoder := json.NewDecoder(r)
+
+	person := Person{}
+	usd := USD{}
+
+	err := decoder.Decode(&person)
+	if err != nil {
+		panic(err)
+	}
+
+	err = decoder.Decode(&usd)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%v\n", person)
+	fmt.Printf("%v\n", usd)
+}
+```
+
+**It can be more performant**
+
+Followup from above, `json.Decoder` only
+[reads the next object or array from the stream](https://github.com/golang/go/blob/21ff6704bc8efa72abe191263aae938f3c867480/src/encoding/json/stream.go#L87-L144)
+and no more[^2].
+
 - idioms
   - grrr "accept interfaces, return structs" (p146)
 
@@ -625,11 +714,9 @@ func (e ErrSneaky) DoEvil() { // error: Cannot define new methods on the non-loc
   - Invoking a function with args of type interface will result in a heap allocation for each of the interface types (p147)
   - interfaces and nil (p147)
   - function types as a bridge to interfaces (p154)
-  - How channels behave (p209)
   - writing to channels in a `select` `case` (p211)
   - buffered, unbuffered channels, and backpressure (p217-218)
   - reason why Go implements monotonic time (p240)
-  - json.NewDecoder can decode multiple values (p245). Also I think it only reads just enough bytes (maybe slightly more) to decode a single type
   - we shouldn't use the static functions of `http` package because other packages may have registered their own handlers
     in the default serve mux. "keep your application under control by avoiding shared state" (p251)
   - http.StripPrefix (p251)
@@ -649,3 +736,4 @@ func (e ErrSneaky) DoEvil() { // error: Cannot define new methods on the non-loc
 ---
 
 [^1]: The other one I can think of is [database/sql](https://pkg.go.dev/database/sql) where the docs for [Conn](https://pkg.go.dev/database/sql#Conn) say "Prefer running queries from DB unless there is a specific need for a continuous single database connection". This leads some engineers to write service logic that _receives_ a [*sql.DB](https://pkg.go.dev/database/sql#DB) including its administrative methods (`SetConnMaxIdleTime`, `SetConnMaxLifetime`, etc).
+[^2]: May read a little more than required because the minimum bytes to be read is 512: https://github.com/golang/go/blob/21ff6704bc8efa72abe191263aae938f3c867480/src/encoding/json/stream.go#L146-L169
