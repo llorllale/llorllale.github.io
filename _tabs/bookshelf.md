@@ -15,7 +15,7 @@ A collection of books I've read over time.
 
 ## 2022
 
-### Q3
+### Q4
 
 * [Learning Go](/posts/learning-go-book)
 
