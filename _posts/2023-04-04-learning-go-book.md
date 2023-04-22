@@ -310,11 +310,11 @@ _Learning Go_ exposes the early adopter to common sensible idioms used throughou
   And I'm sure there are more.
 
   In my experience, caches are usually held in memory somewhere and implemented because the cached data is "expensive"
-  to recreate frequently. Given this, scenario (1) is always served more optimally with judicious use of `sync.RWMutex` and a plain map
+  to create. Given this, scenario (1) is always served more optimally with judicious use of `sync.RWMutex` and a plain map
   to protect against stampedes (a frequent concern), or with a plain map and `atomic.Pointer` to implement a
   [read-copy-update](https://en.wikipedia.org/wiki/Read-copy-update) scheme if the cache is updated infrequently.
 
-  I have yet to come across scenario (2), but some of those questions still apply.
+  I have yet to come across scenario (2), but some of those questions would still apply.
 
   In conclusion, I think `sync.Map` is overused and I also think Go's API documentation should limit its prescriptive
   language and just state the facts of how its APIs operate.
@@ -618,6 +618,18 @@ func (e ErrSneaky) DoEvil() { // error: Cannot define new methods on the non-loc
 }
 ```
 
+## Monotonic time
+
+When available, Go internally uses [monotonic clocks](https://pkg.go.dev/time#hdr-Monotonic_Clocks) to calculate
+[durations](https://pkg.go.dev/time#Duration) between two points in [Time](https://pkg.go.dev/time#Time).
+
+This is a fascinated topic that really deserves an article of its own, so I won't discuss it here. Dropping a couple
+of links for those interested:
+
+* [GoDoc](https://pkg.go.dev/time#hdr-Monotonic_Clocks)
+* [Long discussion on GitHub](https://github.com/golang/go/issues/12914)
+* [How and why the leap second affected Cloudflare DNS](https://blog.cloudflare.com/how-and-why-the-leap-second-affected-cloudflare-dns/)
+
 ## JSON Decoder
 
 (page 245)
@@ -719,14 +731,11 @@ and no more[^2].
   - function types as a bridge to interfaces (p154)
   - writing to channels in a `select` `case` (p211)
   - buffered, unbuffered channels, and backpressure (p217-218)
-  - reason why Go implements monotonic time (p240)
   - we shouldn't use the static functions of `http` package because other packages may have registered their own handlers
     in the default serve mux. "keep your application under control by avoiding shared state" (p251)
   - http.StripPrefix (p251)
-  - limit number of queued requests with buffered channels and a `select` (p262)
   - "empty struct uses no memory" (p263)
   - benchmarks! (p283)
-  - "short tests" (p295)
   - use reflect to make functions and structs (p312-313)
   - performance boost when using unsafe.Pointer (p317-319)
 
