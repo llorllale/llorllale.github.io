@@ -679,7 +679,19 @@ func (e ErrSneaky) DoEvil() { // error: Cannot define new methods on the non-loc
 }
 ```
 
+## Writing to channels in select statements
+
+(page 211)
+
+Not 100% surprising but then again - I have never come across a use case for this:
+
+Cases in a [select statement](https://go.dev/ref/spec#Select_statements) can include "send statements"
+(ie. writing to a channel) as well as receiving operations (ie. reading from a channel); a single instance of `select`
+can have both.
+
 ## Monotonic time
+
+(page 240)
 
 When available, Go internally uses [monotonic clocks](https://pkg.go.dev/time#hdr-Monotonic_Clocks) to calculate
 [durations](https://pkg.go.dev/time#Duration) between two points in [Time](https://pkg.go.dev/time#Time).
@@ -788,7 +800,6 @@ and no more[^2].
 
 - TODO things I learned:
   - Invoking a function with args of type interface will result in a heap allocation for each of the interface types (p147)
-  - writing to channels in a `select` `case` (p211)
   - "empty struct uses no memory" (p263)
   - benchmarks! (p283)
   - use reflect to make functions and structs (p312-313)
