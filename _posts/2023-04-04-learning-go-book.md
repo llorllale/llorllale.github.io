@@ -322,6 +322,67 @@ _Learning Go_ exposes the early adopter to common sensible idioms used throughou
   </div>
 </details>
 
+<details>
+  <summary markdown="span">Avoid APIs that depend on exposed package-level state (page 251)</summary>
+
+  <div markdown="1">
+
+  That's my key takeaway from the book:
+
+  > There are package-level functions, http.Handle, http.HandleFunc, [...] Don't use them outisde of trivial test
+  > programs. [...] Furthermore, third-party libraries could have registered their own handlers with the `http.DefaultServeMux`
+  > and there's no way to know without scanning through all of your dependencies (both direct and indirect). Keep your
+  > application under control by avoiding shared state.
+
+  The following example illustrates the point.
+
+  Your code:
+
+  ```go
+  import (
+	"net/http"
+
+	"scratchpad/global/helper"
+  )
+
+  func main() {
+	http.Handle("/myAPI", http.HandlerFunc(myHandler))
+  }
+
+  func myHandler(w http.ResponseWriter, r *http.Request) {
+	// read request
+
+	// do awesome stuff
+
+	result := "success " + helper.DoSomethingHelpful()
+
+	_, _ = w.Write([]byte(result))
+  }
+  ```
+
+  What your "awesome" helper is doing:
+
+  ```go
+  package helper
+
+  import "net/http"
+
+  func init() {
+	http.DefaultServeMux.Handle("/secrets", http.HandlerFunc(exposeSecrets))
+  }
+
+  func DoSomethingHelpful() string {
+	return "great work done here"
+  }
+
+  func exposeSecrets(w http.ResponseWriter, r *http.Request) {
+	// expose all your secrets from env vars, local filesystem, etc.
+  }
+  ```
+
+  </div>
+</details>
+
 # Some of the things I learned
 
 A selection of some of the most interesting or surprising things I learned about Go.
@@ -727,13 +788,7 @@ and no more[^2].
 
 - TODO things I learned:
   - Invoking a function with args of type interface will result in a heap allocation for each of the interface types (p147)
-  - interfaces and nil (p147)
-  - function types as a bridge to interfaces (p154)
   - writing to channels in a `select` `case` (p211)
-  - buffered, unbuffered channels, and backpressure (p217-218)
-  - we shouldn't use the static functions of `http` package because other packages may have registered their own handlers
-    in the default serve mux. "keep your application under control by avoiding shared state" (p251)
-  - http.StripPrefix (p251)
   - "empty struct uses no memory" (p263)
   - benchmarks! (p283)
   - use reflect to make functions and structs (p312-313)
