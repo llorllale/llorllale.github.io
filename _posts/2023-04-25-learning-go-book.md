@@ -369,7 +369,7 @@ A selection of some of the most interesting or surprising things I learned about
 
 ## Complex numbers
 
-Learned this one right out the gate at page 24.
+(page 24)
 
 Go supports [complex numbers](https://go.dev/ref/spec#Complex_numbers). You can perform arithmetic operations on them,
 and they are comparable (eg. can be used as keys in a map). The following example prints `(4+6i)` and `a`:
@@ -603,6 +603,22 @@ What would be the ramifications of that? Does the caller's reference to the inte
 Or should the changes be effected on a different copy than the caller's? Rather than opening up this can of worms, the Go
 team decided to simplify the mental model by this rule prohibiting this edge case.
 
+## Invoking a function with args of type interface will result in a heap allocation
+
+(page 147)
+
+This was not really a new concept to me, but I still had my "duh!" moment as I read this because I never thought to
+consider this consequence of "Accept Interfaces, Return Structs" (see [below](#accept-interfaces-return-structs)):
+
+> [...] reducing heap allocations improves performance by reducing the amount of work for the garbage collector.
+> Returning a struct avoids a heap allocation, which is good. However, when invoking a function with parameters of
+> interface types, a heap allocation occurs for each of the interface parameters.
+
+The allocations occur not at the function's invocation, but before it, wherever the implementations of the interface
+types were instantiated[^3].
+
+Of course, the usual caveat applies: write readable, maintainable code first, then optimize if needed.
+
 ## Alias declarations
 
 (page 189)
@@ -796,10 +812,9 @@ And from where I am standing, a "best practice" that only stands strong by weake
 much at all from a philosophical standpoint.
 
 After years of programming in Go, I still actually _do_ recommend this pattern to other team members, but I admit I am not fully
-convinced.
+convinced. And it seems no one has time for a nuanced conversation about this.
 
 - TODO things I learned:
-  - Invoking a function with args of type interface will result in a heap allocation for each of the interface types (p147)
   - "empty struct uses no memory" (p263)
   - benchmarks! (p283)
   - use reflect to make functions and structs (p312-313)
@@ -815,3 +830,4 @@ convinced.
 
 [^1]: The other one I can think of is [database/sql](https://pkg.go.dev/database/sql) where the docs for [Conn](https://pkg.go.dev/database/sql#Conn) say "Prefer running queries from DB unless there is a specific need for a continuous single database connection". This leads some engineers to write service logic that _receives_ a [*sql.DB](https://pkg.go.dev/database/sql#DB) including its administrative methods (`SetConnMaxIdleTime`, `SetConnMaxLifetime`, etc).
 [^2]: May read a little more than required because the minimum bytes to be read is 512: https://github.com/golang/go/blob/21ff6704bc8efa72abe191263aae938f3c867480/src/encoding/json/stream.go#L146-L169
+[^3]: Recall that [interfaces](https://go.dev/ref/spec#Interface_types) are composed of the interface's type and an instance of a type that implements the interface. It's the latter that usually requires an allocation in the heap because it is usually implemented by a pointer-type.
