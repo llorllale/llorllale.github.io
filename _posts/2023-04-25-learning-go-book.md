@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Learning Go: An Idiomatic Approach to Real-World Go Programming"
-date: 2023-04-25 08:00:00 -0400
+date: 2023-04-25 14:50:00 -0400
 author: George Aristy
 categories:
 - books
@@ -533,17 +533,11 @@ func main() {
 //  append
 ```
 
-## Reducing the garbage collector's workload
-
-(page 123)
-
-TODO
-
 ## Pointer Receivers vs Value Receivers
 
 (page 132)
 
-> Go considers both pointer and value receiver methods to be in the method set for a pointer instance. For a value instance, 
+> Go considers both pointer and value receiver methods to be in the method set for a pointer. For a value instance, 
 > only the value receiver methods are in the method set.
 
 The practical effect of this is that one cannot assign a value type to a variable of an interface type if the former
@@ -820,7 +814,7 @@ func main() {
 ```
 
 The reason that a pointer uses 8 bytes of memory (on a 64-bit system) is because that is the space required to store
-the pointer variable itself (not the thing to which it points). Aside from the extra heap allocation used up by the
+the pointer value itself (not the thing to which it points). Aside from the extra heap allocation used up by the
 thing the pointer points to, this is another reason why
 [invoking a function with args of type interface](#invoking-a-function-with-args-of-type-interface-will-result-in-a-heap-allocation)
 may result in more memory use.
@@ -851,6 +845,136 @@ Huh, would you look at that?
 
 Anyway - it's a fun curiosity, but I'm 99.9% sure I'll never use any of this[^4].
 
+## Use unsafe.Pointer to convert external binary data
+
+(page 316)
+
+This is one _slick_ trick.
+
+Say we want to read the following bytes off the network: `[0 132 95 237 80 104 111 110 101 0 0 0 0 0 1 0]`.
+Say these bytes correspond to a message with the following structure (in order):
+
+* Value: 4 bytes, an unsigned, big-endian 32-bit int
+* Label: 10 bytes, ASCII
+* Active: 1 byte, boolean flag
+* Padding: 1 byte, because we want everything to fit into 16 bytes
+
+The straightforward implementation of the parser would slice the incoming bytes and assign those to their respective fields:
+
+```go
+type Message struct {
+	Value  uint32
+	Label  [10]byte
+	Active bool
+}
+
+func main() {
+	data := [16]byte{0, 132, 95, 237, 80, 104, 111, 110, 101, 0, 0, 0, 0, 0, 1, 0}
+
+	msg := Message{
+		Value:  binary.BigEndian.Uint32(data[:4]), // allocating memory for a pointer to the new slice (same underlying array tho)
+		Label:  *(*[10]byte)(data[4:16]),          // ditto. Worst if you use copy().
+		Active: data[14] == 1,
+	}
+
+	fmt.Printf("Value: %d\n", msg.Value)   // 8675309
+	fmt.Printf("Label: %s\n", msg.Label)   // Phone
+	fmt.Printf("Active: %t\n", msg.Active) // true
+}
+```
+
+Those allocations may add up.
+
+What you can do instead is the following:
+
+```go
+var isLE bool
+
+func init() {
+	var x uint16 = 0xFF00
+	xb := *(*[2]byte)(unsafe.Pointer(&x))
+	
+    // on a little-endian platform, the bytes will be stored as [00 FF]
+    // on a big-endian platform, the bytes will be stored as [FF 00]
+	isLE = xb[0] == 0x00
+}
+
+type Message struct {
+	Value  uint32
+	Label  [10]byte
+	Active bool
+}
+
+func main() {
+	data := [16]byte{0, 132, 95, 237, 80, 104, 111, 110, 101, 0, 0, 0, 0, 0, 1, 0}
+
+	msg := *(*Message)(unsafe.Pointer(&data))
+
+	if isLE {
+		msg.Value = bits.ReverseBytes32(msg.Value)
+	}
+
+	fmt.Printf("Value: %d\n", msg.Value)   // 8675309
+	fmt.Printf("Label: %s\n", msg.Label)   // Phone
+	fmt.Printf("Active: %t\n", msg.Active) // true
+}
+```
+
+Jon claims the "unsafe" version is twice as performant
+(benchmarks [here](https://github.com/learning-go-book/unsafe_examples/blob/master/data/main_test.go)), which I don't doubt.
+
+There are a few things to unpack here:
+
+**[Endianness](https://en.wikipedia.org/wiki/Endianness)**
+
+We use a variable type with a width of 2 bytes (`uint16`) to store complementary values in each of the bytes,
+`FF` and `00`, in that order. If the order changes then the platform this code is running on is little-endian.
+
+**unsafe.Pointer**
+
+[unsafe.Pointer](https://pkg.go.dev/unsafe#Pointer) can be converted to a pointer value of any other type. This is not
+possible with other types or pointer values.
+
+> **BEWARE**
+> 
+> `unsafe.Pointer` is "unsafe" for a reason. Imagine the following scenario:
+> 
+> ```go
+> func main() {
+>   data := [0]byte{} // you received a payload of an unexpected size
+>
+>   msg := *(*Message)(unsafe.Pointer(&data))
+>
+>   if isLE {
+>     msg.Value = bits.ReverseBytes32(msg.Value)
+>   }
+>
+>   // The following prints whatever garbage happens to be at the memory addresses
+>   // where Value, Label, and Active should be.
+>   // This is now a potential vulnerability in the implementation.
+> 
+>   fmt.Printf("Value: %d\n", msg.Value)   // 1884229632
+>   fmt.Printf("Label: %s\n", msg.Label)   // ��U@
+>   fmt.Printf("Active: %t\n", msg.Active) // false
+>}
+> ```
+{: .prompt-danger }
+
+**Memory layout**
+
+A continuous area of memory is allocated (whether on the heap or on the stack) to hold a struct's data<sup>citation needed</sup>.
+The fields may or may not themselves reside contiguously due to their certain
+[alignment guarantees](https://go.dev/ref/spec#Size_and_alignment_guarantees) that need to be met. Each field naturally
+has a size (aka. "width") that corresponds to its type.
+
+**Bringing it all together**
+
+Because our `Message` struct above was designed to occupy exactly 16 bytes of memory (including alignment), an array
+of 16 bytes can be reinterpreted as an instance of `Message`. This reinterpretation is possible by casting the array
+to an unsafe.Pointer, and then casting the unsafe.Pointer to `Message`. This last step is only possible with `unsafe.Pointer`.
+
+Go's memory layout is a great topic for a future article - stay tuned.
+
 # Things I am on the fence about
 
 ## Accept Interfaces, Return Structs
@@ -874,12 +998,9 @@ much at all from a philosophical standpoint.
 After years of programming in Go, I still actually _do_ recommend this pattern to other team members, but I admit I am not fully
 convinced. And it seems no one has time for a nuanced conversation about this.
 
-- TODO things I learned:
-  - performance boost when using unsafe.Pointer (p317-319)
-
 ---
 
 [^1]: The other one I can think of is [database/sql](https://pkg.go.dev/database/sql) where the docs for [Conn](https://pkg.go.dev/database/sql#Conn) say "Prefer running queries from DB unless there is a specific need for a continuous single database connection". This leads some engineers to write service logic that _receives_ a [*sql.DB](https://pkg.go.dev/database/sql#DB) including its administrative methods (`SetConnMaxIdleTime`, `SetConnMaxLifetime`, etc).
 [^2]: May read a little more than required because the minimum bytes to be read is 512: https://github.com/golang/go/blob/21ff6704bc8efa72abe191263aae938f3c867480/src/encoding/json/stream.go#L146-L169
-[^3]: Recall that [interfaces](https://go.dev/ref/spec#Interface_types) are composed of the interface's type and an instance of a type that implements the interface. It's the latter that usually requires an allocation in the heap because it is usually implemented by a pointer-type.
+[^3]: Recall that [interfaces](https://go.dev/ref/spec#Interface_types) are composed of the interface's type and an instance of a type that implements the interface. It's the latter that usually requires an allocation in the heap because it is usually implemented by a pointer value.
 [^4]: Among many others, one downside is it mitigates the compiler's ability to [eliminate dead code](https://github.com/u-root/u-root/issues/1477)
