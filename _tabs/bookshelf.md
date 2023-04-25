@@ -13,6 +13,12 @@ _<a href='https://www.freepik.com/photos/book'>Book photo created by ikaika - ww
 
 A collection of books I've read over time.
 
+## 2023
+
+### Q1
+
+* [Learning Go](/posts/learning-go-book)
+ 
 ## 2022
 
 ### Q2
