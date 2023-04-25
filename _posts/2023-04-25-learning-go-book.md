@@ -791,6 +791,46 @@ Followup from above, `json.Decoder` only
 [reads the next object or array from the stream](https://github.com/golang/go/blob/21ff6704bc8efa72abe191263aae938f3c867480/src/encoding/json/stream.go#L87-L144)
 and no more[^2].
 
+## Empty struct uses no memory
+
+(page 263)
+
+It's the reason why the "use-map-as-set" idiom is written like this:
+
+```go
+set := map[string]struct{}
+```
+
+instead of:
+
+```go
+set := map[string]*struct{}
+```
+
+One would think that adding an entry to the second case (`set["a"] = nil`) would result in less memory usage than the first
+case (`set["a"] = struct{}`). In fact, the opposite is true:
+
+```go
+func main() {
+	var o struct{}
+	var p *struct{}
+	fmt.Println(unsafe.Sizeof(o)) // prints 0
+	fmt.Println(unsafe.Sizeof(p)) // prints 8
+}
+```
+
+The reason that a pointer uses 8 bytes of memory (on a 64-bit system) is because that is the space required to store
+the pointer variable itself (not the thing to which it points). Aside from the extra heap allocation used up by the
+thing the pointer points to, this is another reason why
+[invoking a function with args of type interface](#invoking-a-function-with-args-of-type-interface-will-result-in-a-heap-allocation)
+may result in more memory use.
+
+The reason that an empty struct uses no memory is because it holds no data and, it being a value-type, it can be stored
+on the stack without taking up any space (again, because it does not hold any data).
+
+I point you to Dave Cheney's excellent article on the topic, [The empty struct](https://dave.cheney.net/2014/03/25/the-empty-struct),
+where he goes the extra mile and covers the implications across several scenarios.
+
 # Things I am on the fence about
 
 ## Accept Interfaces, Return Structs
@@ -815,7 +855,6 @@ After years of programming in Go, I still actually _do_ recommend this pattern t
 convinced. And it seems no one has time for a nuanced conversation about this.
 
 - TODO things I learned:
-  - "empty struct uses no memory" (p263)
   - benchmarks! (p283)
   - use reflect to make functions and structs (p312-313)
   - performance boost when using unsafe.Pointer (p317-319)
