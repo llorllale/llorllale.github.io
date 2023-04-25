@@ -117,14 +117,14 @@ In addition, I endorse ["The Happy path is left-aligned"](https://medium.com/@ma
 even when using the comma-OK idiom:
 
 ```go
-// BAD
+// not great
 if v, ok := myMap["key"]; ok {
   // handle value
 } else {
   // handle key not found
 }
 
-// GOOD
+// better
 v, ok := myMap["key"]
 if !ok {
   // handle key not found
@@ -775,8 +775,28 @@ Followup from above, `json.Decoder` only
 [reads the next object or array from the stream](https://github.com/golang/go/blob/21ff6704bc8efa72abe191263aae938f3c867480/src/encoding/json/stream.go#L87-L144)
 and no more[^2].
 
-- idioms
-  - grrr "accept interfaces, return structs" (p146)
+# Things I am on the fence about
+
+## Accept Interfaces, Return Structs
+
+(page 146)
+
+["Accept Interfaces, Return Structs"](https://medium.com/@cep21/preemptive-interface-anti-pattern-in-go-54c18ac0668a) is a
+structural pattern first popularized by [Jack Lindamood](https://medium.com/@cep21) way back in 2016, so it's been around a
+while.
+
+I think this pattern is at its strongest when working in big, fast-paced teams with engineers who may yet have not developed
+their design skills to its full potential. However, it's just altogether _easier_ to keep diluting a type's "purpose" by tacking
+on more and more methods to its API. Not many people are capable of thinking in higher-level, more abstract terms like
+["Input", "Output", "Scalar", "Func", etc.](https://www.javadoc.io/doc/org.cactoos/cactoos/latest/org/cactoos/package-summary.html).
+So when you stop to think about it, "accept interfaces, return structs" is at its strongest when another universal best practice
+is thrown by the wayside: 
+["the bigger the interface, the weaker the abstraction"](https://www.javadoc.io/doc/org.cactoos/cactoos/latest/org/cactoos/package-summary.html).
+And from where I am standing, a "best practice" that only stands strong by weakening another best practice doesn't net you
+much at all from a philosophical standpoint.
+
+After years of programming in Go, I still actually _do_ recommend this pattern to other team members, but I admit I am not fully
+convinced.
 
 - TODO things I learned:
   - Invoking a function with args of type interface will result in a heap allocation for each of the interface types (p147)
