@@ -831,6 +831,26 @@ on the stack without taking up any space (again, because it does not hold any da
 I point you to Dave Cheney's excellent article on the topic, [The empty struct](https://dave.cheney.net/2014/03/25/the-empty-struct),
 where he goes the extra mile and covers the implications across several scenarios.
 
+## Make functions and structs with reflection
+
+(pages 312-313)
+
+I have hardly ever peeked at the [reflect package](https://pkg.go.dev/reflect) because reflection is
+[a bad idea](https://softwareengineering.stackexchange.com/questions/193526/is-it-a-bad-habit-to-overuse-reflection).
+
+That being said - I had no idea Go's `reflect` package was capable of instantiating types (I thought it was only good
+for introspection):
+
+* [reflect.MakeChan()](https://pkg.go.dev/reflect#MakeChan)
+* [reflect.MakeFunc()](https://pkg.go.dev/reflect#MakeFunc)
+* [reflect.MakeMap()](https://pkg.go.dev/reflect#MakeMap)
+* [reflect.MakeSlice()](https://pkg.go.dev/reflect#MakeSlice)
+* [reflect.New()](https://pkg.go.dev/reflect#New)
+
+Huh, would you look at that?
+
+Anyway - it's a fun curiosity, but I'm 99.9% sure I'll never use any of this[^4].
+
 # Things I am on the fence about
 
 ## Accept Interfaces, Return Structs
@@ -855,18 +875,11 @@ After years of programming in Go, I still actually _do_ recommend this pattern t
 convinced. And it seems no one has time for a nuanced conversation about this.
 
 - TODO things I learned:
-  - benchmarks! (p283)
-  - use reflect to make functions and structs (p312-313)
   - performance boost when using unsafe.Pointer (p317-319)
-
-- TODO Outdated?
-  - converting arrays to slices (p46)
-
-- errata
-  - "goroutines are lightweight processes" (p205). refer to my own talk on the subject
 
 ---
 
 [^1]: The other one I can think of is [database/sql](https://pkg.go.dev/database/sql) where the docs for [Conn](https://pkg.go.dev/database/sql#Conn) say "Prefer running queries from DB unless there is a specific need for a continuous single database connection". This leads some engineers to write service logic that _receives_ a [*sql.DB](https://pkg.go.dev/database/sql#DB) including its administrative methods (`SetConnMaxIdleTime`, `SetConnMaxLifetime`, etc).
 [^2]: May read a little more than required because the minimum bytes to be read is 512: https://github.com/golang/go/blob/21ff6704bc8efa72abe191263aae938f3c867480/src/encoding/json/stream.go#L146-L169
 [^3]: Recall that [interfaces](https://go.dev/ref/spec#Interface_types) are composed of the interface's type and an instance of a type that implements the interface. It's the latter that usually requires an allocation in the heap because it is usually implemented by a pointer-type.
+[^4]: Among many others, one downside is it mitigates the compiler's ability to [eliminate dead code](https://github.com/u-root/u-root/issues/1477)
