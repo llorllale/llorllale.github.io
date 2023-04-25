@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Learning Go: An Idiomatic Approach to Real-World Go Programming"
-date: 2023-04-04 15:00:00 -0400
+date: 2023-04-25 08:00:00 -0400
 author: George Aristy
 categories:
 - books
@@ -37,152 +37,143 @@ reader from zero to hero.
 
 # Some of the things I liked
 
-_Learning Go_ exposes the early adopter to common sensible idioms used throughout the ecosystem:
+_Learning Go_ exposes the early adopter to common sensible idioms used throughout the ecosystem.
 
-<details>
-  <summary markdown="span">comma-OK idiom (page 54)</summary>
+## The comma-OK idiom
 
-  <div markdown="1">
+(page 54)
 
-  Simple way to differentiate between a type's [zero value](https://go.dev/ref/spec#The_zero_value) and its absence, usually
-  as return values from some sort of API (typically a [map](https://go.dev/ref/spec#Map_types)).
+Simple way to differentiate between a type's [zero value](https://go.dev/ref/spec#The_zero_value) and its absence, usually
+as return values from some sort of API (typically a [map](https://go.dev/ref/spec#Map_types)).
 
-  ```go
-  v, ok := myMap["key"]
-  if !ok {
-    // handle key not found
-  }
-  
-  // handle value
-  ```
+```go
+v, ok := myMap["key"]
+if !ok {
+  // handle key not found
+}
 
-  Note that if your API may return an [error](https://go.dev/ref/spec#Errors) for other reasons, then it's better to
-  use a sentinel error:
+// handle value
+```
 
-  ```go
-  var ErrNotFound = errors.New("my sentinel error")
-  
-  v, err := myAPI.Get("key")
-  if errors.Is(ErrNotFound) {
-    // handle key not found
-  }
-  
-  if err != nil {
-    // handle other error
-  }
-  
-  // handle value
-  ```
+Note that if your API may return an [error](https://go.dev/ref/spec#Errors) for other reasons, then it's better to
+use a sentinel error:
 
-  Lastly, the comma-OK idiom is implemented by [channels](https://go.dev/ref/spec#Channel_types) (to differentiate
-  between the zero-value and a closed channel) and [type assertions](https://go.dev/ref/spec#Type_assertions) (to
-  know whether the assertion is true).
+```go
+var ErrNotFound = errors.New("my sentinel error")
 
-  </div>
-</details>
+v, err := myAPI.Get("key")
+if errors.Is(ErrNotFound) {
+  // handle key not found
+}
 
-<details>
-  <summary markdown="span">left-aligned, short `if` statement bodies (page 70)</summary>
+if err != nil {
+  // handle other error
+}
 
-  <div markdown="1">
+// handle value
+```
 
-  Avoid deeply nested structures:
+Lastly, the comma-OK idiom is implemented by [channels](https://go.dev/ref/spec#Channel_types) (to differentiate
+between the zero-value and a closed channel) and [type assertions](https://go.dev/ref/spec#Type_assertions) (to
+know whether the assertion is true).
 
-  ```go
-  // BAD
-  if i%3 == 0 {
-    if i%5 == 0 {
-      return "FizzBuzz"
-    } else {
-      return "Fizz"
-    }
-  } else if i%5 == 0 {
-    return "Buzz"
-  } else {
-    return fmt.Sprint(i)
-  }
-  
-  // GOOD
-  if i%3 ==0 && i%5 == 0 {
+## Left-aligned, short `if` statement bodies
+
+(page 70)
+
+Avoid deeply nested structures:
+
+```go
+// BAD
+if i%3 == 0 {
+  if i%5 == 0 {
     return "FizzBuzz"
-  }
-  
-  if i%3 == 0 {
+  } else {
     return "Fizz"
   }
-  
-  if i%5 == 0 {
-    return "Buzz"
-  }
-  
+} else if i%5 == 0 {
+  return "Buzz"
+} else {
   return fmt.Sprint(i)
-  ```
+}
 
-  In addition, I endorse ["The Happy path is left-aligned"](https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88)
-  even when using the comma-OK idiom:
+// GOOD
+if i%3 ==0 && i%5 == 0 {
+  return "FizzBuzz"
+}
 
-  ```go
-  // BAD
-  if v, ok := myMap["key"]; ok {
-    // handle value
-  } else {
-    // handle key not found
-  }
-  
-  // GOOD
-  v, ok := myMap["key"]
-  if !ok {
-    // handle key not found
-  }
-  
+if i%3 == 0 {
+  return "Fizz"
+}
+
+if i%5 == 0 {
+  return "Buzz"
+}
+
+return fmt.Sprint(i)
+```
+
+In addition, I endorse ["The Happy path is left-aligned"](https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88)
+even when using the comma-OK idiom:
+
+```go
+// BAD
+if v, ok := myMap["key"]; ok {
   // handle value
-  ```
+} else {
+  // handle key not found
+}
 
-  The improvement in readability due to increased line-of-sight (see linked article) is worth the slight increase in
-  number of lines in my opinion.
+// GOOD
+v, ok := myMap["key"]
+if !ok {
+  // handle key not found
+}
 
-  </div>
-</details>
+// handle value
+```
 
-<details>
-  <summary markdown="span">types are executable documentation (page 136)</summary>
+The improvement in readability due to increased line-of-sight (see linked article) is worth the slight increase in
+number of lines in my opinion.
 
-  <div markdown="1">
+## Types are executable documentation
 
-  [User-defined types](https://go.dev/ref/spec#Type_declarations) add clarity by exposing the concept represented by a given value. Imagine
-  [functional options](https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis) without a custom type:
+(page 136)
 
-  ```go
-  func DoSomething(ctx context.Context, key string, opts ...func(*Config)) error {
-    // do something
-  }
-  ```
+[User-defined types](https://go.dev/ref/spec#Type_declarations) add clarity by exposing the concept represented by a given value. Imagine
+[functional options](https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis) without a custom type:
 
-  This API's clarity can be enhanced as follows:
+```go
+func DoSomething(ctx context.Context, key string, opts ...func(*Config)) error {
+  // do something
+}
+```
 
-  ```go
-  type Option func(*Config)
-  
-  func DoSomething(ctx context.Context, key string, opts ...Option) error {
-    // do something
-  }
-  ```
+This API's clarity can be enhanced as follows:
 
-  But user-defined types can do much more than this. Consider [http.HandlerFunc](https://pkg.go.dev/net/http#HandlerFunc):
+```go
+type Option func(*Config)
 
-  ```go
-  type HandlerFunc func(ResponseWriter, *Request)
-  
-  func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request) {
-    f(w, r)
-  }
-  ```
+func DoSomething(ctx context.Context, key string, opts ...Option) error {
+  // do something
+}
+```
 
-  In this case, the type serves as an _adapter_ for user-provided functions that meet the signature requirements. This
-  frees the user from having to define a whole `struct` type just to implement the one `ServeHTTP` method:
+But user-defined types can do much more than this. Consider [http.HandlerFunc](https://pkg.go.dev/net/http#HandlerFunc):
 
-  ```go
-  func main() {
+```go
+type HandlerFunc func(ResponseWriter, *Request)
+
+func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request) {
+  f(w, r)
+}
+```
+
+In this case, the type serves as an _adapter_ for user-provided functions that meet the signature requirements. This
+frees the user from having to define a whole `struct` type just to implement the one `ServeHTTP` method:
+
+```go
+func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/foo", http.HandlerFunc(handleFoo)) // just cast the function to http.HandlerFunc
 
@@ -190,166 +181,158 @@ _Learning Go_ exposes the early adopter to common sensible idioms used throughou
 	if err != nil {
 	  log.Fatal(err)
 	}
-  }
+}
 
-  func handleFoo(w http.ResponseWriter, r *http.Request) {
+func handleFoo(w http.ResponseWriter, r *http.Request) {
 	// handle foo
-  }
-  ```
+}
+```
 
-  One other advantage of user-defined types is that they have the potential to stop being simple data structures or primitives
-  and start having useful behaviour. Consider the following example:
-  
-  ```go
-  func main() {
+One other advantage of user-defined types is that they have the potential to stop being simple data structures or primitives
+and start having useful behaviour. Consider the following example:
+
+```go
+func main() {
 	percentage := 0.2
 	subtotal := 29.5
 
 	ApplyDiscount(subtotal, percentage)
 
 	fmt.Printf("applied %.0f%%\n", percentage*100)
-  }
+}
 
-  func ApplyDiscount(subtotal, percentage float64) {
+func ApplyDiscount(subtotal, percentage float64) {
 	// do something
-  }
-  ```
+}
+```
 
-  Let's make "percentage" more useful as a first-class concept:
+Let's make "percentage" more useful as a first-class concept:
 
-  ```go
-  type Percentage int
+```go
+type Percentage int
 
-  func (p Percentage) String() string {
+func (p Percentage) String() string {
 	return fmt.Sprintf("%d%%", p)
-  }
+}
 
-  func (p Percentage) Float() float64 {
+func (p Percentage) Float() float64 {
 	return float64(p / 100)
-  }
+}
 
-  func main() {
+func main() {
 	var percentage Percentage = 20
 	subtotal := 29.5
 
 	ApplyDiscount(subtotal, percentage)
 
 	fmt.Printf("applied %s\n", percentage)
-  }
+}
 
-  func ApplyDiscount(subtotal float64, p Percentage) {
+func ApplyDiscount(subtotal float64, p Percentage) {
 	// do something
-  }
-  ```
+}
+```
 
-  Another example - an in-memory datastore useful for tests:
+Another example - an in-memory datastore useful for tests:
 
-  ```go
-  type Store[K comparable, V any] interface {
+```go
+type Store[K comparable, V any] interface {
 	Get(k K) (V, error)
 	Put(k K, v V) error
-  }
+}
 
-  type mockStore[K comparable, V any] map[K]V
+type mockStore[K comparable, V any] map[K]V
 
-  func (m mockStore[K, V]) Get(k K) (V, error) {
+func (m mockStore[K, V]) Get(k K) (V, error) {
 	return m[k], nil
-  }
+}
 
-  func (m mockStore[K, V]) Put(k K, v V) error {
+func (m mockStore[K, V]) Put(k K, v V) error {
 	m[k] = v
 	return nil
-  }
-  ```
+}
+```
 
-  </div>
-</details>
+## sync.Map Is Not The Map You Are Looking For
 
-<details>
-  <summary markdown="span">sync.Map Is Not The Map You Are Looking For (page 230)</summary>
+(page 240)
 
-  <div markdown="1">
+I generally find Go's community and (in some cases) its documentation rather dogmatic and prescriptive when compared
+to others. The practical effect of this in the real world is it tends to lead the novice/mid-level engineer to the
+incorrect conclusion that a certain API or pattern is the best fit for their use case. [sync.Map](https://pkg.go.dev/sync#Map)
+is one of those cases where the documentation generally leads engineers to suboptimal solutions in terms of performance[^1]:
 
-  I generally find Go's community and (in some cases) its documentation rather dogmatic and prescriptive when compared
-  to others. The practical effect of this in the real world is it tends to lead the novice/mid-level engineer to the
-  incorrect conclusion that a certain API or pattern is the best fit for their use case. [sync.Map](https://pkg.go.dev/sync#Map)
-  is one of those cases where the documentation generally leads engineers to suboptimal solutions in terms of performance[^1]:
+> Map is like a Go map[interface{}]interface{} but is safe for concurrent use by multiple goroutines without additional
+> locking or coordination. Loads, stores, and deletes run in amortized constant time.
+> 
+> The Map type is specialized. Most code should use a plain Go map instead, with separate locking or coordination, for
+> better type safety and to make it easier to maintain other invariants along with the map content.
+> 
+> The Map type is optimized for two common use cases: (1) when the entry for a given key is only ever written once but
+> read many times, as in caches that only grow, or (2) when multiple goroutines read, write, and overwrite entries for
+> disjoint sets of keys. In these two cases, use of a Map may significantly reduce lock contention compared to a Go
+> map paired with a separate Mutex or RWMutex.
 
-  > Map is like a Go map[interface{}]interface{} but is safe for concurrent use by multiple goroutines without additional
-  > locking or coordination. Loads, stores, and deletes run in amortized constant time.
-  > 
-  > The Map type is specialized. Most code should use a plain Go map instead, with separate locking or coordination, for
-  > better type safety and to make it easier to maintain other invariants along with the map content.
-  > 
-  > The Map type is optimized for two common use cases: (1) when the entry for a given key is only ever written once but
-  > read many times, as in caches that only grow, or (2) when multiple goroutines read, write, and overwrite entries for
-  > disjoint sets of keys. In these two cases, use of a Map may significantly reduce lock contention compared to a Go
-  > map paired with a separate Mutex or RWMutex.
+The first paragraph informs us that this map is safe for concurrent reads and writes. This map has had type parameters
+ever since generics were introduced in Go 1.18, so this line is outdated.
 
-  The first paragraph informs us that this map is safe for concurrent reads and writes. This map has had type parameters
-  ever since generics were introduced in Go 1.18, so this line is outdated.
-  
-  The second paragraph recommends use of the plain map with more common synchronization primitives (locks, channels).
-  One of the reasons for this recommendation - better type safety - is now outdated. It's a rather short paragraph.
+The second paragraph recommends use of the plain map with more common synchronization primitives (locks, channels).
+One of the reasons for this recommendation - better type safety - is now outdated. It's a rather short paragraph.
 
-  The third paragraph is longer and is the one most likely to mislead the novice/mid-level engineer: as an authoritative
-  source, it gives the impression that if your use case matches the two enumerated there then you should use `sync.Map`
-  without further consideration. The second paragraph's recommendation is usually brushed away after reading this one.
+The third paragraph is longer and is the one most likely to mislead the novice/mid-level engineer: as an authoritative
+source, it gives the impression that if your use case matches the two enumerated there then you should use `sync.Map`
+without further consideration. The second paragraph's recommendation is usually brushed away after reading this one.
 
-  A good engineer should have further considerations before deciding on whether to use `sync.Map`:
+A good engineer should have further considerations before deciding on whether to use `sync.Map`:
 
-  * Are [stampedes](https://en.wikipedia.org/wiki/Cache_stampede) a concern?
-  * Are external services impacted when populating the cache?
-  * How large is the cache expected to grow?
-  * How frequently are cache entries added?
-  * Are cache entries ever updated after being added?
-  * How expensive is it to create entries for the cache and how does it stack against the
-    [40ns it takes to transfer L2 caches between CPUs](https://youtu.be/C1EtfDnsdDs?t=67) as per the original author of
-    `sync.Map`? How many cores do your nodes have?
+* Are [stampedes](https://en.wikipedia.org/wiki/Cache_stampede) a concern?
+* Are external services impacted when populating the cache?
+* How large is the cache expected to grow?
+* How frequently are cache entries added?
+* Are cache entries ever updated after being added?
+* How expensive is it to create entries for the cache and how does it stack against the
+  [40ns it takes to transfer L2 caches between CPUs](https://youtu.be/C1EtfDnsdDs?t=67) as per the original author of
+  `sync.Map`? How many cores do your nodes have?
 
-  And I'm sure there are more.
+And I'm sure there are more.
 
-  In my experience, caches are usually held in memory somewhere and implemented because the cached data is "expensive"
-  to create. Given this, scenario (1) is always served more optimally with judicious use of `sync.RWMutex` and a plain map
-  to protect against stampedes (a frequent concern), or with a plain map and `atomic.Pointer` to implement a
-  [read-copy-update](https://en.wikipedia.org/wiki/Read-copy-update) scheme if the cache is updated infrequently.
+In my experience, caches are usually held in memory somewhere and implemented because the cached data is "expensive"
+to create. Given this, scenario (1) is always served more optimally with judicious use of `sync.RWMutex` and a plain map
+to protect against stampedes (a frequent concern), or with a plain map and `atomic.Pointer` to implement a
+[read-copy-update](https://en.wikipedia.org/wiki/Read-copy-update) scheme if the cache is updated infrequently.
 
-  I have yet to come across scenario (2), but some of those questions would still apply.
+I have yet to come across scenario (2), but some of those questions would still apply.
 
-  In conclusion, I think `sync.Map` is overused and I also think Go's API documentation should limit its prescriptive
-  language and just state the facts of how its APIs operate.
+In conclusion, I think `sync.Map` is overused and I also think Go's API documentation should limit its prescriptive
+language and just state the facts of how its APIs operate.
 
-  </div>
-</details>
+## Avoid APIs that depend on exposed package-level state
 
-<details>
-  <summary markdown="span">Avoid APIs that depend on exposed package-level state (page 251)</summary>
+(page 251)
 
-  <div markdown="1">
+"Avoid APIs that depend on exposed package-level state" is my key takeaway from the book:
 
-  That's my key takeaway from the book:
+> There are package-level functions, http.Handle, http.HandleFunc, [...] Don't use them outisde of trivial test
+> programs. [...] Furthermore, third-party libraries could have registered their own handlers with the `http.DefaultServeMux`
+> and there's no way to know without scanning through all of your dependencies (both direct and indirect). Keep your
+> application under control by avoiding shared state.
 
-  > There are package-level functions, http.Handle, http.HandleFunc, [...] Don't use them outisde of trivial test
-  > programs. [...] Furthermore, third-party libraries could have registered their own handlers with the `http.DefaultServeMux`
-  > and there's no way to know without scanning through all of your dependencies (both direct and indirect). Keep your
-  > application under control by avoiding shared state.
+The following example illustrates the point.
 
-  The following example illustrates the point.
+Your code:
 
-  Your code:
-
-  ```go
-  import (
+```go
+import (
 	"net/http"
 
 	"scratchpad/global/helper"
-  )
+)
 
-  func main() {
+func main() {
 	http.Handle("/myAPI", http.HandlerFunc(myHandler))
-  }
+}
 
-  func myHandler(w http.ResponseWriter, r *http.Request) {
+func myHandler(w http.ResponseWriter, r *http.Request) {
 	// read request
 
 	// do awesome stuff
@@ -357,31 +340,28 @@ _Learning Go_ exposes the early adopter to common sensible idioms used throughou
 	result := "success " + helper.DoSomethingHelpful()
 
 	_, _ = w.Write([]byte(result))
-  }
-  ```
+}
+```
 
-  What your "awesome" helper is doing:
+What your "awesome" helper is doing:
 
-  ```go
-  package helper
+```go
+package helper
 
-  import "net/http"
+import "net/http"
 
-  func init() {
+func init() {
 	http.DefaultServeMux.Handle("/secrets", http.HandlerFunc(exposeSecrets))
-  }
+}
 
-  func DoSomethingHelpful() string {
+func DoSomethingHelpful() string {
 	return "great work done here"
-  }
+}
 
-  func exposeSecrets(w http.ResponseWriter, r *http.Request) {
+func exposeSecrets(w http.ResponseWriter, r *http.Request) {
 	// expose all your secrets from env vars, local filesystem, etc.
-  }
-  ```
-
-  </div>
-</details>
+}
+```
 
 # Some of the things I learned
 
