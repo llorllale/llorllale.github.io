@@ -23,3 +23,23 @@ resource "google_storage_bucket" "state" {
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
 }
+
+resource "google_storage_bucket" "my-site" {
+  name                        = "george-aristy-my-site"
+  project                     = module.project.project_id
+  location                    = "NORTHAMERICA-NORTHEAST2"
+  storage_class               = "STANDARD"
+  uniform_bucket_level_access = true
+}
+
+resource "google_storage_bucket_iam_member" "owner" {
+  bucket = google_storage_bucket.my-site.name
+  role   = "roles/storage.admin"
+  member = "user:george.aristy@gmail.com"
+}
+
+resource "google_storage_bucket_iam_member" "public" {
+  bucket = google_storage_bucket.my-site.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}
