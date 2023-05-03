@@ -12,8 +12,12 @@ function doCmd() {
   echo ""
 }
 
+doCmd "rm -rf $SITE_DIR"
+
 doCmd "bundle exec jekyll b -d $SITE_DIR"
 
 doCmd "tree $SITE_DIR"
+
+doCmd "gsutil -m rm -r $BUCKET/*"
 
 doCmd "gsutil -m cp -r $SITE_DIR/* $BUCKET"
