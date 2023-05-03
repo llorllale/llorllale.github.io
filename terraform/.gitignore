@@ -1,0 +1,4 @@
+.terraform/
+
+# place "secrets" in this file
+variables.tf
