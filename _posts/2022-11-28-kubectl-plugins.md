@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Plugins I use with <code class="highlight">kubectl</code>
+title: Plugins I use with kubectl
 date: 2022-11-28 15:40:00 -0500
 author: George Aristy
 tags:
