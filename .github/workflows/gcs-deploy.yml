@@ -1,0 +1,45 @@
+name: 'Deploy to GCS'
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - .gitignore
+      - README.md
+      - LICENSE
+
+jobs:
+  publish:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # for posts's lastmod
+          submodules: true
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.7
+          bundler-cache: true
+
+      - id: GCloud Auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+      - name: Setup GCloud
+        uses: google-github-actions/setup-gcloud@v1
+        install_components: 'gsutil'
+
+      - name: Build Site
+        env:
+          JEKYLL_ENV: production
+        run: bundle exec jekyll b -d _site
+
+      - name: Delete Old
+        run: gsutil -m rm -r $BUCKET/*
+
+      - name: Copy New
+        run: gsutil -m cp -r _site/* gs://george-aristy-my-site/
