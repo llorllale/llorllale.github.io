@@ -31,7 +31,8 @@ jobs:
 
       - name: Setup GCloud
         uses: google-github-actions/setup-gcloud@v1
-        install_components: 'gsutil'
+        with:
+          install_components: 'gsutil'
 
       - name: Build Site
         env:
