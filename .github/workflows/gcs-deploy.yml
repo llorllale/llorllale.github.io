@@ -24,7 +24,7 @@ jobs:
           ruby-version: 2.7
           bundler-cache: true
 
-      - id: 'GCloud Auth'
+      - name: 'GCloud Auth'
         uses: google-github-actions/auth@v1
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
