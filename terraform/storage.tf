@@ -22,7 +22,7 @@ resource "google_storage_bucket" "my-site" {
 resource "google_storage_bucket_iam_member" "owner" {
   bucket = google_storage_bucket.my-site.name
   role   = "roles/storage.admin"
-  member = "user:george.aristy@gmail.com"
+  member = "user:${var.admin_email}"
 }
 
 resource "google_storage_bucket_iam_member" "public" {
