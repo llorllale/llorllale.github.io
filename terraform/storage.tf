@@ -13,6 +13,10 @@ resource "google_storage_bucket" "my-site" {
   location                    = "NORTHAMERICA-NORTHEAST2"
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
+  website {
+    main_page_suffix = "index.html"
+    not_found_page   = "404.html"
+  }
 }
 
 resource "google_storage_bucket_iam_member" "owner" {
