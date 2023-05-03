@@ -12,17 +12,17 @@ resource "google_compute_global_address" "public_ip" {
   project = module.project.project_id
 }
 
-resource "google_compute_backend_bucket" "my-site-bucket-backend" {
+resource "google_compute_backend_bucket" "my_site_bucket_backend" {
   project     = module.project.project_id
   name        = "my-site-bucket-backend"
-  bucket_name = google_storage_bucket.my-site.name
+  bucket_name = google_storage_bucket.my_site.name
   #  enable_cdn  = true
 }
 
 resource "google_compute_url_map" "site_url_map" {
   project         = module.project.project_id
-  name            = google_storage_bucket.my-site.name
-  default_service = google_compute_backend_bucket.my-site-bucket-backend.id
+  name            = google_storage_bucket.my_site.name
+  default_service = google_compute_backend_bucket.my_site_bucket_backend.id
 }
 
 resource "google_compute_managed_ssl_certificate" "cert" {
