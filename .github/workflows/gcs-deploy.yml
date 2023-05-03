@@ -40,7 +40,7 @@ jobs:
         run: bundle exec jekyll b -d _site
 
       - name: 'Delete Old'
-        run: gsutil -m rm -r $BUCKET/*
+        run: gsutil -m rm -r gs://george-aristy-my-site/*
 
       - name: 'Copy New'
         run: gsutil -m cp -r _site/* gs://george-aristy-my-site/
