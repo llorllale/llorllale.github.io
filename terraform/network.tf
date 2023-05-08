@@ -25,19 +25,22 @@ resource "google_compute_url_map" "site_url_map" {
   default_service = google_compute_backend_bucket.my-site-bucket-backend.id
 }
 
-resource "google_compute_managed_ssl_certificate" "cert" {
-  name    = "my-site-cert"
+resource "google_compute_managed_ssl_certificate" "site_cert" {
+  name    = "site-cert"
   project = module.project.project_id
 
   managed {
-    domains = [google_dns_record_set.dns_site_record.name]
+    domains = [
+      google_dns_record_set.dns_site_record.name,
+      google_dns_record_set.dns_www_site_record.name
+    ]
   }
 }
 
 resource "google_compute_target_https_proxy" "https_proxy" {
   project          = module.project.project_id
   name             = "https-proxy"
-  ssl_certificates = [google_compute_managed_ssl_certificate.cert.id]
+  ssl_certificates = [google_compute_managed_ssl_certificate.site_cert.id]
   url_map          = google_compute_url_map.site_url_map.id
   quic_override    = "ENABLE"
 }
@@ -91,6 +94,16 @@ resource "google_dns_managed_zone" "public_zone" {
 resource "google_dns_record_set" "dns_site_record" {
   project = module.project.project_id
   name    = google_dns_managed_zone.public_zone.dns_name
+  type    = "A"
+  ttl     = 3600
+
+  managed_zone = google_dns_managed_zone.public_zone.name
+
+  rrdatas = [google_compute_global_address.public_ip.address]
+}
+resource "google_dns_record_set" "dns_www_site_record" {
+  project = module.project.project_id
+  name    = "www.${google_dns_managed_zone.public_zone.dns_name}"
   type    = "A"
   ttl     = 3600
 
