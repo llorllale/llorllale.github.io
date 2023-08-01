@@ -1,0 +1,961 @@
+<!DOCTYPE html><html lang="en-US" ><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><meta name="generator" content="Jekyll v4.2.2" /><meta property="og:title" content="Learning Go: An Idiomatic Approach to Real-World Go Programming" /><meta name="author" content="George Aristy" /><meta property="og:locale" content="en_US" /><meta name="description" content="Written by Jon Bodner, Learning Go: An Idiomatic Approach to Real-World Go Programming is, in my opinion, one of the best resources there is to learn Go, particularly if you are somewhere around the intermediate stage with a couple of years under your belt. From the basic topics covered at the start all the way to cgo, reflection, and unsafe, this book covers it all, complete with tips on writing idiomatic code. I can guarantee this book will leave you with strongly reinforced learnings and new knowledge." /><meta property="og:description" content="Written by Jon Bodner, Learning Go: An Idiomatic Approach to Real-World Go Programming is, in my opinion, one of the best resources there is to learn Go, particularly if you are somewhere around the intermediate stage with a couple of years under your belt. From the basic topics covered at the start all the way to cgo, reflection, and unsafe, this book covers it all, complete with tips on writing idiomatic code. I can guarantee this book will leave you with strongly reinforced learnings and new knowledge." /><link rel="canonical" href="https://georgearisty.dev/posts/learning-go-book/" /><meta property="og:url" content="https://georgearisty.dev/posts/learning-go-book/" /><meta property="og:site_name" content="George Aristy" /><meta property="og:type" content="article" /><meta property="article:published_time" content="2023-04-25T14:50:00-04:00" /><meta name="twitter:card" content="summary" /><meta property="twitter:title" content="Learning Go: An Idiomatic Approach to Real-World Go Programming" /><meta name="twitter:site" content="@twitter_username" /><meta name="twitter:creator" content="@George Aristy" /><meta name="google-site-verification" content="google_meta_tag_verification" /> <script type="application/ld+json"> {"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"George Aristy"},"dateModified":"2023-04-25T14:50:00-04:00","datePublished":"2023-04-25T14:50:00-04:00","description":"Written by Jon Bodner, Learning Go: An Idiomatic Approach to Real-World Go Programming is, in my opinion, one of the best resources there is to learn Go, particularly if you are somewhere around the intermediate stage with a couple of years under your belt. From the basic topics covered at the start all the way to cgo, reflection, and unsafe, this book covers it all, complete with tips on writing idiomatic code. I can guarantee this book will leave you with strongly reinforced learnings and new knowledge.","headline":"Learning Go: An Idiomatic Approach to Real-World Go Programming","mainEntityOfPage":{"@type":"WebPage","@id":"https://georgearisty.dev/posts/learning-go-book/"},"url":"https://georgearisty.dev/posts/learning-go-book/"}</script><title>Learning Go: An Idiomatic Approach to Real-World Go Programming | George Aristy</title><link rel="apple-touch-icon" sizes="180x180" href="/assets/img/favicons/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicons/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicons/favicon-16x16.png"><link rel="manifest" href="/assets/img/favicons/site.webmanifest"><link rel="shortcut icon" href="/assets/img/favicons/favicon.ico"><meta name="apple-mobile-web-app-title" content="George Aristy"><meta name="application-name" content="George Aristy"><meta name="msapplication-TileColor" content="#da532c"><meta name="msapplication-config" content="/assets/img/favicons/browserconfig.xml"><meta name="theme-color" content="#ffffff"><link rel="stylesheet" href="/assets/lib/fonts/main.css"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin="use-credentials"><link rel="dns-prefetch" href="https://www.google-analytics.com"><link rel="preconnect" href="https://www.googletagmanager.com" crossorigin="anonymous"><link rel="dns-prefetch" href="https://www.googletagmanager.com"><link rel="stylesheet" href="/assets/lib/bootstrap-4.6.1/bootstrap.min.css"><link rel="stylesheet" href="/assets/lib/fontawesome-free-5.15.4/css/all.min.css"><link rel="stylesheet" href="/assets/css/style.css"><link rel="stylesheet" href="/assets/lib/bootstrap-toc-1.0.1/bootstrap-toc.min.css"><link rel="stylesheet" href="/assets/lib/magnific-popup-1.1.0/magnific-popup.css"> <script src="/assets/lib/jquery-3.6.0/jquery.min.js"></script> <script type="text/javascript"> class ModeToggle { static get MODE_KEY() { return "mode"; } static get MODE_ATTR() { return "data-mode"; } static get DARK_MODE() { return "dark"; } static get LIGHT_MODE() { return "light"; } static get ID() { return "mode-toggle"; } constructor() { if (this.hasMode) { if (this.isDarkMode) { if (!this.isSysDarkPrefer) { this.setDark(); } } else { if (this.isSysDarkPrefer) { this.setLight(); } } } let self = this; /* always follow the system prefers */ this.sysDarkPrefers.addEventListener("change", () => { if (self.hasMode) { if (self.isDarkMode) { if (!self.isSysDarkPrefer) { self.setDark(); } } else { if (self.isSysDarkPrefer) { self.setLight(); } } self.clearMode(); } self.notify(); }); } /* constructor() */ get sysDarkPrefers() { return window.matchMedia("(prefers-color-scheme: dark)"); } get isSysDarkPrefer() { return this.sysDarkPrefers.matches; } get isDarkMode() { return this.mode === ModeToggle.DARK_MODE; } get isLightMode() { return this.mode === ModeToggle.LIGHT_MODE; } get hasMode() { return this.mode != null; } get mode() { return sessionStorage.getItem(ModeToggle.MODE_KEY); } /* get the current mode on screen */ get modeStatus() { if (this.isDarkMode || (!this.hasMode && this.isSysDarkPrefer)) { return ModeToggle.DARK_MODE; } else { return ModeToggle.LIGHT_MODE; } } setDark() { $('html').attr(ModeToggle.MODE_ATTR, ModeToggle.DARK_MODE); sessionStorage.setItem(ModeToggle.MODE_KEY, ModeToggle.DARK_MODE); } setLight() { $('html').attr(ModeToggle.MODE_ATTR, ModeToggle.LIGHT_MODE); sessionStorage.setItem(ModeToggle.MODE_KEY, ModeToggle.LIGHT_MODE); } clearMode() { $('html').removeAttr(ModeToggle.MODE_ATTR); sessionStorage.removeItem(ModeToggle.MODE_KEY); } /* Notify another plugins that the theme mode has changed */ notify() { window.postMessage({ direction: ModeToggle.ID, message: this.modeStatus }, "*"); } } /* ModeToggle */ const toggle = new ModeToggle(); function flipMode() { if (toggle.hasMode) { if (toggle.isSysDarkPrefer) { if (toggle.isLightMode) { toggle.clearMode(); } else { toggle.setLight(); } } else { if (toggle.isDarkMode) { toggle.clearMode(); } else { toggle.setDark(); } } } else { if (toggle.isSysDarkPrefer) { toggle.setLight(); } else { toggle.setDark(); } } toggle.notify(); } /* flipMode() */ </script><body data-spy="scroll" data-target="#toc" data-topbar-visible="true"><div id="sidebar" class="d-flex flex-column align-items-end"><div class="profile-wrapper text-center"><div id="avatar"> <a href="/" alt="avatar" class="mx-auto"> <img src=" /assets/img/portrait.png " alt="avatar" onerror="this.style.display='none'"> </a></div><div class="site-title mt-3"> <a href="/">George Aristy</a></div><div class="site-subtitle font-italic">Blog about software craftmanship</div></div><ul class="w-100"><li class="nav-item"> <a href="/" class="nav-link"> <i class="fa-fw fas fa-home ml-xl-3 mr-xl-3 unloaded"></i> <span>HOME</span> </a><li class="nav-item"> <a href="/categories/" class="nav-link"> <i class="fa-fw fas fa-stream ml-xl-3 mr-xl-3 unloaded"></i> <span>CATEGORIES</span> </a><li class="nav-item"> <a href="/tags/" class="nav-link"> <i class="fa-fw fas fa-tags ml-xl-3 mr-xl-3 unloaded"></i> <span>TAGS</span> </a><li class="nav-item"> <a href="/archives/" class="nav-link"> <i class="fa-fw fas fa-archive ml-xl-3 mr-xl-3 unloaded"></i> <span>ARCHIVES</span> </a><li class="nav-item"> <a href="/about/" class="nav-link"> <i class="fa-fw fas fa-info-circle ml-xl-3 mr-xl-3 unloaded"></i> <span>ABOUT</span> </a><li class="nav-item"> <a href="/bookshelf/" class="nav-link"> <i class="fa-fw fas fa-book ml-xl-3 mr-xl-3 unloaded"></i> <span>BOOKSHELF</span> </a><li class="nav-item"> <a href="/projects/" class="nav-link"> <i class="fa-fw fas fa-project-diagram ml-xl-3 mr-xl-3 unloaded"></i> <span>PROJECTS</span> </a><li class="nav-item"> <a href="/talks/" class="nav-link"> <i class="fa-fw fas fa-comment ml-xl-3 mr-xl-3 unloaded"></i> <span>TALKS</span> </a></ul><div class="sidebar-bottom mt-auto d-flex flex-wrap justify-content-center align-items-center"> <button class="mode-toggle btn" aria-label="Switch Mode"> <i class="fas fa-adjust"></i> </button> <span class="icon-border"></span> <a href="https://github.com/llorllale" aria-label="github" target="_blank" rel="noopener"> <i class="fab fa-github"></i> </a> <a href=" javascript:location.href = 'mailto:' + ['george.aristy','gmail.com'].join('@')" aria-label="email" > <i class="fas fa-envelope"></i> </a> <a href="/feed.xml" aria-label="rss" > <i class="fas fa-rss"></i> </a> <a href="https://www.linkedin.com/in/georgearisty/" aria-label="linkedin" target="_blank" rel="noopener"> <i class="fab fa-linkedin"></i> </a> <a href="https://stackoverflow.com/users/1623885/george-aristy" aria-label="stack-overflow" target="_blank" rel="noopener"> <i class="fab fa-stack-overflow"></i> </a></div></div><div id="topbar-wrapper" class="row justify-content-center"><div id="topbar" class="col-11 d-flex h-100 align-items-center justify-content-between"> <span id="breadcrumb"> <span> <a href="/"> Home </a> </span> <span>Learning Go: An Idiomatic Approach to Real-World Go Programming</span> </span> <i id="sidebar-trigger" class="fas fa-bars fa-fw"></i><div id="topbar-title"> Post</div><i id="search-trigger" class="fas fa-search fa-fw"></i> <span id="search-wrapper" class="align-items-center"> <i class="fas fa-search fa-fw"></i> <input class="form-control" id="search-input" type="search" aria-label="search" autocomplete="off" placeholder="Search..."> </span> <span id="search-cancel" >Cancel</span></div></div><div id="main-wrapper"><div id="main"><div class="row"><div id="core-wrapper" class="col-12 col-lg-11 col-xl-8"><div class="post pl-1 pr-1 pl-sm-2 pr-sm-2 pl-md-4 pr-md-4"><h1 data-toc-skip>Learning Go: An Idiomatic Approach to Real-World Go Programming</h1><div class="post-meta text-muted"><div> By <em> <a href="https://www.linkedin.com/in/georgearisty">George Aristy</a> </em></div><div class="d-flex"><div> <span> Posted <em class="timeago" data-ts="1682448600" data-toggle="tooltip" data-placement="bottom" data-tooltip-df="llll" > 2023-04-25 </em> </span> <span class="readtime" data-toggle="tooltip" data-placement="bottom" title="4811 words"> <em>26 min</em> read</span></div></div></div><div class="post-content"><p><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 300'%3E%3C/svg%3E" data-src="/assets/img/books/learning-go/front-cover.jpg" alt="book cover" class="left" height="300" width="200" data-proofer-ignore> Written by <a href="https://www.linkedin.com/in/jonbodner/">Jon Bodner</a>, <a href="https://www.amazon.ca/Learning-Go-Idiomatic-Real-World-Programming/dp/1492077216">Learning Go: An Idiomatic Approach to Real-World Go Programming</a> is, in my opinion, one of the best resources there is to learn <a href="https://go.dev/">Go</a>, particularly if you are somewhere around the intermediate stage with a couple of years under your belt. From the basic topics covered at the start all the way to <code class="language-plaintext highlighter-rouge">cgo</code>, reflection, and <code class="language-plaintext highlighter-rouge">unsafe</code>, this book covers it all, complete with tips on writing idiomatic code. I can guarantee this book will leave you with strongly reinforced learnings and new knowledge.</p><p>The book came out right before <a href="https://tip.golang.org/doc/go1.18">Go 1.18 was released</a> (mayor feature being generics), but everything contained in this book still holds beautifully.</p><p>I highly recommend this book for those that value Go as a professional tool and are serious about mastering it.</p><p><em>Check out some other books I’ve read on the <a href="/bookshelf/">bookshelf</a>.</em></p><h1 id="summary">Summary</h1><p><em>Learning Go</em> is a complete treasure trove of learnings about everything related to Go: its syntax, standard tools, standard APIs, common idioms, common sources of bugs, great insight into the reasons for the design of some of Go’s APIs and operators, and ending with advanced topics such as <code class="language-plaintext highlighter-rouge">cgo</code> and <code class="language-plaintext highlighter-rouge">unsafe</code>. No prior knowledge of Go is required from the reader; given prior exposure to other similar programming languages, this book will effortlessly take the reader from zero to hero.</p><h1 id="some-of-the-things-i-liked">Some of the things I liked</h1><p><em>Learning Go</em> exposes the early adopter to common sensible idioms used throughout the ecosystem.</p><h2 id="the-comma-ok-idiom"><span class="mr-2">The comma-OK idiom</span><a href="#the-comma-ok-idiom" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 54)</p><p>Simple way to differentiate between a type’s <a href="https://go.dev/ref/spec#The_zero_value">zero value</a> and its absence, usually as return values from some sort of API (typically a <a href="https://go.dev/ref/spec#Map_types">map</a>).</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre><td class="rouge-code"><pre><span class="n">v</span><span class="p">,</span> <span class="n">ok</span> <span class="o">:=</span> <span class="n">myMap</span><span class="p">[</span><span class="s">"key"</span><span class="p">]</span>
+<span class="k">if</span> <span class="o">!</span><span class="n">ok</span> <span class="p">{</span>
+  <span class="c">// handle key not found</span>
+<span class="p">}</span>
+
+<span class="c">// handle value</span>
+</pre></table></code></div></div><p>Note that if your API may return an <a href="https://go.dev/ref/spec#Errors">error</a> for other reasons, then it’s better to use a sentinel error:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+</pre><td class="rouge-code"><pre><span class="k">var</span> <span class="n">ErrNotFound</span> <span class="o">=</span> <span class="n">errors</span><span class="o">.</span><span class="n">New</span><span class="p">(</span><span class="s">"my sentinel error"</span><span class="p">)</span>
+
+<span class="n">v</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">myAPI</span><span class="o">.</span><span class="n">Get</span><span class="p">(</span><span class="s">"key"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">errors</span><span class="o">.</span><span class="n">Is</span><span class="p">(</span><span class="n">ErrNotFound</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c">// handle key not found</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+  <span class="c">// handle other error</span>
+<span class="p">}</span>
+
+<span class="c">// handle value</span>
+</pre></table></code></div></div><p>Lastly, the comma-OK idiom is implemented by <a href="https://go.dev/ref/spec#Channel_types">channels</a> (to differentiate between the zero-value and a closed channel) and <a href="https://go.dev/ref/spec#Type_assertions">type assertions</a> (to know whether the assertion is true).</p><h2 id="left-aligned-short-if-statement-bodies"><span class="mr-2">Left-aligned, short <code class="language-plaintext highlighter-rouge"><span class="mr-2">if</code> statement bodies</span><a href="#left-aligned-short-if-statement-bodies" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 70)</p><p>Avoid deeply nested structures:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+</pre><td class="rouge-code"><pre><span class="c">// BAD</span>
+<span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="m">3</span> <span class="o">==</span> <span class="m">0</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="m">5</span> <span class="o">==</span> <span class="m">0</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="s">"FizzBuzz"</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="s">"Fizz"</span>
+  <span class="p">}</span>
+<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="m">5</span> <span class="o">==</span> <span class="m">0</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="s">"Buzz"</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">fmt</span><span class="o">.</span><span class="n">Sprint</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c">// GOOD</span>
+<span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="m">3</span> <span class="o">==</span><span class="m">0</span> <span class="o">&amp;&amp;</span> <span class="n">i</span><span class="o">%</span><span class="m">5</span> <span class="o">==</span> <span class="m">0</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="s">"FizzBuzz"</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="m">3</span> <span class="o">==</span> <span class="m">0</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="s">"Fizz"</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="m">5</span> <span class="o">==</span> <span class="m">0</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="s">"Buzz"</span>
+<span class="p">}</span>
+
+<span class="k">return</span> <span class="n">fmt</span><span class="o">.</span><span class="n">Sprint</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+</pre></table></code></div></div><p>In addition, I endorse <a href="https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88">“The Happy path is left-aligned”</a> even when using the comma-OK idiom:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+</pre><td class="rouge-code"><pre><span class="c">// not great</span>
+<span class="k">if</span> <span class="n">v</span><span class="p">,</span> <span class="n">ok</span> <span class="o">:=</span> <span class="n">myMap</span><span class="p">[</span><span class="s">"key"</span><span class="p">];</span> <span class="n">ok</span> <span class="p">{</span>
+  <span class="c">// handle value</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="c">// handle key not found</span>
+<span class="p">}</span>
+
+<span class="c">// better</span>
+<span class="n">v</span><span class="p">,</span> <span class="n">ok</span> <span class="o">:=</span> <span class="n">myMap</span><span class="p">[</span><span class="s">"key"</span><span class="p">]</span>
+<span class="k">if</span> <span class="o">!</span><span class="n">ok</span> <span class="p">{</span>
+  <span class="c">// handle key not found</span>
+<span class="p">}</span>
+
+<span class="c">// handle value</span>
+</pre></table></code></div></div><p>The improvement in readability due to increased line-of-sight (see linked article) is worth the slight increase in number of lines in my opinion.</p><h2 id="types-are-executable-documentation"><span class="mr-2">Types are executable documentation</span><a href="#types-are-executable-documentation" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 136)</p><p><a href="https://go.dev/ref/spec#Type_declarations">User-defined types</a> add clarity by exposing the concept represented by a given value. Imagine <a href="https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis">functional options</a> without a custom type:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">DoSomething</span><span class="p">(</span><span class="n">ctx</span> <span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="p">,</span> <span class="n">key</span> <span class="kt">string</span><span class="p">,</span> <span class="n">opts</span> <span class="o">...</span><span class="k">func</span><span class="p">(</span><span class="o">*</span><span class="n">Config</span><span class="p">))</span> <span class="kt">error</span> <span class="p">{</span>
+  <span class="c">// do something</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>This API’s clarity can be enhanced as follows:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">Option</span> <span class="k">func</span><span class="p">(</span><span class="o">*</span><span class="n">Config</span><span class="p">)</span>
+
+<span class="k">func</span> <span class="n">DoSomething</span><span class="p">(</span><span class="n">ctx</span> <span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="p">,</span> <span class="n">key</span> <span class="kt">string</span><span class="p">,</span> <span class="n">opts</span> <span class="o">...</span><span class="n">Option</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+  <span class="c">// do something</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>But user-defined types can do much more than this. Consider <a href="https://pkg.go.dev/net/http#HandlerFunc">http.HandlerFunc</a>:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">HandlerFunc</span> <span class="k">func</span><span class="p">(</span><span class="n">ResponseWriter</span><span class="p">,</span> <span class="o">*</span><span class="n">Request</span><span class="p">)</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">f</span> <span class="n">HandlerFunc</span><span class="p">)</span> <span class="n">ServeHTTP</span><span class="p">(</span><span class="n">w</span> <span class="n">ResponseWriter</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span><span class="n">Request</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">f</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>In this case, the type serves as an <em>adapter</em> for user-provided functions that meet the signature requirements. This frees the user from having to define a whole <code class="language-plaintext highlighter-rouge">struct</code> type just to implement the one <code class="language-plaintext highlighter-rouge">ServeHTTP</code> method:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">mux</span> <span class="o">:=</span> <span class="n">http</span><span class="o">.</span><span class="n">NewServeMux</span><span class="p">()</span>
+	<span class="n">mux</span><span class="o">.</span><span class="n">Handle</span><span class="p">(</span><span class="s">"/foo"</span><span class="p">,</span> <span class="n">http</span><span class="o">.</span><span class="n">HandlerFunc</span><span class="p">(</span><span class="n">handleFoo</span><span class="p">))</span> <span class="c">// just cast the function to http.HandlerFunc</span>
+
+	<span class="n">err</span> <span class="o">:=</span> <span class="n">http</span><span class="o">.</span><span class="n">ListenAndServe</span><span class="p">(</span><span class="s">":8080"</span><span class="p">,</span> <span class="n">mux</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+	  <span class="n">log</span><span class="o">.</span><span class="n">Fatal</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">handleFoo</span><span class="p">(</span><span class="n">w</span> <span class="n">http</span><span class="o">.</span><span class="n">ResponseWriter</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c">// handle foo</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>One other advantage of user-defined types is that they have the potential to stop being simple data structures or primitives and start having useful behaviour. Consider the following example:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">percentage</span> <span class="o">:=</span> <span class="m">0.2</span>
+	<span class="n">subtotal</span> <span class="o">:=</span> <span class="m">29.5</span>
+
+	<span class="n">ApplyDiscount</span><span class="p">(</span><span class="n">subtotal</span><span class="p">,</span> <span class="n">percentage</span><span class="p">)</span>
+
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"applied %.0f%%</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">percentage</span><span class="o">*</span><span class="m">100</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">ApplyDiscount</span><span class="p">(</span><span class="n">subtotal</span><span class="p">,</span> <span class="n">percentage</span> <span class="kt">float64</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c">// do something</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>Let’s make “percentage” more useful as a first-class concept:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">Percentage</span> <span class="kt">int</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">p</span> <span class="n">Percentage</span><span class="p">)</span> <span class="n">String</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="n">fmt</span><span class="o">.</span><span class="n">Sprintf</span><span class="p">(</span><span class="s">"%d%%"</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">p</span> <span class="n">Percentage</span><span class="p">)</span> <span class="n">Float</span><span class="p">()</span> <span class="kt">float64</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="kt">float64</span><span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="m">100</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">var</span> <span class="n">percentage</span> <span class="n">Percentage</span> <span class="o">=</span> <span class="m">20</span>
+	<span class="n">subtotal</span> <span class="o">:=</span> <span class="m">29.5</span>
+
+	<span class="n">ApplyDiscount</span><span class="p">(</span><span class="n">subtotal</span><span class="p">,</span> <span class="n">percentage</span><span class="p">)</span>
+
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"applied %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">percentage</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">ApplyDiscount</span><span class="p">(</span><span class="n">subtotal</span> <span class="kt">float64</span><span class="p">,</span> <span class="n">p</span> <span class="n">Percentage</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c">// do something</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>Another example - an in-memory datastore useful for tests:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">Store</span><span class="p">[</span><span class="n">K</span> <span class="n">comparable</span><span class="p">,</span> <span class="n">V</span> <span class="n">any</span><span class="p">]</span> <span class="k">interface</span> <span class="p">{</span>
+	<span class="n">Get</span><span class="p">(</span><span class="n">k</span> <span class="n">K</span><span class="p">)</span> <span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+	<span class="n">Put</span><span class="p">(</span><span class="n">k</span> <span class="n">K</span><span class="p">,</span> <span class="n">v</span> <span class="n">V</span><span class="p">)</span> <span class="kt">error</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">mockStore</span><span class="p">[</span><span class="n">K</span> <span class="n">comparable</span><span class="p">,</span> <span class="n">V</span> <span class="n">any</span><span class="p">]</span> <span class="k">map</span><span class="p">[</span><span class="n">K</span><span class="p">]</span><span class="n">V</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">m</span> <span class="n">mockStore</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">])</span> <span class="n">Get</span><span class="p">(</span><span class="n">k</span> <span class="n">K</span><span class="p">)</span> <span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="n">m</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="no">nil</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">m</span> <span class="n">mockStore</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">])</span> <span class="n">Put</span><span class="p">(</span><span class="n">k</span> <span class="n">K</span><span class="p">,</span> <span class="n">v</span> <span class="n">V</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="n">m</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+	<span class="k">return</span> <span class="no">nil</span>
+<span class="p">}</span>
+</pre></table></code></div></div><h2 id="syncmap-is-not-the-map-you-are-looking-for"><span class="mr-2">sync.Map Is Not The Map You Are Looking For</span><a href="#syncmap-is-not-the-map-you-are-looking-for" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 240)</p><p>I generally find Go’s community and (in some cases) its documentation rather dogmatic and prescriptive when compared to others. The practical effect of this in the real world is it tends to lead the novice/mid-level engineer to the incorrect conclusion that a certain API or pattern is the best fit for their use case. <a href="https://pkg.go.dev/sync#Map">sync.Map</a> is one of those cases where the documentation generally leads engineers to suboptimal solutions in terms of performance<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup>:</p><blockquote><p>Map is like a Go map[interface{}]interface{} but is safe for concurrent use by multiple goroutines without additional locking or coordination. Loads, stores, and deletes run in amortized constant time.</p><p>The Map type is specialized. Most code should use a plain Go map instead, with separate locking or coordination, for better type safety and to make it easier to maintain other invariants along with the map content.</p><p>The Map type is optimized for two common use cases: (1) when the entry for a given key is only ever written once but read many times, as in caches that only grow, or (2) when multiple goroutines read, write, and overwrite entries for disjoint sets of keys. In these two cases, use of a Map may significantly reduce lock contention compared to a Go map paired with a separate Mutex or RWMutex.</p></blockquote><p>The first paragraph informs us that this map is safe for concurrent reads and writes. This map has had type parameters ever since generics were introduced in Go 1.18, so this line is outdated.</p><p>The second paragraph recommends use of the plain map with more common synchronization primitives (locks, channels). One of the reasons for this recommendation - better type safety - is now outdated. It’s a rather short paragraph.</p><p>The third paragraph is longer and is the one most likely to mislead the novice/mid-level engineer: as an authoritative source, it gives the impression that if your use case matches the two enumerated there then you should use <code class="language-plaintext highlighter-rouge">sync.Map</code> without further consideration. The second paragraph’s recommendation is usually brushed away after reading this one.</p><p>A good engineer should have further considerations before deciding on whether to use <code class="language-plaintext highlighter-rouge">sync.Map</code>:</p><ul><li>Are <a href="https://en.wikipedia.org/wiki/Cache_stampede">stampedes</a> a concern?<li>Are external services impacted when populating the cache?<li>How large is the cache expected to grow?<li>How frequently are cache entries added?<li>Are cache entries ever updated after being added?<li>How expensive is it to create entries for the cache and how does it stack against the <a href="https://youtu.be/C1EtfDnsdDs?t=67">40ns it takes to transfer L2 caches between CPUs</a> as per the original author of <code class="language-plaintext highlighter-rouge">sync.Map</code>? How many cores do your nodes have?</ul><p>And I’m sure there are more.</p><p>In my experience, caches are usually held in memory somewhere and implemented because the cached data is “expensive” to create. Given this, scenario (1) is always served more optimally with judicious use of <code class="language-plaintext highlighter-rouge">sync.RWMutex</code> and a plain map to protect against stampedes (a frequent concern), or with a plain map and <code class="language-plaintext highlighter-rouge">atomic.Pointer</code> to implement a <a href="https://en.wikipedia.org/wiki/Read-copy-update">read-copy-update</a> scheme if the cache is updated infrequently.</p><p>I have yet to come across scenario (2), but some of those questions would still apply.</p><p>In conclusion, I think <code class="language-plaintext highlighter-rouge">sync.Map</code> is overused and I also think Go’s API documentation should limit its prescriptive language and just state the facts of how its APIs operate.</p><h2 id="avoid-apis-that-depend-on-exposed-package-level-state"><span class="mr-2">Avoid APIs that depend on exposed package-level state</span><a href="#avoid-apis-that-depend-on-exposed-package-level-state" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 251)</p><p>“Avoid APIs that depend on exposed package-level state” is my key takeaway from the book:</p><blockquote><p>There are package-level functions, http.Handle, http.HandleFunc, […] Don’t use them outisde of trivial test programs. […] Furthermore, third-party libraries could have registered their own handlers with the <code class="language-plaintext highlighter-rouge">http.DefaultServeMux</code> and there’s no way to know without scanning through all of your dependencies (both direct and indirect). Keep your application under control by avoiding shared state.</p></blockquote><p>The following example illustrates the point.</p><p>Your code:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre><td class="rouge-code"><pre><span class="k">import</span> <span class="p">(</span>
+	<span class="s">"net/http"</span>
+
+	<span class="s">"scratchpad/global/helper"</span>
+<span class="p">)</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">http</span><span class="o">.</span><span class="n">Handle</span><span class="p">(</span><span class="s">"/myAPI"</span><span class="p">,</span> <span class="n">http</span><span class="o">.</span><span class="n">HandlerFunc</span><span class="p">(</span><span class="n">myHandler</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">myHandler</span><span class="p">(</span><span class="n">w</span> <span class="n">http</span><span class="o">.</span><span class="n">ResponseWriter</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c">// read request</span>
+
+	<span class="c">// do awesome stuff</span>
+
+	<span class="n">result</span> <span class="o">:=</span> <span class="s">"success "</span> <span class="o">+</span> <span class="n">helper</span><span class="o">.</span><span class="n">DoSomethingHelpful</span><span class="p">()</span>
+
+	<span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">Write</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>What your “awesome” helper is doing:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre><td class="rouge-code"><pre><span class="k">package</span> <span class="n">helper</span>
+
+<span class="k">import</span> <span class="s">"net/http"</span>
+
+<span class="k">func</span> <span class="n">init</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">http</span><span class="o">.</span><span class="n">DefaultServeMux</span><span class="o">.</span><span class="n">Handle</span><span class="p">(</span><span class="s">"/secrets"</span><span class="p">,</span> <span class="n">http</span><span class="o">.</span><span class="n">HandlerFunc</span><span class="p">(</span><span class="n">exposeSecrets</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">DoSomethingHelpful</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="s">"great work done here"</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">exposeSecrets</span><span class="p">(</span><span class="n">w</span> <span class="n">http</span><span class="o">.</span><span class="n">ResponseWriter</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c">// expose all your secrets from env vars, local filesystem, etc.</span>
+<span class="p">}</span>
+</pre></table></code></div></div><h1 id="some-of-the-things-i-learned">Some of the things I learned</h1><p>A selection of some of the most interesting or surprising things I learned about Go.</p><h2 id="complex-numbers"><span class="mr-2">Complex numbers</span><a href="#complex-numbers" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 24)</p><p>Go supports <a href="https://go.dev/ref/spec#Complex_numbers">complex numbers</a>. You can perform arithmetic operations on them, and they are comparable (eg. can be used as keys in a map). The following example prints <code class="language-plaintext highlighter-rouge">(4+6i)</code> and <code class="language-plaintext highlighter-rouge">a</code>:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">a</span> <span class="o">:=</span> <span class="nb">complex</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">)</span>
+	<span class="n">b</span> <span class="o">:=</span> <span class="nb">complex</span><span class="p">(</span><span class="m">3</span><span class="p">,</span> <span class="m">4</span><span class="p">)</span>
+	<span class="n">c</span> <span class="o">:=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+
+	<span class="n">m</span> <span class="o">:=</span> <span class="k">map</span><span class="p">[</span><span class="kt">complex128</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span>
+		<span class="n">a</span><span class="o">:</span> <span class="s">"a"</span><span class="p">,</span>
+		<span class="n">b</span><span class="o">:</span> <span class="s">"b"</span><span class="p">,</span>
+	<span class="p">}</span>
+
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">a</span><span class="p">])</span>
+<span class="p">}</span>
+</pre></table></code></div></div><h2 id="struct-conversion"><span class="mr-2">Struct conversion</span><a href="#struct-conversion" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 59)</p><p>Anonymous structs are interchangeable if their fields align perfectly and are comparable:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">alice</span> <span class="o">:=</span> <span class="k">struct</span> <span class="p">{</span>
+		<span class="n">Name</span> <span class="kt">string</span>
+		<span class="n">Age</span>  <span class="kt">int</span>
+	<span class="p">}{</span>
+		<span class="n">Name</span><span class="o">:</span> <span class="s">"Alice"</span><span class="p">,</span>
+		<span class="n">Age</span><span class="o">:</span>  <span class="m">30</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="n">garfield</span> <span class="o">:=</span> <span class="k">struct</span> <span class="p">{</span>
+		<span class="n">Name</span> <span class="kt">string</span>
+		<span class="n">Age</span>  <span class="kt">int</span>
+	<span class="p">}{</span>
+		<span class="n">Name</span><span class="o">:</span> <span class="s">"Garfield"</span><span class="p">,</span>
+		<span class="n">Age</span><span class="o">:</span>  <span class="m">2</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="n">garfield</span> <span class="o">=</span> <span class="n">alice</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%+v</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">garfield</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c">// Output:</span>
+<span class="c">//   {Name:Alice Age:30}</span>
+</pre></table></code></div></div><p>This is particularly useful when populating third-party structs with fields that are anonymous structs. Instead of having to do this:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">Config</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Simple1</span>    <span class="kt">string</span>
+	<span class="n">Simple2</span>    <span class="kt">string</span>
+	<span class="n">Composite1</span> <span class="k">struct</span> <span class="p">{</span>
+		<span class="n">Name</span>  <span class="kt">string</span>
+		<span class="n">Date</span>  <span class="n">time</span><span class="o">.</span><span class="n">Time</span>
+		<span class="n">Value</span> <span class="kt">int</span>
+	<span class="p">}</span>
+	<span class="n">Composite2</span> <span class="k">struct</span> <span class="p">{</span>
+		<span class="n">Name</span>  <span class="kt">string</span>
+		<span class="n">Date</span>  <span class="n">time</span><span class="o">.</span><span class="n">Time</span>
+		<span class="n">Value</span> <span class="kt">int</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">conf</span> <span class="o">:=</span> <span class="n">Config</span><span class="p">{</span>
+		<span class="n">Simple1</span><span class="o">:</span> <span class="s">"one"</span><span class="p">,</span>
+		<span class="n">Simple2</span><span class="o">:</span> <span class="s">"two"</span><span class="p">,</span>
+		<span class="n">Composite1</span><span class="o">:</span> <span class="k">struct</span> <span class="p">{</span>
+			<span class="n">Name</span>  <span class="kt">string</span>
+			<span class="n">Date</span>  <span class="n">time</span><span class="o">.</span><span class="n">Time</span>
+			<span class="n">Value</span> <span class="kt">int</span>
+		<span class="p">}{</span>
+			<span class="n">Name</span><span class="o">:</span>  <span class="s">"alice"</span><span class="p">,</span>
+			<span class="n">Date</span><span class="o">:</span>  <span class="n">time</span><span class="o">.</span><span class="n">Now</span><span class="p">(),</span>
+			<span class="n">Value</span><span class="o">:</span> <span class="m">1</span><span class="p">,</span>
+		<span class="p">},</span>
+		<span class="n">Composite2</span><span class="o">:</span> <span class="k">struct</span> <span class="p">{</span>
+			<span class="n">Name</span>  <span class="kt">string</span>
+			<span class="n">Date</span>  <span class="n">time</span><span class="o">.</span><span class="n">Time</span>
+			<span class="n">Value</span> <span class="kt">int</span>
+		<span class="p">}{</span>
+			<span class="n">Name</span><span class="o">:</span>  <span class="s">"bob"</span><span class="p">,</span>
+			<span class="n">Date</span><span class="o">:</span>  <span class="n">time</span><span class="o">.</span><span class="n">Now</span><span class="p">(),</span>
+			<span class="n">Value</span><span class="o">:</span> <span class="m">4</span><span class="p">,</span>
+		<span class="p">},</span>
+	<span class="p">}</span>
+
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%+v</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>You can save a few lines by declaring an anonymous struct that matches the structure of the composite fields:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">Config</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Simple1</span>    <span class="kt">string</span>
+	<span class="n">Simple2</span>    <span class="kt">string</span>
+	<span class="n">Composite1</span> <span class="k">struct</span> <span class="p">{</span>
+		<span class="n">Name</span>  <span class="kt">string</span>
+		<span class="n">Date</span>  <span class="n">time</span><span class="o">.</span><span class="n">Time</span>
+		<span class="n">Value</span> <span class="kt">int</span>
+	<span class="p">}</span>
+	<span class="n">Composite2</span> <span class="k">struct</span> <span class="p">{</span>
+		<span class="n">Name</span>  <span class="kt">string</span>
+		<span class="n">Date</span>  <span class="n">time</span><span class="o">.</span><span class="n">Time</span>
+		<span class="n">Value</span> <span class="kt">int</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">type</span> <span class="n">composite</span> <span class="k">struct</span> <span class="p">{</span>
+		<span class="n">Name</span>  <span class="kt">string</span>
+		<span class="n">Date</span>  <span class="n">time</span><span class="o">.</span><span class="n">Time</span>
+		<span class="n">Value</span> <span class="kt">int</span>
+	<span class="p">}</span>
+
+	<span class="n">conf</span> <span class="o">:=</span> <span class="n">Config</span><span class="p">{</span>
+		<span class="n">Simple1</span><span class="o">:</span> <span class="s">"one"</span><span class="p">,</span>
+		<span class="n">Simple2</span><span class="o">:</span> <span class="s">"two"</span><span class="p">,</span>
+		<span class="n">Composite1</span><span class="o">:</span> <span class="n">composite</span><span class="p">{</span>
+			<span class="n">Name</span><span class="o">:</span>  <span class="s">"alice"</span><span class="p">,</span>
+			<span class="n">Date</span><span class="o">:</span>  <span class="n">time</span><span class="o">.</span><span class="n">Now</span><span class="p">(),</span>
+			<span class="n">Value</span><span class="o">:</span> <span class="m">1</span><span class="p">,</span>
+		<span class="p">},</span>
+		<span class="n">Composite2</span><span class="o">:</span> <span class="n">composite</span><span class="p">{</span>
+			<span class="n">Name</span><span class="o">:</span>  <span class="s">"bob"</span><span class="p">,</span>
+			<span class="n">Date</span><span class="o">:</span>  <span class="n">time</span><span class="o">.</span><span class="n">Now</span><span class="p">(),</span>
+			<span class="n">Value</span><span class="o">:</span> <span class="m">4</span><span class="p">,</span>
+		<span class="p">},</span>
+	<span class="p">}</span>
+
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%+v</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></table></code></div></div><h2 id="the-universe-block"><span class="mr-2">The Universe Block</span><a href="#the-universe-block" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 65)</p><p>I was surprised to learn that what I thought were special keywords that could not be used anywhere in code are actually <a href="https://go.dev/ref/spec#Predeclared_identifiers">predeclared identifiers</a> in the <em>universe block</em>: the block in which all code is in scope. Because they are mere (predeclared) <em>identifiers</em> and not keywords, they can be shadowed just like any other identifier:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="no">nil</span> <span class="o">:=</span> <span class="m">1</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="no">nil</span><span class="p">)</span>
+	<span class="nb">append</span> <span class="o">:=</span> <span class="s">"append"</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="nb">append</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c">// Output:</span>
+<span class="c">//  1</span>
+<span class="c">//  append</span>
+</pre></table></code></div></div><h2 id="pointer-receivers-vs-value-receivers"><span class="mr-2">Pointer Receivers vs Value Receivers</span><a href="#pointer-receivers-vs-value-receivers" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 132)</p><blockquote><p>Go considers both pointer and value receiver methods to be in the method set for a pointer. For a value instance, only the value receiver methods are in the method set.</p></blockquote><p>The practical effect of this is that one cannot assign a value type to a variable of an interface type if the former does not have methods with value-type receivers that implement the interface:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">Greeter</span> <span class="k">interface</span> <span class="p">{</span>
+	<span class="n">Greet</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Runner</span> <span class="k">interface</span> <span class="p">{</span>
+	<span class="n">Run</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Athlete</span> <span class="k">struct</span><span class="p">{}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span><span class="n">Athlete</span><span class="p">)</span> <span class="n">Greet</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s">"Hello there!"</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">a</span> <span class="n">Athlete</span><span class="p">)</span> <span class="n">Run</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s">"I am running!"</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">var</span> <span class="n">a</span> <span class="n">Greeter</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Athlete</span><span class="p">{}</span>
+	<span class="k">var</span> <span class="n">b</span> <span class="n">Greeter</span> <span class="o">=</span> <span class="n">Athlete</span><span class="p">{}</span> <span class="c">// compile error!</span>
+	<span class="k">var</span> <span class="n">c</span> <span class="n">Runner</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Athlete</span><span class="p">{}</span>
+	<span class="k">var</span> <span class="n">d</span> <span class="n">Runner</span> <span class="o">=</span> <span class="n">Athlete</span><span class="p">{}</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>I had never given much though to this distinction and now got curious - <em>why?</em> The Golang FAQ has an <a href="https://go.dev/doc/faq#different_method_sets">answer</a>:</p><blockquote><p>This distinction arises because if an interface value contains a pointer *T, a method call can obtain a value by dereferencing the pointer, but if an interface value contains a value T, there is no safe way for a method call to obtain a pointer. (Doing so would allow a method to modify the contents of the value inside the interface, which is not permitted by the language specification.)</p><p>Even in cases where the compiler could take the address of a value to pass to the method, if the method modifies the value the changes will be lost in the caller. As an example, if the Write method of bytes.Buffer used a value receiver rather than a pointer, this code:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre><td class="rouge-code"><pre><span class="k">var</span> <span class="n">buf</span> <span class="n">bytes</span><span class="o">.</span><span class="n">Buffer</span>
+<span class="n">io</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">Stdin</span><span class="p">)</span>
+</pre></table></code></div></div><p>would copy standard input into a copy of buf, not into buf itself. This is almost never the desired behavior.</p></blockquote><p>The second reason is fairly easy to understand: if <a href="https://pkg.go.dev/bytes#Buffer">bytes.Buffer</a> had a value receiver for its <a href="https://pkg.go.dev/bytes#Buffer.Write">Write</a> method, then <code class="language-plaintext highlighter-rouge">io.Copy</code> would write the contents of <code class="language-plaintext highlighter-rouge">os.Stdin</code> to a <em>copy</em> of <code class="language-plaintext highlighter-rouge">buf</code>, not the caller’s copy.</p><p>The first reason is a bit more esoteric: if value types were allowed to implement interfaces then any method call that modifies the value itself would also modify the interface object itself. Or should they modify a copy made on the fly? What would be the ramifications of that? Does the caller’s reference to the interface object magically update to the new value? Or should the changes be effected on a different copy than the caller’s? Rather than opening up this can of worms, the Go team decided to simplify the mental model by this rule prohibiting this edge case.</p><h2 id="invoking-a-function-with-args-of-type-interface-will-result-in-a-heap-allocation"><span class="mr-2">Invoking a function with args of type interface will result in a heap allocation</span><a href="#invoking-a-function-with-args-of-type-interface-will-result-in-a-heap-allocation" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 147)</p><p>This was not really a new concept to me, but I still had my “duh!” moment as I read this because I never thought to consider this consequence of “Accept Interfaces, Return Structs” (see <a href="#accept-interfaces-return-structs">below</a>):</p><blockquote><p>[…] reducing heap allocations improves performance by reducing the amount of work for the garbage collector. Returning a struct avoids a heap allocation, which is good. However, when invoking a function with parameters of interface types, a heap allocation occurs for each of the interface parameters.</p></blockquote><p>The allocations occur not at the function’s invocation, but before it, wherever the implementations of the interface types were instantiated<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">2</a></sup>.</p><p>Of course, the usual caveat applies: write readable, maintainable code first, then optimize if needed.</p><h2 id="alias-declarations"><span class="mr-2">Alias declarations</span><a href="#alias-declarations" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 189)</p><p>I was aware of aliases but never bothered to look closely at them since I haven’t had the need to declare them myself, although I have used some from the standard library plenty of times. Some of these may surprise you:</p><ul><li><code class="language-plaintext highlighter-rouge">byte</code>, <code class="language-plaintext highlighter-rouge">rune</code>, and <code class="language-plaintext highlighter-rouge">any</code> are aliases (see <a href="https://github.com/golang/go/blob/4fe46cee4ea4eb15e38675ff32222f07e6b15404/src/builtin/builtin.go#L85-L95">code</a>)<li><a href="https://github.com/golang/go/blob/979956a7321e74f1441ae2a05c9dc6560d7fe84c/src/os/error.go#L46"><code class="language-plaintext highlighter-rouge">os.PathError</code></a>, <a href="https://github.com/golang/go/blob/d4da735091986868015369e01c63794af9cc9b84/src/os/types.go#L20-L28"><code class="language-plaintext highlighter-rouge">os.FileInfo</code>, <code class="language-plaintext highlighter-rouge">os.FileMode</code></a>, and <a href="https://github.com/golang/go/blob/3d913a926675d8d6fcdc3cfaefd3136dfeba06e1/src/os/dir.go#L82"><code class="language-plaintext highlighter-rouge">os.DirEntry</code></a> are also aliases</ul><p>The difference between <a href="https://go.dev/ref/spec#Alias_declarations">alias declarations</a> and <a href="https://go.dev/ref/spec#Type_definitions">type definitions</a> is the former does not create a new type; it merely creates a new name that can also be used to refer to the type definition.</p><p>The following example defines type <code class="language-plaintext highlighter-rouge">Person</code> and an alias to it, <code class="language-plaintext highlighter-rouge">Alice</code>. Outwardly the code seems to define a new method on <code class="language-plaintext highlighter-rouge">Alice</code>, but really the method is attached to <code class="language-plaintext highlighter-rouge">Person</code> and also invokable from a reference to <code class="language-plaintext highlighter-rouge">Alice</code>:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">Person</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">name</span> <span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">Person</span><span class="p">)</span> <span class="n">Name</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Alice</span> <span class="o">=</span> <span class="n">Person</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span><span class="n">Alice</span><span class="p">)</span> <span class="n">Greet</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="n">fmt</span><span class="o">.</span><span class="n">Sprintf</span><span class="p">(</span><span class="s">"Hello, my name is %s!"</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">a</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="n">Alice</span><span class="p">{</span><span class="n">name</span><span class="o">:</span> <span class="s">"Alice"</span><span class="p">}</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">Name</span><span class="p">())</span>
+
+	<span class="n">p</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="n">Person</span><span class="p">{</span><span class="n">name</span><span class="o">:</span> <span class="s">"Alice"</span><span class="p">}</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">Name</span><span class="p">())</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">Greet</span><span class="p">())</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>Before you get any ideas though - there is no way to get around the hard restriction on modifying the structure of types in different packages:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+</pre><td class="rouge-code"><pre><span class="k">import</span> <span class="s">"os"</span>
+
+<span class="k">type</span> <span class="n">ErrSneaky</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">PathError</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">e</span> <span class="n">ErrSneaky</span><span class="p">)</span> <span class="n">DoEvil</span><span class="p">()</span> <span class="p">{</span> <span class="c">// error: Cannot define new methods on the non-local type 'fs.PathError'</span>
+  <span class="c">// do something evil</span>
+<span class="p">}</span>
+</pre></table></code></div></div><h2 id="writing-to-channels-in-select-statements"><span class="mr-2">Writing to channels in select statements</span><a href="#writing-to-channels-in-select-statements" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 211)</p><p>Not 100% surprising but then again - I have never come across a use case for this:</p><p>Cases in a <a href="https://go.dev/ref/spec#Select_statements">select statement</a> can include “send statements” (ie. writing to a channel) as well as receiving operations (ie. reading from a channel); a single instance of <code class="language-plaintext highlighter-rouge">select</code> can have both.</p><h2 id="monotonic-time"><span class="mr-2">Monotonic time</span><a href="#monotonic-time" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 240)</p><p>When available, Go internally uses <a href="https://pkg.go.dev/time#hdr-Monotonic_Clocks">monotonic clocks</a> to calculate <a href="https://pkg.go.dev/time#Duration">durations</a> between two points in <a href="https://pkg.go.dev/time#Time">Time</a>.</p><p>This is a fascinated topic that really deserves an article of its own, so I won’t discuss it here. Dropping a couple of links for those interested:</p><ul><li><a href="https://pkg.go.dev/time#hdr-Monotonic_Clocks">GoDoc</a><li><a href="https://github.com/golang/go/issues/12914">Long discussion on GitHub</a><li><a href="https://blog.cloudflare.com/how-and-why-the-leap-second-affected-cloudflare-dns/">How and why the leap second affected Cloudflare DNS</a></ul><h2 id="json-decoder"><span class="mr-2">JSON Decoder</span><a href="#json-decoder" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 245)</p><p>I have been using <a href="https://pkg.go.dev/encoding/json#Decoder">json.Decoder</a> in my APIs since forever because of the way it collapses two actions into one.</p><p>Compare this:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">myHandler</span><span class="p">(</span><span class="n">w</span> <span class="n">http</span><span class="o">.</span><span class="n">ResponseWriter</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">payload</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">io</span><span class="o">.</span><span class="n">ReadAll</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">Body</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+    <span class="c">// handle error</span>
+  <span class="p">}</span>
+  
+  <span class="n">request</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="n">MyRequest</span><span class="p">{}</span>
+  
+  <span class="n">err</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">Unmarshal</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+    <span class="c">// handle error</span>
+  <span class="p">}</span>
+  
+  <span class="c">// process request</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>to this:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">myHandler</span><span class="p">(</span><span class="n">w</span> <span class="n">http</span><span class="o">.</span><span class="n">ResponseWriter</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">request</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="n">MyRequest</span><span class="p">{}</span>
+  
+  <span class="n">err</span> <span class="o">:=</span> <span class="n">json</span><span class="o">.</span><span class="n">NewDecoder</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">Body</span><span class="p">)</span><span class="o">.</span><span class="n">Decode</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+    <span class="c">// handle error</span>
+  <span class="p">}</span>
+  
+  <span class="c">// process request</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>The benefits and features of <code class="language-plaintext highlighter-rouge">json.Decoder</code> do not stop there though:</p><p><strong>It can decode multiple values</strong></p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">Person</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Name</span> <span class="kt">string</span> <span class="s">`json:"name"`</span>
+	<span class="n">Age</span>  <span class="kt">int</span>    <span class="s">`json:"age"`</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">USD</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Dollars</span> <span class="kt">int</span> <span class="s">`json:"dollars"`</span>
+	<span class="n">Cents</span>   <span class="kt">int</span> <span class="s">`json:"cents"`</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">r</span> <span class="o">:=</span> <span class="n">strings</span><span class="o">.</span><span class="n">NewReader</span><span class="p">(</span><span class="s">`
+		{"name": "Alice", "age": 32}
+		{"dollars": 10, "cents": 2}
+	`</span><span class="p">)</span>
+
+	<span class="n">decoder</span> <span class="o">:=</span> <span class="n">json</span><span class="o">.</span><span class="n">NewDecoder</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+	<span class="n">person</span> <span class="o">:=</span> <span class="n">Person</span><span class="p">{}</span>
+	<span class="n">usd</span> <span class="o">:=</span> <span class="n">USD</span><span class="p">{}</span>
+
+	<span class="n">err</span> <span class="o">:=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">Decode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">person</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+		<span class="nb">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="n">err</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">Decode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">usd</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+		<span class="nb">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%v</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">person</span><span class="p">)</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%v</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">usd</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>Note that this feature is typically used to decode sequences of objects of the same type in a loop using <a href="https://pkg.go.dev/encoding/json#Decoder.More">Decoder.More()</a> as exit condition.</p><p><strong>It can be more performant</strong></p><p>Followup from above, <code class="language-plaintext highlighter-rouge">json.Decoder</code> only <a href="https://github.com/golang/go/blob/21ff6704bc8efa72abe191263aae938f3c867480/src/encoding/json/stream.go#L87-L144">reads the next object or array from the stream</a> and no more<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">3</a></sup>.</p><h2 id="empty-struct-uses-no-memory"><span class="mr-2">Empty struct uses no memory</span><a href="#empty-struct-uses-no-memory" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 263)</p><p>It’s the reason why the “use-map-as-set” idiom is written like this:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre><td class="rouge-code"><pre><span class="n">set</span> <span class="o">:=</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="k">struct</span><span class="p">{}</span>
+</pre></table></code></div></div><p>instead of:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre><td class="rouge-code"><pre><span class="n">set</span> <span class="o">:=</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="k">struct</span><span class="p">{}</span>
+</pre></table></code></div></div><p>One would think that adding an entry to the second case (<code class="language-plaintext highlighter-rouge">set["a"] = nil</code>) would result in less memory usage than the first case (<code class="language-plaintext highlighter-rouge">set["a"] = struct{}</code>). In fact, the opposite is true:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">var</span> <span class="n">o</span> <span class="k">struct</span><span class="p">{}</span>
+	<span class="k">var</span> <span class="n">p</span> <span class="o">*</span><span class="k">struct</span><span class="p">{}</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">unsafe</span><span class="o">.</span><span class="n">Sizeof</span><span class="p">(</span><span class="n">o</span><span class="p">))</span> <span class="c">// prints 0</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">unsafe</span><span class="o">.</span><span class="n">Sizeof</span><span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="c">// prints 8</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>The reason that a pointer uses 8 bytes of memory (on a 64-bit system) is because that is the space required to store the pointer value itself (not the thing to which it points). Aside from the extra heap allocation used up by the thing the pointer points to, this is another reason why <a href="#invoking-a-function-with-args-of-type-interface-will-result-in-a-heap-allocation">invoking a function with args of type interface</a> may result in more memory use.</p><p>The reason that an empty struct uses no memory is because it holds no data and, it being a value-type, it can be stored on the stack without taking up any space (again, because it does not hold any data).</p><p>I point you to Dave Cheney’s excellent article on the topic, <a href="https://dave.cheney.net/2014/03/25/the-empty-struct">The empty struct</a>, where he goes the extra mile and covers the implications across several scenarios.</p><h2 id="make-functions-and-structs-with-reflection"><span class="mr-2">Make functions and structs with reflection</span><a href="#make-functions-and-structs-with-reflection" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(pages 312-313)</p><p>I have hardly ever peeked at the <a href="https://pkg.go.dev/reflect">reflect package</a> because reflection is <a href="https://softwareengineering.stackexchange.com/questions/193526/is-it-a-bad-habit-to-overuse-reflection">a bad idea</a>.</p><p>That being said - I had no idea Go’s <code class="language-plaintext highlighter-rouge">reflect</code> package was capable of instantiating types (I thought it was only good for introspection):</p><ul><li><a href="https://pkg.go.dev/reflect#MakeChan">reflect.MakeChan()</a><li><a href="https://pkg.go.dev/reflect#MakeFunc">reflect.MakeFunc()</a><li><a href="https://pkg.go.dev/reflect#MakeMap">reflect.MakeMap()</a><li><a href="https://pkg.go.dev/reflect#MakeSlice">reflect.MakeSlice()</a><li><a href="https://pkg.go.dev/reflect#New">reflect.New()</a></ul><p>Huh, would you look at that?</p><p>Anyway - it’s a fun curiosity, but I’m 99.9% sure I’ll never use any of this<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">4</a></sup>.</p><h2 id="use-unsafepointer-to-convert-external-binary-data"><span class="mr-2">Use unsafe.Pointer to convert external binary data</span><a href="#use-unsafepointer-to-convert-external-binary-data" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 316)</p><p>This is one <em>slick</em> trick.</p><p>Say we want to read the following bytes off the network: <code class="language-plaintext highlighter-rouge">[0 132 95 237 80 104 111 110 101 0 0 0 0 0 1 0]</code>. Say these bytes correspond to a message with the following structure (in order):</p><ul><li>Value: 4 bytes, an unsigned, big-endian 32-bit int<li>Label: 10 bytes, ASCII<li>Active: 1 byte, boolean flag<li>Padding: 1 byte, because we want everything to fit into 16 bytes</ul><p>The straightforward implementation of the parser would slice the incoming bytes and assign those to their respective fields:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre><td class="rouge-code"><pre><span class="k">type</span> <span class="n">Message</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Value</span>  <span class="kt">uint32</span>
+	<span class="n">Label</span>  <span class="p">[</span><span class="m">10</span><span class="p">]</span><span class="kt">byte</span>
+	<span class="n">Active</span> <span class="kt">bool</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">data</span> <span class="o">:=</span> <span class="p">[</span><span class="m">16</span><span class="p">]</span><span class="kt">byte</span><span class="p">{</span><span class="m">0</span><span class="p">,</span> <span class="m">132</span><span class="p">,</span> <span class="m">95</span><span class="p">,</span> <span class="m">237</span><span class="p">,</span> <span class="m">80</span><span class="p">,</span> <span class="m">104</span><span class="p">,</span> <span class="m">111</span><span class="p">,</span> <span class="m">110</span><span class="p">,</span> <span class="m">101</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">}</span>
+
+	<span class="n">msg</span> <span class="o">:=</span> <span class="n">Message</span><span class="p">{</span>
+		<span class="n">Value</span><span class="o">:</span>  <span class="n">binary</span><span class="o">.</span><span class="n">BigEndian</span><span class="o">.</span><span class="n">Uint32</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="o">:</span><span class="m">4</span><span class="p">]),</span> <span class="c">// allocating memory for a pointer to the new slice (same underlying array tho)</span>
+		<span class="n">Label</span><span class="o">:</span>  <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="m">10</span><span class="p">]</span><span class="kt">byte</span><span class="p">)(</span><span class="n">data</span><span class="p">[</span><span class="m">4</span><span class="o">:</span><span class="m">16</span><span class="p">]),</span>          <span class="c">// ditto. Worst if you use copy().</span>
+		<span class="n">Active</span><span class="o">:</span> <span class="n">data</span><span class="p">[</span><span class="m">14</span><span class="p">]</span> <span class="o">==</span> <span class="m">1</span><span class="p">,</span>
+	<span class="p">}</span>
+
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"Value: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">Value</span><span class="p">)</span>   <span class="c">// 8675309</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"Label: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">Label</span><span class="p">)</span>   <span class="c">// Phone</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"Active: %t</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">Active</span><span class="p">)</span> <span class="c">// true</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>Those allocations may add up.</p><p>What you can do instead is the following:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+</pre><td class="rouge-code"><pre><span class="k">var</span> <span class="n">isLE</span> <span class="kt">bool</span>
+
+<span class="k">func</span> <span class="n">init</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">var</span> <span class="n">x</span> <span class="kt">uint16</span> <span class="o">=</span> <span class="m">0xFF00</span>
+	<span class="n">xb</span> <span class="o">:=</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="m">2</span><span class="p">]</span><span class="kt">byte</span><span class="p">)(</span><span class="n">unsafe</span><span class="o">.</span><span class="n">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="n">x</span><span class="p">))</span>
+	
+    <span class="c">// on a little-endian platform, the bytes will be stored as [00 FF]</span>
+    <span class="c">// on a big-endian platform, the bytes will be stored as [FF 00]</span>
+	<span class="n">isLE</span> <span class="o">=</span> <span class="n">xb</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="o">==</span> <span class="m">0x00</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Message</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Value</span>  <span class="kt">uint32</span>
+	<span class="n">Label</span>  <span class="p">[</span><span class="m">10</span><span class="p">]</span><span class="kt">byte</span>
+	<span class="n">Active</span> <span class="kt">bool</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">data</span> <span class="o">:=</span> <span class="p">[</span><span class="m">16</span><span class="p">]</span><span class="kt">byte</span><span class="p">{</span><span class="m">0</span><span class="p">,</span> <span class="m">132</span><span class="p">,</span> <span class="m">95</span><span class="p">,</span> <span class="m">237</span><span class="p">,</span> <span class="m">80</span><span class="p">,</span> <span class="m">104</span><span class="p">,</span> <span class="m">111</span><span class="p">,</span> <span class="m">110</span><span class="p">,</span> <span class="m">101</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">}</span>
+
+	<span class="n">msg</span> <span class="o">:=</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">Message</span><span class="p">)(</span><span class="n">unsafe</span><span class="o">.</span><span class="n">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">))</span>
+
+	<span class="k">if</span> <span class="n">isLE</span> <span class="p">{</span>
+		<span class="n">msg</span><span class="o">.</span><span class="n">Value</span> <span class="o">=</span> <span class="n">bits</span><span class="o">.</span><span class="n">ReverseBytes32</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">Value</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"Value: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">Value</span><span class="p">)</span>   <span class="c">// 8675309</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"Label: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">Label</span><span class="p">)</span>   <span class="c">// Phone</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"Active: %t</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">Active</span><span class="p">)</span> <span class="c">// true</span>
+<span class="p">}</span>
+</pre></table></code></div></div><p>Jon claims the “unsafe” version is twice as performant (benchmarks <a href="https://github.com/learning-go-book/unsafe_examples/blob/master/data/main_test.go">here</a>), which I don’t doubt.</p><p>There are a few things to unpack here:</p><p><strong><a href="https://en.wikipedia.org/wiki/Endianness">Endianness</a></strong></p><p>We use a variable type with a width of 2 bytes (<code class="language-plaintext highlighter-rouge">uint16</code>) to store complementary values in each of the bytes, <code class="language-plaintext highlighter-rouge">FF</code> and <code class="language-plaintext highlighter-rouge">00</code>, in that order. If the order changes then the platform this code is running on is little-endian.</p><p><strong>unsafe.Pointer</strong></p><p><a href="https://pkg.go.dev/unsafe#Pointer">unsafe.Pointer</a> can be converted to a pointer value of any other type. This is not possible with other types or pointer values.</p><blockquote class="prompt-danger"><div><p><strong>BEWARE</strong></p><p><code class="language-plaintext highlighter-rouge">unsafe.Pointer</code> is “unsafe” for a reason. Imagine the following scenario:</p><div class="language-go highlighter-rouge"><div class="code-header"> <span data-label-text="Go"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre><td class="rouge-code"><pre><span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">data</span> <span class="o">:=</span> <span class="p">[</span><span class="m">0</span><span class="p">]</span><span class="kt">byte</span><span class="p">{}</span> <span class="c">// you received a payload of an unexpected size</span>
+
+  <span class="n">msg</span> <span class="o">:=</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">Message</span><span class="p">)(</span><span class="n">unsafe</span><span class="o">.</span><span class="n">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">))</span>
+
+  <span class="k">if</span> <span class="n">isLE</span> <span class="p">{</span>
+    <span class="n">msg</span><span class="o">.</span><span class="n">Value</span> <span class="o">=</span> <span class="n">bits</span><span class="o">.</span><span class="n">ReverseBytes32</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">Value</span><span class="p">)</span>
+  <span class="p">}</span>
+
+  <span class="c">// The following prints whatever garbage happens to be at the memory addresses</span>
+  <span class="c">// where Value, Label, and Active should be.</span>
+  <span class="c">// This is now a potential vulnerability in the implementation.</span>
+
+  <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"Value: %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">Value</span><span class="p">)</span>   <span class="c">// 1884229632</span>
+  <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"Label: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">Label</span><span class="p">)</span>   <span class="c">// ��U@</span>
+  <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"Active: %t</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">msg</span><span class="o">.</span><span class="n">Active</span><span class="p">)</span> <span class="c">// false</span>
+<span class="p">}</span>
+</pre></table></code></div></div></div></blockquote><p><strong>Memory layout</strong></p><p>A continuous area of memory is allocated (whether on the heap or on the stack) to hold a struct’s data<sup>citation needed</sup>. The fields may or may not themselves reside contiguously due to their certain <a href="https://go.dev/ref/spec#Size_and_alignment_guarantees">alignment guarantees</a> that need to be met. Each field naturally has a size (aka. “width”) that corresponds to its type.</p><p><strong>Bringing it all together</strong></p><p>Because our <code class="language-plaintext highlighter-rouge">Message</code> struct above was designed to occupy exactly 16 bytes of memory (including alignment), an array of 16 bytes can be reinterpreted as an instance of <code class="language-plaintext highlighter-rouge">Message</code>. This reinterpretation is possible by casting the array to an unsafe.Pointer, and then casting the unsafe.Pointer to <code class="language-plaintext highlighter-rouge">Message</code>. This last step is only possible with <code class="language-plaintext highlighter-rouge">unsafe.Pointer</code>.</p><p>Go’s memory layout is a great topic for a future article - stay tuned.</p><h1 id="things-i-am-on-the-fence-about">Things I am on the fence about</h1><h2 id="accept-interfaces-return-structs"><span class="mr-2">Accept Interfaces, Return Structs</span><a href="#accept-interfaces-return-structs" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>(page 146)</p><p><a href="https://medium.com/@cep21/preemptive-interface-anti-pattern-in-go-54c18ac0668a">“Accept Interfaces, Return Structs”</a> is a structural pattern first popularized by <a href="https://medium.com/@cep21">Jack Lindamood</a> way back in 2016, so it’s been around a while.</p><p>I think this pattern is at its strongest when working in big, fast-paced teams with engineers who may yet have not developed their design skills to its full potential. However, it’s just altogether <em>easier</em> to keep diluting a type’s “purpose” by tacking on more and more methods to its API. Not many people are capable of thinking in higher-level, more abstract terms like <a href="https://www.javadoc.io/doc/org.cactoos/cactoos/latest/org/cactoos/package-summary.html">“Input”, “Output”, “Scalar”, “Func”, etc.</a>. So when you stop to think about it, “accept interfaces, return structs” is at its strongest when another universal best practice is thrown by the wayside: <a href="https://www.javadoc.io/doc/org.cactoos/cactoos/latest/org/cactoos/package-summary.html">“the bigger the interface, the weaker the abstraction”</a>. And from where I am standing, a “best practice” that only stands strong by weakening another best practice doesn’t net you much at all from a philosophical standpoint.</p><p>After years of programming in Go, I still actually <em>do</em> recommend this pattern to other team members, but I admit I am not fully convinced. And it seems no one has time for a nuanced conversation about this.</p><hr /><div class="footnotes" role="doc-endnotes"><ol><li id="fn:1" role="doc-endnote"><p>The other one I can think of is <a href="https://pkg.go.dev/database/sql">database/sql</a> where the docs for <a href="https://pkg.go.dev/database/sql#Conn">Conn</a> say “Prefer running queries from DB unless there is a specific need for a continuous single database connection”. This leads some engineers to write service logic that <em>receives</em> a <a href="https://pkg.go.dev/database/sql#DB">*sql.DB</a> including its administrative methods (<code class="language-plaintext highlighter-rouge">SetConnMaxIdleTime</code>, <code class="language-plaintext highlighter-rouge">SetConnMaxLifetime</code>, etc). <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p><li id="fn:3" role="doc-endnote"><p>Recall that <a href="https://go.dev/ref/spec#Interface_types">interfaces</a> are composed of the interface’s type and an instance of a type that implements the interface. It’s the latter that usually requires an allocation in the heap because it is usually implemented by a pointer value. <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p><li id="fn:2" role="doc-endnote"><p>May read a little more than required because the minimum bytes to be read is 512: https://github.com/golang/go/blob/21ff6704bc8efa72abe191263aae938f3c867480/src/encoding/json/stream.go#L146-L169 <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p><li id="fn:4" role="doc-endnote"><p>Among many others, one downside is it mitigates the compiler’s ability to <a href="https://github.com/u-root/u-root/issues/1477">eliminate dead code</a> <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p></ol></div></div><div class="post-tail-wrapper text-muted"><div class="post-meta mb-3"> <i class="far fa-folder-open fa-fw mr-1"></i> <a href='/categories/books/'>books</a>, <a href='/categories/golang/'>golang</a></div><div class="post-tags"> <i class="fa fa-tags fa-fw mr-1"></i> <a href="/tags/book/" class="post-tag no-text-decoration" >book</a> <a href="/tags/go/" class="post-tag no-text-decoration" >go</a> <a href="/tags/golang/" class="post-tag no-text-decoration" >golang</a></div><div class="post-tail-bottom d-flex justify-content-between align-items-center mt-3 pt-5 pb-2"><div class="license-wrapper"> This post is licensed under <a href="https://creativecommons.org/licenses/by/4.0/"> CC BY 4.0 </a> by the author.</div><div class="share-wrapper"> <span class="share-label text-muted mr-1">Share</span> <span class="share-icons"> <a href="https://t.me/share/url?url=https://georgearisty.dev/posts/learning-go-book/&amp;text=Learning Go: An Idiomatic Approach to Real-World Go Programming - George Aristy" data-toggle="tooltip" data-placement="top" title="Telegram" target="_blank" rel="noopener" aria-label="Telegram"> <i class="fa-fw fab fa-telegram"></i> </a> <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://georgearisty.dev/posts/learning-go-book/" data-toggle="tooltip" data-placement="top" title="Linkedin" target="_blank" rel="noopener" aria-label="Linkedin"> <i class="fa-fw fab fa-linkedin"></i> </a> <a href="https://news.ycombinator.com/submitlink?u=https://georgearisty.dev/posts/learning-go-book/&amp;t=Learning Go: An Idiomatic Approach to Real-World Go Programming - George Aristy" data-toggle="tooltip" data-placement="top" title="Hacker News" target="_blank" rel="noopener" aria-label="Hacker News"> <i class="fa-fw fab fa-hacker-news"></i> </a> <i id="copy-link" class="fa-fw fas fa-link small" data-toggle="tooltip" data-placement="top" title="Copy link" data-title-succeed="Link copied successfully!"> </i> </span></div></div></div></div></div><div id="panel-wrapper" class="col-xl-3 pl-2 text-muted"><div class="access"><div id="access-lastmod" class="post"><div class="panel-heading">Recently Updated</div><ul class="post-content pl-0 pb-1 ml-1 mt-2"><li><a href="/posts/kubectl-plugins/">Plugins I use with kubectl</a><li><a href="/posts/test-driven-development-by-example/">Test-Driven Development By Example</a><li><a href="/posts/ckad/">Certified Kubernetes Application Developer: My Experience</a><li><a href="/posts/clean-architecture/">Clean Architecture: A Craftsman's Guide to Software Structure and Design</a><li><a href="/posts/build-trap/">Escaping the Build Trap: How Effective Product Management Creates Real Value</a></ul></div><div id="access-tags"><div class="panel-heading">Trending Tags</div><div class="d-flex flex-wrap mt-3 mb-1 mr-3"> <a class="post-tag" href="/tags/go/">go</a> <a class="post-tag" href="/tags/golang/">golang</a> <a class="post-tag" href="/tags/java/">java</a> <a class="post-tag" href="/tags/book/">book</a> <a class="post-tag" href="/tags/learning-go/">learning-go</a> <a class="post-tag" href="/tags/k8s/">k8s</a> <a class="post-tag" href="/tags/kubernetes/">kubernetes</a> <a class="post-tag" href="/tags/vim/">vim</a> <a class="post-tag" href="/tags/concurrency/">concurrency</a> <a class="post-tag" href="/tags/elegant-objects/">elegant-objects</a></div></div></div><script src="/assets/lib/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><div id="toc-wrapper" class="pl-0 pr-4 mb-5"><div class="panel-heading pl-3 pt-2 mb-2">Contents</div><nav id="toc" data-toggle="toc"></nav></div></div></div><div class="row"><div class="col-12 col-lg-11 col-xl-8"><div id="tail-wrapper" class="pl-1 pr-1 pl-sm-2 pr-sm-2 pl-md-4 pr-md-4"><div id="related-posts" class="mt-5 mb-2 mb-sm-4"><h3 class="pt-2 mt-1 mb-4 ml-1" data-toc-skip>Further Reading</h3><div class="card-deck mb-4"><div class="card"> <a href="/posts/golang-methods-on-nil-references/"><div class="card-body"> <em class="timeago small" data-ts="1544385600" > 2018-12-09 </em><h3 class="pt-0 mt-1 mb-3" data-toc-skip>Golang - methods on nil references</h3><div class="text-muted small"><p> This is the first in a series of posts where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects t...</p></div></div></a></div><div class="card"> <a href="/posts/golang-elegant-containers/"><div class="card-body"> <em class="timeago small" data-ts="1545195600" > 2018-12-19 </em><h3 class="pt-0 mt-1 mb-3" data-toc-skip>Golang - are Elegant Containers possible?</h3><div class="text-muted small"><p> This post is part of a series where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the princi...</p></div></div></a></div><div class="card"> <a href="/posts/golang-elegant-functional-containers/"><div class="card-body"> <em class="timeago small" data-ts="1545195600" > 2018-12-19 </em><h3 class="pt-0 mt-1 mb-3" data-toc-skip>Golang - another go at elegant containers</h3><div class="text-muted small"><p> This post is part of a series where I do my best to organize my thoughts around Go: its paradigms and usability as a programming language. I write this as a Java programmer that respects the princi...</p></div></div></a></div></div></div><div class="post-navigation d-flex justify-content-between"> <a href="/posts/k8s-kube-controller-manager/" class="btn btn-outline-primary" prompt="Older"><p>Kubernetes' Controller Manager</p></a> <span class="btn btn-outline-primary disabled" prompt="Newer"><p>-</p></span></div><script type="text/javascript"> $(function () { const origin = "https://giscus.app"; const iframe = "iframe.giscus-frame"; const lightTheme = "light"; const darkTheme = "dark_dimmed"; let initTheme = lightTheme; if ($("html[data-mode=dark]").length > 0 || ($("html[data-mode]").length == 0 && window.matchMedia("(prefers-color-scheme: dark)").matches)) { initTheme = darkTheme; } let giscusAttributes = { "src": "https://giscus.app/client.js", "data-repo": "llorllale/llorllale.github.io", "data-repo-id": "MDEwOlJlcG9zaXRvcnk4MDM1Mjk5Ng==", "data-category": "Announcements", "data-category-id": "DIC_kwDOBMoW5M4COm92", "data-mapping": "title", "data-reactions-enabled": "1", "data-emit-metadata": "0", "data-theme": initTheme, "data-input-position": "bottom", "data-lang": "en", "crossorigin": "anonymous", "async": "" }; let giscusScript = document.createElement("script"); Object.entries(giscusAttributes).forEach(([key, value]) => giscusScript.setAttribute(key, value)); document.getElementById("tail-wrapper").appendChild(giscusScript); addEventListener("message", (event) => { if (event.source === window && event.data && event.data.direction === ModeToggle.ID) { /* global theme mode changed */ const mode = event.data.message; const theme = (mode === ModeToggle.DARK_MODE ? darkTheme : lightTheme); const message = { setConfig: { theme: theme } }; const giscus = document.querySelector(iframe).contentWindow; giscus.postMessage({ giscus: message }, origin); } }); }); </script></div></div></div><footer class="d-flex w-100 justify-content-center"><div class="d-flex justify-content-between align-items-center text-muted"><div class="footer-left"><p class="mb-0"> © 2023 <a href="https://www.linkedin.com/in/georgearisty">George Aristy</a>. <span data-toggle="tooltip" data-placement="top" title="Except where otherwise noted, the blog posts on this site are licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) License by the author.">Some rights reserved.</span></p></div><div class="footer-right"><p class="mb-0"> Powered by <a href="https://jekyllrb.com" target="_blank" rel="noopener">Jekyll</a> with <a href="https://github.com/cotes2020/jekyll-theme-chirpy" target="_blank" rel="noopener">Chirpy</a> theme.</p></div></div></footer></div><div id="search-result-wrapper" class="d-flex justify-content-center unloaded"><div class="col-12 col-sm-11 post-content"><div id="search-hints"><div id="access-tags"><div class="panel-heading">Trending Tags</div><div class="d-flex flex-wrap mt-3 mb-1 mr-3"> <a class="post-tag" href="/tags/go/">go</a> <a class="post-tag" href="/tags/golang/">golang</a> <a class="post-tag" href="/tags/java/">java</a> <a class="post-tag" href="/tags/book/">book</a> <a class="post-tag" href="/tags/learning-go/">learning-go</a> <a class="post-tag" href="/tags/k8s/">k8s</a> <a class="post-tag" href="/tags/kubernetes/">kubernetes</a> <a class="post-tag" href="/tags/vim/">vim</a> <a class="post-tag" href="/tags/concurrency/">concurrency</a> <a class="post-tag" href="/tags/elegant-objects/">elegant-objects</a></div></div></div><div id="search-results" class="d-flex flex-wrap justify-content-center text-muted mt-3"></div></div></div></div><div id="mask"></div><a id="back-to-top" href="#" aria-label="back-to-top" class="btn btn-lg btn-box-shadow" role="button"> <i class="fas fa-angle-up"></i> </a> <script src="/assets/lib/simple-jekyll-search-1.10.0/simple-jekyll-search.min.js"></script> <script> SimpleJekyllSearch({ searchInput: document.getElementById('search-input'), resultsContainer: document.getElementById('search-results'), json: '/assets/js/data/search.json', searchResultTemplate: '<div class="pl-1 pr-1 pl-sm-2 pr-sm-2 pl-lg-4 pr-lg-4 pl-xl-0 pr-xl-0"> <a href="{url}">{title}</a><div class="post-meta d-flex flex-column flex-sm-row text-muted mt-1 mb-1"> {categories} {tags}</div><p>{snippet}</p></div>', noResultsText: '<p class="mt-5">Oops! No result founds.</p>', templateMiddleware: function(prop, value, template) { if (prop === 'categories') { if (value === '') { return `${value}`; } else { return `<div class="mr-sm-4"><i class="far fa-folder fa-fw"></i>${value}</div>`; } } if (prop === 'tags') { if (value === '') { return `${value}`; } else { return `<div><i class="fa fa-tag fa-fw"></i>${value}</div>`; } } } }); </script> <script src="/assets/lib/magnific-popup-1.1.0/jquery.magnific-popup.min.js"></script> <script src="/assets/lib/lozad-1.16.0/lozad.min.js"></script> <script src="/assets/lib/clipboard-2.0.9/clipboard.min.js"></script> <script src="/assets/lib/dayjs-1.10.7/dayjs.min.js"></script> <script src="/assets/lib/dayjs-1.10.7/locale/en.min.js"></script> <script src="/assets/lib/dayjs-1.10.7/plugin/relativeTime.min.js"></script> <script src="/assets/lib/dayjs-1.10.7/plugin/localizedFormat.min.js"></script> <script defer src="/assets/js/dist/post.min.js"></script> <script src="/assets/lib/bootstrap-4.6.1/bootstrap.bundle.min.js"></script> <script defer src="/app.js"></script> <script defer src="https://www.googletagmanager.com/gtag/js?id=G-P9Y4YYSCTS"></script> <script> document.addEventListener("DOMContentLoaded", function(event) { window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-P9Y4YYSCTS'); }); </script>

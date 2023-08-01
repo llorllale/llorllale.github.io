@@ -1,0 +1,1522 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Golang: Concurrency Primitives</title>
+
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/theme/black.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="../assets/reveal.js/plugin/highlight/monokai.css">
+
+    <style>
+        /* Aside */
+        .left {
+            float: left;
+        }
+
+        img.left {
+            margin: 0;
+            padding: 0;
+            width: 25%;
+        }
+
+        img.left + ul {
+            margin: 0;
+            width: 60%;
+        }
+
+        /* Figures with captions */
+        .reveal section figure {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 600px;
+            height: 400px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .reveal section figure > img {
+            width: 100%;
+            max-height: none;
+            border-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section figure > figcaption {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            width: 100%;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section figure > figcaption {
+            line-height: 1.5em;
+            vertical-align: middle;
+        }
+
+        .reveal section figure > figcaption a {
+            line-height: 1.5em !important;
+        }
+
+        /* Cover */
+        .reveal section.cover footer {
+            line-height: 33px;
+            clear: both;
+        }
+
+        .reveal section.cover > footer {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section.cover footer img {
+            float: left;
+            margin: 0 1em 0 0;
+            padding: 0;
+            cursor: pointer;
+            border-style: none;
+        }
+
+        .reveal section.cover footer a,
+        .reveal section.cover footer span {
+            margin: 0;
+            padding: 0;
+            vertical-align: baseline;
+            line-height: 33px;
+        }
+
+        /* Separata */
+        .reveal section.separata hgroup {
+            margin-top: 0.5em;
+        }
+
+        .reveal section.separata hgroup h2,
+        .reveal section.separata hgroup h3,
+        .reveal section.separata hgroup h4 {
+            color: #F0F1EB;
+            text-shadow: #111150 0px 0px 0.2em;
+        }
+
+        .reveal section.separata figure {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section.separata figure > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            z-index: -1;
+        }
+
+        /* Animation */
+        div.animation-container {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 809px;
+            height: 399px;
+            background-color: transparent;
+            -moz-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            overflow: hidden;
+        }
+
+        .animation-container .frame,
+        .animation-container .frame > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            min-width: 100%;
+            max-width: none;
+            max-height: none;
+            box-shadow: none
+        }
+
+        .animation-container .frame > img.loader {
+            position: absolute;
+            top: 140px;
+            left: 180px;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            width: 126px;
+            min-width: 126px;
+            box-shadow: none;
+        }
+
+        .snippet {
+            font-family: monospace !important;
+        }
+
+        .reveal table.matrix {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reveal table.matrix th.pivot {
+            border-style: none;
+        }
+
+        .reveal table.matrix th, .reveal table.matrix td {
+            border-style: solid;
+            border-width: 1px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .reveal table.matrix td li {
+            list-style: none;
+        }
+
+        .reveal pre {
+            width:100%;
+        }
+
+        .reveal .bad {
+            color: red;
+            font-style: italic;
+        }
+
+        .reveal .small {
+            font-size: 0.6em;
+        }
+
+        .reveal .highlight {
+            background-color: #606000; /*#222230;*/
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section class="cover">
+            <h1>Concurrency Primitives in Go</h1>
+            <img src="/assets/img/talks/golang-concurrency-primitives/cover.png" width="500"/>
+            <p>
+                <small>By <a href="https://georgearisty.dev/">George Aristy</a> /
+                    <a href="https://github.com/llorllale">llorllale</a></small>
+            </p>
+            <footer>
+                <a rel="license"
+                   href="http://creativecommons.org/licenses/by-nc-sa/2.0/">
+                    <img alt="Creative Commons License"
+                         src="http://i.creativecommons.org/l/by-nc-sa/2.0/88x31.png"/>
+                </a>
+                <span>This work is licensed under a </span>
+                <a rel="license"
+                   href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+                    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 Generic
+                    License
+                </a>
+            </footer>
+        </section>
+        <section>
+            <h2>Goroutines</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <ul>
+                        <li>Core concept in Go's concurrency model.</li>
+                        <li>Can efficiently run 1000s of goroutines (for work not bound by CPU)</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <strong>Go Proverb: </strong> <a target="_blank" href="https://www.youtube.com/watch?v=PAAkCSZUG1c&t=3m42s">Concurrency != Parallelism</a>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h2>How do they work?</h2>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>M:N Scheduler</h3>
+                    <div style="float: left">
+                        <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.model.drawio.svg" height="400"/>
+                    </div>
+                    <div style="float: right; text-align: left">
+                        <div style="font-size: large">
+                            <br/>
+                            <br/>
+                            <br/>
+                            <br/>
+                            Schedulers<br/>
+                            <ul>
+                                <li><strong>Go runtime: </strong> schedules goroutines (M) unto threads (N).</li>
+                                <li><strong>OS: </strong> schedules threads unto CPU cores.</li>
+                            </ul>
+                        </div>
+                        <br/>
+                        <div style="font-size: large">
+                            Benefits<br/>
+                            <ul>
+                                <li><strong>Speed: </strong> no expensive system calls to create threads.</li>
+                                <li><strong>Memory: </strong> small stack per-goroutine; can grow as needed.</li>
+                                <li><strong>Context Switching: </strong> entirely within the process (faster).</li>
+                                <li><strong>Scheduling: </strong> optimized for Go.</li>
+                                <li>Excellent overview: <a href="https://youtu.be/YHRO5WQGh0k" target="_blank">The Scheduler Saga</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: scheduling</h3>
+                    A goroutine is blocked by another:<br/>
+                    <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.step0.drawio.svg" height="400"/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: scheduling</h3>
+                    Some threads created by the Go runtime have been freed up:<br/>
+                    <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.step1.drawio.svg" height="400"/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: scheduling</h3>
+                    Go runtime schedules goroutine to a free thread:<br/>
+                    <img src="/assets/img/talks/golang-concurrency-primitives/goroutines.step2.drawio.svg" height="400"/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I run goroutines?</h3>
+                </div>
+                <div class="fragment">
+                    <h3>How do I run goroutines?</h3>
+                    Use keyword <code class="highlight">go</code> followed by an expression (typically a function call):
+                    <pre><code data-trim data-noescape>
+                        func main() {
+                            go func() {
+                                fmt.Println("Hello goroutine!")
+                            }()
+                        }
+                    </code></pre>
+                    <footer>
+                        <small>
+                            Spec: <a target="_blank" href="https://go.dev/ref/spec#Go_statements">https://go.dev/ref/spec#Go_statements</a>
+                        </small>
+                    </footer>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Channels</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <h3>What are channels?</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>What are channels?</h3>
+                    <ul>
+                        <li>Blocking bounded queues</li>
+                        <li>Channels have a type</li>
+                        <li>Concurrency-safe</li>
+                        <li>Can allow either reads or writes (or both)</li>
+                    </ul>
+                    <br/>
+                    <br/>
+                    <footer>
+                        <small>
+                            Spec: <a target="_blank" href="https://go.dev/ref/spec#Channel_types">https://go.dev/ref/spec#Channel_types</a>
+                        </small>
+                    </footer>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Fun Fact</h3>
+                    Channels are a struct, <a target="_blank" href="https://github.com/golang/go/blob/4fc9565ffce91c4299903f7c17a275f0786734a1/src/runtime/chan.go#L17-L29">hchan</a>,
+                    under the hood. Access to hchan's buffer is guarded by a mutex.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Purpose</h3>
+                    <blockquote>
+                        A channel provides a mechanism for concurrently executing functions to communicate by sending and receiving values of a specified element type.
+                    </blockquote>
+                    - The Spec
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    Create one using the <code class="highlight">make</code> keyword:
+                    <pre><code data-noescape data-trim>
+                        func main() {
+                            unbuffered := make(chan int)
+                            buffered := make(chan int, 3)
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    Read and write using the <code class="highlight"><-</code> operator:
+                    <pre><code data-noescape data-trim>
+                        // Which of the following compiles?
+                        func main() {
+                            readWrite := make(chan int)
+                            readOnly := make(<-chan int)
+                            writeOnly := make(chan<- int)
+
+                            readWrite <- 1 // OK
+                            <-readWrite    // OK
+                            readOnly <- 1  // compilation error
+                            <-readOnly     // OK
+                            writeOnly <- 1 // OK
+                            <-writeOnly    // compilation error
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    Read in a loop using the <code class="highlight">range</code> keyword:
+                    <pre><code data-noescape data-trim>
+                        func main() {
+                            ch := make(chan string, 3)
+
+                            ch <- "Hello"
+                            ch <- "Fellow"
+                            ch <- "Gophers"
+
+                            close(ch)
+
+                            for s := range ch { // exits when channel is closed
+                                fmt.Println(s)
+                            }
+
+                            // Output:
+                            //  Hello
+                            //  Fellow
+                            //  Gophers
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    Read from the first available channel using the <code class="highlight">select</code> statement:
+                    <pre><code data-noescape data-trim>
+                        select {
+                        case <-ch1:
+                            doSomething()
+                        case <-ch2:
+                            doSomethingElse()
+                        ...
+                        case <-chN:
+                            doTheNthThing()
+                        }
+                    </code></pre>
+                    <footer>
+                        <small>
+                            Spec: <a target="_blank" href="https://go.dev/ref/spec#Select_statements">https://go.dev/ref/spec#Select_statements</a>
+                        </small>
+                    </footer>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    <code class="highlight">select</code> example:
+                    <pre><code data-noescape data-trim data-line-numbers="4-5">
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            ch1 := make(chan int)
+                            ch2 := make(chan int)
+
+                            go func() { // write to ch1 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch1 <- 1
+                                close(ch1)
+                            }()
+
+                            go func() { // write to ch2 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch2 <- 2
+                                close(ch2)
+                            }()
+
+                            select { // Output: either 1 or 2
+                            case v := <-ch1:
+                                fmt.Println(v)
+                            case v := <-ch2:
+                                fmt.Println(v)
+                            }
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    <code class="highlight">select</code> example:
+                    <pre><code data-noescape data-trim data-line-numbers="7-12">
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            ch1 := make(chan int)
+                            ch2 := make(chan int)
+
+                            go func() { // write to ch1 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch1 <- 1
+                                close(ch1)
+                            }()
+
+                            go func() { // write to ch2 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch2 <- 2
+                                close(ch2)
+                            }()
+
+                            select { // Output: either 1 or 2
+                            case v := <-ch1:
+                                fmt.Println(v)
+                            case v := <-ch2:
+                                fmt.Println(v)
+                            }
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    <code class="highlight">select</code> example:
+                    <pre><code data-noescape data-trim data-line-numbers="13-19">
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            ch1 := make(chan int)
+                            ch2 := make(chan int)
+
+                            go func() { // write to ch1 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch1 <- 1
+                                close(ch1)
+                            }()
+
+                            go func() { // write to ch2 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch2 <- 2
+                                close(ch2)
+                            }()
+
+                            select { // Output: either 1 or 2
+                            case v := <-ch1:
+                                fmt.Println(v)
+                            case v := <-ch2:
+                                fmt.Println(v)
+                            }
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>How do I use channels?</h3>
+                    <code class="highlight">select</code> example:
+                    <pre><code data-noescape data-trim data-line-numbers="21-26">
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            ch1 := make(chan int)
+                            ch2 := make(chan int)
+
+                            go func() { // write to ch1 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch1 <- 1
+                                close(ch1)
+                            }()
+
+                            go func() { // write to ch2 after random delay
+                                delay := time.Duration(rand.Intn(2)) * time.Second
+                                time.Sleep(delay)
+                                ch2 <- 2
+                                close(ch2)
+                            }()
+
+                            select { // Output: either 1 or 2
+                            case v := <-ch1:
+                                fmt.Println(v)
+                            case v := <-ch2:
+                                fmt.Println(v)
+                            }
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <img src="/assets/img/talks/golang-concurrency-primitives/producer-consumer.drawio.svg"/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="2">
+                        func main() { // "main" goroutine
+                            data := make(chan string) // data channel
+
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
+
+                                close(data)
+                            }()
+
+                            done := make(chan struct{}) // done channel
+
+                            go func() { // consumer
+                                for s := range data {
+                                    fmt.Println(s)
+                                }
+
+                                close(done)
+                            }()
+
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="4-10">
+                        func main() { // "main" goroutine
+                            data := make(chan string) // data channel
+
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
+
+                                close(data)
+                            }()
+
+                            done := make(chan struct{}) // done channel
+
+                            go func() { // consumer
+                                for s := range data {
+                                    fmt.Println(s)
+                                }
+
+                                close(done)
+                            }()
+
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="12">
+                        func main() { // "main" goroutine
+                            data := make(chan string) // data channel
+
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
+
+                                close(data)
+                            }()
+
+                            done := make(chan struct{}) // done channel
+
+                            go func() { // consumer
+                                for s := range data {
+                                    fmt.Println(s)
+                                }
+
+                                close(done)
+                            }()
+
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="14-20">
+                        func main() { // "main" goroutine
+                            data := make(chan string) // data channel
+
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
+
+                                close(data)
+                            }()
+
+                            done := make(chan struct{}) // done channel
+
+                            go func() { // consumer
+                                for s := range data {
+                                    fmt.Println(s)
+                                }
+
+                                close(done)
+                            }()
+
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="22-27">
+                        func main() { // "main" goroutine
+                            data := make(chan string) // data channel
+
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
+
+                                close(data)
+                            }()
+
+                            done := make(chan struct{}) // done channel
+
+                            go func() { // consumer
+                                for s := range data { // exits when data is closed
+                                    fmt.Println(s)
+                                }
+
+                                close(done)
+                            }()
+
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
+
+                            // Output:
+                            //  Hello
+                            //  Fellow
+                            //  Gophers!
+                            //  bye!
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Example: producer and consumer</h3>
+                    <pre><code data-trim data-noescape data-line-numbers="29-33">
+                        func main() { // "main" goroutine
+                            data := make(chan string) // data channel
+
+                            go func() { // producer
+                                for _, s := range []string{"Hello", "Fellow", "Gophers!"} {
+                                    data <- s
+                                }
+
+                                close(data)
+                            }()
+
+                            done := make(chan struct{}) // done channel
+
+                            go func() { // consumer
+                                for s := range data { // exits when data is closed
+                                    fmt.Println(s)
+                                }
+
+                                close(done)
+                            }()
+
+                            select {
+                            case <-done:
+                                fmt.Println("bye!")
+                            case <-time.After(time.Second):
+                                fmt.Println("timeout!")
+                            }
+
+                            // Output:
+                            //  Hello
+                            //  Fellow
+                            //  Gophers!
+                            //  bye!
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>&#9888;&#65039;️ Warning &#9888;&#65039;</h3>
+                    <br/>
+                    <ul>
+                        <li>Reading from a nil channel will hang forever</li>
+                        <li>Writing to a closed channel will <em>panic</em></li>
+                        <li>Closing a closed channel will <em>panic</em></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>The <code class="highlight">sync</code> package</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    Contains useful APIs to synchronize work across goroutines.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Use when one goroutine needs to wait for several others to complete.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="2">
+                        func main() { // "main" goroutine
+                            var wg sync.WaitGroup
+
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
+
+                            wg.Add(3) // # of workers known beforehand
+
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
+
+                            wg.Wait() // blocks until all three are done
+
+                            fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="4-7">
+                        func main() { // "main" goroutine
+                            var wg sync.WaitGroup
+
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
+
+                            wg.Add(3) // # of workers known beforehand
+
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
+
+                            wg.Wait() // blocks until all three are done
+
+                            fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="9">
+                        func main() { // "main" goroutine
+                            var wg sync.WaitGroup
+
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
+
+                            wg.Add(3) // # of workers known beforehand
+
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
+
+                            wg.Wait() // blocks until all three are done
+
+                            fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="11-13">
+                        func main() { // "main" goroutine
+                            var wg sync.WaitGroup
+
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
+
+                            wg.Add(3) // # of workers known beforehand
+
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
+
+                            wg.Wait() // blocks until all three are done
+
+                            fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="15">
+                        func main() { // "main" goroutine
+                            var wg sync.WaitGroup
+
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
+
+                            wg.Add(3) // # of workers known beforehand
+
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
+
+                            wg.Wait() // blocks until all three are done
+
+                            fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.WaitGroup</h3>
+                    Example: "main" waits for three workers to finish
+                    <pre><code data-noescape data-trim data-line-numbers="17">
+                        func main() { // "main" goroutine
+                            var wg sync.WaitGroup
+
+                            work := func(delay time.Duration) {
+                                defer wg.Done() // signal this work is "done"
+                                time.Sleep(delay)
+                            }
+
+                            wg.Add(3) // # of workers known beforehand
+
+                            go work(time.Second)
+                            go work(500 * time.Millisecond)
+                            go work(700 * time.Millisecond)
+
+                            wg.Wait() // blocks until all three are done
+
+                            fmt.Println("done!")
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Use to defer some initialization code that should run only once and not necessarily on every program
+                    execution.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers="3-7">
+                        var once sync.Once
+
+                        func expensiveInit() {
+                            once.Do(func() {
+                                fmt.Println("initialized!")
+                            })
+                        }
+
+                        func main() {
+                            expensiveInit() // prints "initialized!"
+                            expensiveInit() // does nothing
+                            expensiveInit() // does nothing
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers="10">
+                        var once sync.Once
+
+                        func expensiveInit() {
+                            once.Do(func() {
+                                fmt.Println("initialized!")
+                            })
+                        }
+
+                        func main() {
+                            expensiveInit() // prints "initialized!"
+                            expensiveInit() // does nothing
+                            expensiveInit() // does nothing
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers="11">
+                        var once sync.Once
+
+                        func expensiveInit() {
+                            once.Do(func() {
+                                fmt.Println("initialized!")
+                            })
+                        }
+
+                        func main() {
+                            expensiveInit() // prints "initialized!"
+                            expensiveInit() // does nothing
+                            expensiveInit() // does nothing
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Once</h3>
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers="12">
+                        var once sync.Once
+
+                        func expensiveInit() {
+                            once.Do(func() {
+                                fmt.Println("initialized!")
+                            })
+                        }
+
+                        func main() {
+                            expensiveInit() // prints "initialized!"
+                            expensiveInit() // does nothing
+                            expensiveInit() // does nothing
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    Use to control concurrent reads or writes to a shared data structure.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <ul>
+                        <li><strong>sync.Mutex: </strong>mutual exclusion lock</li>
+                        <li><strong>sync.RWMutex: </strong>reader/writer mutual exclusion lock</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    Example: what does the following print?
+                    <pre><code data-noescape data-trim data-line-numbers="1-10">
+                        func printLetters(words []string) {
+                            n := time.Duration(rand.Intn(100))
+
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
+                        }
+
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            var wg sync.WaitGroup
+
+                            wg.Add(2)
+
+                            go func() {
+                                defer wg.Done()
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
+
+                            go func() {
+                                defer wg.Done()
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    Example: what does the following print?
+                    <pre><code data-noescape data-trim data-line-numbers="12-30">
+                        func printLetters(words []string) {
+                            n := time.Duration(rand.Intn(100))
+
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
+                        }
+
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            var wg sync.WaitGroup
+
+                            wg.Add(2)
+
+                            go func() {
+                                defer wg.Done()
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
+
+                            go func() {
+                                defer wg.Done()
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <br/>
+                    <pre><code data-noescape data-trim>
+                        k a b c l d e m f g n h i o j
+                        p q r s t
+                    </code></pre>
+                    <small>Char sequences are not on their own lines.</small>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Let's fix it!</h3>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <pre><code data-noescape data-trim data-line-numbers="16">
+                        func printLetters(words []string) {
+                            n := time.Duration(rand.Intn(100))
+
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
+                        }
+
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            var wg sync.WaitGroup
+                            var mu sync.Mutex
+
+                            wg.Add(2)
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <pre><code data-noescape data-trim data-line-numbers="22-23">
+                        func printLetters(words []string) {
+                            n := time.Duration(rand.Intn(100))
+
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
+                        }
+
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            var wg sync.WaitGroup
+                            var mu sync.Mutex
+
+                            wg.Add(2)
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <pre><code data-noescape data-trim data-line-numbers="29-30">
+                        func printLetters(words []string) {
+                            n := time.Duration(rand.Intn(100))
+
+                            for _, s := range words {
+                                fmt.Print(s + " ")
+                                time.Sleep(n * time.Millisecond)
+                            }
+
+                            fmt.Println()
+                        }
+
+                        func main() {
+                            rand.Seed(time.Now().Unix())
+
+                            var wg sync.WaitGroup
+                            var mu sync.Mutex
+
+                            wg.Add(2)
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"})
+                            }()
+
+                            go func() {
+                                defer wg.Done()
+                                mu.Lock()         // acquire lock
+                                defer mu.Unlock() // release lock when done
+                                printLetters([]string{"k", "l", "m", "n", "o", "p", "q", "r", "s", "t"})
+                            }()
+
+                            wg.Wait()
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <br/>
+                    <pre><code data-noescape data-trim>
+                        k l m n o p q r s t
+                        a b c d e f g h i j
+                    </code></pre>
+                    <small>Char sequences guaranteed to be on their own lines.</small>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Mutex & sync.RWMutex</h3>
+                    <br/>
+                    &#9888;&#65039; <strong>Warning</strong> &#9888;&#65039;
+                    <br/>
+                    Lock() is <em>not</em> reentrant!
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Honorable Mentions</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    <h3>Package <code class="highlight">sync/atomic</code></h3>
+                    <br/>
+                    <ul>
+                        <li>Primitive wrappers around CPU register operations (swap, load, store, compare-and-swap)</li>
+                        <li>Lockless and often used in implementation of other sync primitives</li>
+                    </ul>
+                    <br/>
+                    <br/>
+                    <small>You probably don't need these.</small>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Package <code class="highlight">sync/atomic</code></h3>
+                    A few std packages where used:<br/>
+                    <ul>
+                        <li>sync</li>
+                        <li>database/sql</li>
+                        <li>net/http</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Package <code class="highlight">sync/atomic</code></h3>
+                    Example (broken):
+                    <pre><code data-noescape data-trim data-line-numbers>
+                        func main() {
+                            var (
+                                total int32
+                                wg    sync.WaitGroup
+                            )
+
+                            wg.Add(10_000)
+
+                            for i := 0; i < 10_000; i++ {
+                                go func() {
+                                    defer wg.Done()
+                                    total++
+                                }()
+                            }
+
+                            wg.Wait()
+
+                            fmt.Println(total) // example: 9106
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Package <code class="highlight">sync/atomic</code></h3>
+                    Example (fixed):
+                    <pre><code data-noescape data-trim data-line-numbers>
+                        func main() {
+                            var (
+                                total int32
+                                wg    sync.WaitGroup
+                            )
+
+                            wg.Add(10_000)
+
+                            for i := 0; i < 10_000; i++ {
+                                go func() {
+                                    defer wg.Done()
+                                    atomic.AddInt32(&total, 1)
+                                }()
+                            }
+
+                            wg.Wait()
+
+                            fmt.Println(total) // 10000
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Map</h3>
+                    <br/>
+                    <ul>
+                        <li>Concurrency-safe</li>
+                        <li>Optimized for highly concurrent scenarios where keys are only added and read</li>
+                        <li>Still cannot bind type parameter at instantiation as of Go 1.18</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Map</h3>
+                    <br/>
+                    A regular <code class="highlight">map</code> guarded by a <code class="highlight">sync.RWMutex</code>
+                    should fulfill most use cases without sacrificing legibility.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>sync.Map</h3>
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers>
+                        func main() {
+                            var m sync.Map
+                            m.Store("key", 1)
+                            m.Store(1, 1)
+
+                            v, ok := m.Load("key")
+                            if ok {
+                                n := v.(int)
+                                fmt.Println(n) // 1
+                            }
+
+                            v, ok = m.Load(1)
+                            if ok {
+                                n := v.(int)
+                                fmt.Println(n) // 1
+                            }
+                        }
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>errgroup.Group</h3>
+                    <br/>
+                    <ul>
+                        <li>Part of golang.org/x/sync (non-standard)</li>
+                        <li>Supplement to sync.WaitGroup</li>
+                        <li>"Provides synchronization, error propagation, and Context cancelation"</li>
+                        <li>Maintained by Go authors</li>
+                    </ul>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>errgroup.Group</h3>
+                    Comparison: error handling with sync.WaitGroup:
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+	timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var urls = []string{
+		"http://www.golang.org/",
+		"http://www.google.com/",
+	}
+
+	var g sync.WaitGroup
+
+	g.Add(len(urls))
+
+	var client http.Client
+	var errors []error
+	var mu sync.Mutex
+
+	for _, url := range urls {
+		u := url
+		go func() {
+			defer g.Done()
+
+			req, err := http.NewRequestWithContext(timeout, http.MethodGet, u, nil)
+			if err != nil {
+				mu.Lock()
+				errors = append(errors, err)
+				mu.Unlock()
+
+				return
+			}
+
+			// Fetch the URL.
+			resp, err := client.Do(req)
+			if err != nil {
+				mu.Lock()
+				errors = append(errors, err)
+				mu.Unlock()
+
+				return
+			}
+
+			_ = resp.Body.Close()
+		}()
+	}
+
+	// Wait for all HTTP fetches to complete.
+	g.Wait()
+
+	if len(errors) == 0 {
+		fmt.Println("Successfully fetched all URLs.")
+	}
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>errgroup.Group</h3>
+                    Comparison: error handling with errgroup.Group:
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+	timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var urls = []string{
+		"http://www.golang.org/",
+		"http://www.google.com/",
+	}
+
+	g, _ := errgroup.WithContext(timeout)
+
+	var client http.Client
+
+	for _, url := range urls {
+		u := url
+		go func() {
+			g.Go(func() error {
+				req, err := http.NewRequestWithContext(timeout, http.MethodGet, u, nil)
+				if err != nil {
+					return err
+				}
+
+				// Fetch the URL.
+				resp, err := client.Do(req)
+				if err != nil {
+					return err
+				}
+
+				return resp.Body.Close()
+			})
+		}()
+	}
+
+	// Wait for all HTTP fetches to complete.
+	if err := g.Wait(); err == nil {
+		fmt.Println("Successfully fetched all URLs.")
+	}
+}
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Questions?</h2>
+        </section>
+    </div>
+</div>
+
+<script src="../assets/reveal.js/dist/reveal.js"></script>
+<script src="../assets/reveal.js/plugin/notes/notes.js"></script>
+<script src="../assets/reveal.js/plugin/markdown/markdown.js"></script>
+<script src="../assets/reveal.js/plugin/highlight/highlight.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+    });
+</script>
+</body>
+</html>

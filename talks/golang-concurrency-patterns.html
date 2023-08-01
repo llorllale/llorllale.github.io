@@ -1,0 +1,903 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Golang: Concurrency Patterns</title>
+
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="../assets/reveal.js/dist/theme/black.css">
+    <link rel="stylesheet" href="../assets/lib/fontawesome-free-5.15.4/css/all.min.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="../assets/reveal.js/plugin/highlight/monokai.css">
+
+    <style>
+        /* Aside */
+        .left {
+            float: left;
+        }
+
+        img.left {
+            margin: 0;
+            padding: 0;
+            width: 25%;
+        }
+
+        img.left + ul {
+            margin: 0;
+            width: 60%;
+        }
+
+        /* Figures with captions */
+        .reveal section figure {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 600px;
+            height: 400px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .reveal section figure > img {
+            width: 100%;
+            max-height: none;
+            border-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section figure > figcaption {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            width: 100%;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section figure > figcaption {
+            line-height: 1.5em;
+            vertical-align: middle;
+        }
+
+        .reveal section figure > figcaption a {
+            line-height: 1.5em !important;
+        }
+
+        /* Cover */
+        .reveal section.cover footer {
+            line-height: 33px;
+            clear: both;
+        }
+
+        .reveal section.cover > footer {
+            position: absolute;
+            bottom: 0.5em;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: rgb(37, 33, 28);
+            background-color: rgba(37, 33, 28, 0.5);
+            font-size: 0.4em;
+            text-align: center;
+        }
+
+        .reveal section.cover footer img {
+            float: left;
+            margin: 0 1em 0 0;
+            padding: 0;
+            cursor: pointer;
+            border-style: none;
+        }
+
+        .reveal section.cover footer a,
+        .reveal section.cover footer span {
+            margin: 0;
+            padding: 0;
+            vertical-align: baseline;
+            line-height: 33px;
+        }
+
+        /* Separata */
+        .reveal section.separata hgroup {
+            margin-top: 0.5em;
+        }
+
+        .reveal section.separata hgroup h2,
+        .reveal section.separata hgroup h3,
+        .reveal section.separata hgroup h4 {
+            color: #F0F1EB;
+            text-shadow: #111150 0px 0px 0.2em;
+        }
+
+        .reveal section.separata figure {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .reveal section.separata figure > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-style: none;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            z-index: -1;
+        }
+
+        /* Animation */
+        div.animation-container {
+            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            width: 809px;
+            height: 399px;
+            background-color: transparent;
+            -moz-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            -webkit-box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 6px 0px;
+            overflow: hidden;
+        }
+
+        .animation-container .frame,
+        .animation-container .frame > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            min-width: 100%;
+            max-width: none;
+            max-height: none;
+            box-shadow: none
+        }
+
+        .animation-container .frame > img.loader {
+            position: absolute;
+            top: 140px;
+            left: 180px;
+            border: 0;
+            border-style: none;
+            padding: 0;
+            margin: 0;
+            width: 126px;
+            min-width: 126px;
+            box-shadow: none;
+        }
+
+        .snippet {
+            font-family: monospace !important;
+        }
+
+        .reveal table.matrix {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reveal table.matrix th.pivot {
+            border-style: none;
+        }
+
+        .reveal table.matrix th, .reveal table.matrix td {
+            border-style: solid;
+            border-width: 1px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .reveal table.matrix td li {
+            list-style: none;
+        }
+
+        .reveal pre {
+            width:100%;
+        }
+
+        .reveal code {
+            font-size: 0.6em;
+            line-height: normal;
+        }
+
+        .reveal .bad {
+            color: red;
+            font-style: italic;
+        }
+
+        .reveal .small {
+            font-size: 0.6em;
+        }
+
+        .reveal .highlight {
+            background-color: #606000; /*#222230;*/
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section class="cover">
+            <h1>Concurrency Patterns in Go</h1>
+            <img src="/assets/img/talks/golang-concurrency-patterns/gopher-concurrency.jpg" width="500"/>
+            <p>
+                <small>By <a href="https://georgearisty.dev/">George Aristy</a> /
+                    <a href="https://github.com/llorllale">llorllale</a></small>
+            </p>
+            <footer>
+                <a rel="license"
+                   href="http://creativecommons.org/licenses/by-nc-sa/2.0/">
+                    <img alt="Creative Commons License"
+                         src="http://i.creativecommons.org/l/by-nc-sa/2.0/88x31.png"/>
+                </a>
+                <span>This work is licensed under a </span>
+                <a rel="license"
+                   href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+                    Creative Commons Attribution-NonCommercial-ShareAlike 4.0 Generic
+                    License
+                </a>
+            </footer>
+        </section>
+        <section>
+            Building upon previous talk on <a href="/posts/golang-concurrency-primitives">Golang Concurrency Primitives</a>.
+        </section>
+        <section>
+            <h2>Topics</h2>
+            <ul>
+                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> The Done channel pattern</li>
+                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> The Fan-In pattern</li>
+                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> The Fan-Out pattern</li>
+                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> Sharding</li>
+                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> Bounded Parallelism</li>
+                <li class="fragment"><i style="color: lightgreen" class="fa fa-plus"></i> Backpressure</li>
+                <li class="fragment"><i style="color: red" class="fa fa-minus"></i> Deadlocks <span class="fragment">(stay tuned)</span></li>
+            </ul>
+        </section>
+        <section>
+            <h2>References</h2>
+            <div class="r-stack">
+            <ul>
+                <li class="fragment">Learning Go: An Idiomatic Approach to Real-World Go Programming (<a target="_blank" href="https://www.amazon.ca/Learning-Go-Idiomatic-Real-World-Programming/dp/1492077216"><i class="fa fa-external-link-alt"></i></a>)</li>
+                <li class="fragment">Cloud-Native Go: Building Reliable Services in Unreliable Environments (<a target="_blank" href="https://www.amazon.ca/Cloud-Native-Go-Unreliable-Environments/dp/1492076333"><i class="fa fa-external-link-alt"></i></a>)</li>
+                <li class="fragment">The Go Blog: Go Concurrency Patterns: Pipelines and cancellation (<a target="_blank" href="https://go.dev/blog/pipelines"><i class="fa fa-external-link-alt"></i></a>)</li>
+            </ul>
+            </div>
+        </section>
+        <section>
+            <h2>The <strong>Done</strong> Channel Pattern</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    Provides a way to send a "stop" or "done" signal to a goroutine.<br/>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Pattern:
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+    result := make(chan interface{})
+    done := make(chan struct{})
+
+    go func() { // launch sub goroutine
+        select {
+        case result <- ...:  // write to result channel
+        case <-done:
+            // abort when `done` is closed
+        }
+    }()
+
+    // wait for result or timeout, whichever occurs first
+    select {
+    case r := <-result:
+        // process result
+    case <-time.After(time.Second):
+        // handle timeout
+    }
+
+    close(done) // cleanup `done` channel
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Common mistake: not cancelling unit of work after the intended duration (<a href="https://go.dev/play/p/GjC4UJjViTT" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>)
+                    <pre><code data-trim data-noescape data-line-numbers>
+// request does not support context
+func request() interface{} {
+    time.Sleep(5 * time.Second) // simulate expensive operation
+    return "Hello, World!"
+}
+
+func main() {
+    result := make(chan interface{})
+    done := make(chan struct{})
+
+    go func() {
+        select {
+        case result <- request():
+            fmt.Println("request completed")
+        case <-done:
+            fmt.Println("request canceled")
+        }
+    }()
+
+    select {
+    case r := <-result:
+        fmt.Println("result: ", r)
+    case <-time.After(time.Second):
+        fmt.Println("request timeout")
+    }
+
+    close(done)
+
+    time.Sleep(100 * time.Millisecond) // allow time for sub goroutine to print cancel msg
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Output:
+                    <pre><code data-trim data-noescape>
+request timeout
+
+Program exited.
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    What is happening:
+                    <pre><code data-trim data-noescape data-line-numbers="12-19">
+// request does not support context
+func request() interface{} {
+    time.Sleep(5 * time.Second) // simulate expensive operation
+    return "Hello, World!"
+}
+
+func main() {
+    result := make(chan interface{})
+    done := make(chan struct{})
+
+    go func() {
+        // each `case` stmt is evaluated once in source order
+        // see https://go.dev/ref/spec#Select_statements
+        select {
+        case result <- request(): // `request()` evaluation takes ~5s
+            fmt.Println("request completed")
+        case <-done:
+            fmt.Println("request canceled")
+        }
+    }()
+
+    select {
+    case r := <-result:
+        fmt.Println("result: ", r)
+    case <-time.After(time.Second):
+        fmt.Println("request timeout")
+    }
+
+    close(done)
+
+    time.Sleep(100 * time.Millisecond) // allow sub goroutine to print cancel msg
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Fix: refactor case statement into a pure "receive statement" by evaluating <code class="highlight">request()</code> in another goroutine (<a href="https://go.dev/play/p/RjqbCeNlxRu" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>).
+                    <pre><code data-noescape data-trim data-line-numbers="8-11,18-20">
+// request does not support context
+func request() interface{} {
+    time.Sleep(5 * time.Second) // simulate expensive operation
+    return "Hello, World!"
+}
+
+func main() {
+    tmp := make(chan interface{})
+    go func() {
+        tmp <- request()
+    }()
+
+    result := make(chan interface{})
+    done := make(chan struct{})
+
+    go func() {
+        select {
+        case t := <-tmp:
+            result <- t
+            fmt.Println("request completed")
+        case <-done:
+            fmt.Println("request canceled")
+        }
+    }()
+
+    select {
+    case r := <-result:
+        fmt.Println("result: ", r)
+    case <-time.After(time.Second):
+        fmt.Println("request timeout")
+    }
+
+    close(done)
+
+    time.Sleep(100 * time.Millisecond) // allow time for sub goroutine to print cancel msg
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Version using <code class="highlight">context.Context</code> (<a href="https://go.dev/play/p/4SQYpGlYWpz" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim data-line-numbers="8-9,23-24,35">
+// request does not support context
+func request() interface{} {
+    time.Sleep(5 * time.Second) // simulate expensive operation
+    return "Hello, World!"
+}
+
+func main() {
+    ctx, cancel := context.WithCancel(context.Background()) // or context.WithDeadline, or context.WithTimeout
+    defer cancel()                                          // best practice, but don't rely on it for timely cancellation
+
+    tmp := make(chan interface{})
+    go func() {
+        tmp <- request()
+    }()
+
+    result := make(chan interface{})
+
+    go func() {
+        select {
+        case t := <-tmp:
+            result <- t
+            fmt.Println("request completed")
+        case <-ctx.Done():
+            fmt.Println("request canceled: ", ctx.Err())
+        }
+    }()
+
+    select {
+    case r := <-result:
+        fmt.Println("result: ", r)
+    case <-time.After(time.Second):
+        fmt.Println("request timeout")
+    }
+
+    cancel() // important! cancel now; don't defer
+
+    time.Sleep(100 * time.Millisecond) // allow time for sub goroutine to print cancel msg
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    When the 3rd party API supports <code class="highlight">context.Context</code> (<a href="https://go.dev/play/p/f6KokosBHUz" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim data-line-numbers="17-25">
+// request supports context (blackbox)
+func request(ctx context.Context) (interface{}, error) {
+    select {
+    case <-time.After(5 * time.Second):
+        return "Hello, World!", nil
+    case <-ctx.Done():
+        return nil, ctx.Err()
+    }
+}
+
+func main() {
+    ctx, cancel := context.WithCancel(context.Background()) // or context.WithDeadline, or context.WithTimeout
+    defer cancel()                                          // best practice, but don't rely on it for timely cancellation
+
+    result := make(chan interface{})
+
+    go func() {
+        r, err := request(ctx)
+        if err != nil {
+            fmt.Println("request error: ", err)
+            return
+        }
+
+        result <- r
+    }()
+
+    select {
+    case r := <-result:
+        fmt.Println("result: ", r)
+    case <-time.After(time.Second):
+        fmt.Println("request timeout")
+    }
+
+    cancel() // important! cancel now; don't defer
+
+    time.Sleep(100 * time.Millisecond) // allow time for sub goroutine to print cancel msg
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Lesson: prefer APIs that support <code class="highlight">context.Context</code>;
+                    otherwise wrap them in a function that does.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Things to keep an eye on</h3>
+                    Check if context is cancelled before invoking operation:
+                    <pre><code data-noescape data-trim data-line-numbers="8-10">
+func main() {
+    ctx, cancel := context.WithCancel(context.Background()) // or context.WithDeadline, or context.WithTimeout
+    defer cancel()                                          // best practice, but don't rely on it for timely cancellation
+
+    result := make(chan interface{})
+
+    go func() {
+        if ctx.Err() != nil { // abort if context is already cancelled
+            return
+        }
+
+        r, err := request(ctx)
+        if err != nil {
+            fmt.Println("request error: ", err)
+            return
+        }
+
+        result <- r
+    }()
+
+    select {
+    case r := <-result:
+        fmt.Println("result: ", r)
+    case <-time.After(time.Second):
+        fmt.Println("request timeout")
+    }
+
+    cancel() // important! cancel now; don't defer
+
+    time.Sleep(100 * time.Millisecond) // allow time for sub goroutine to print cancel msg
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Things to keep an eye on</h3>
+                    Cleanup your channels and goroutines:
+                    <pre><code data-noescape data-time data-line-numbers="6-10,13-16,28">
+func main() {
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    // Set a buffer on the channel.
+    // This way, even if parent goroutine is gone (timeout, etc.)
+    // and no longer listening on this channel, the sub goroutine
+    // won't block when writing.
+    result := make(chan interface{}, 1)
+
+    go func() {
+        // Close channel when done.
+        // Not closed in parent goroutine to avoid  writing to a
+        // closed channel (panic).
+        defer close(result)
+
+        if ctx.Err() != nil { // abort if context is already cancelled
+            return
+        }
+
+        r, err := request(ctx)
+        if err != nil {
+            fmt.Println("request error: ", err)
+            return
+        }
+
+        result <- r // won't block
+    }()
+
+    select {
+    case r := <-result:
+        fmt.Println("result: ", r)
+    case <-time.After(time.Second):
+        fmt.Println("request timeout")
+    }
+
+    cancel() // important! cancel now; don't defer
+
+    time.Sleep(100 * time.Millisecond) // allow time for sub goroutine to print cancel msg
+}
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>The Fan-In Pattern</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    Multiplex multiple input channels onto one output channel.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers>
+func FanIn(sources ...<-chan int) <-chan int {
+    dest := make(chan int) // return destination channel
+
+    var wg sync.WaitGroup
+    wg.Add(len(sources))
+
+    // multiplex each source into dest
+    for _, src := range sources {
+        go func(src <-chan int) {
+            defer wg.Done()
+
+            for v := range src {
+                dest <- v
+            }
+        }(src)
+    }
+
+    // close dest when all sources are closed
+    go func() {
+        wg.Wait()
+        close(dest)
+    }()
+
+    return dest
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Usage (<a href="https://go.dev/play/p/NI_I_kJjyQd" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+    src := sources()
+    dest := FanIn(src...) // sources coalesced into a single channel
+
+    for r := range dest {
+        fmt.Println(r)
+    }
+}
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>The Fan-Out Pattern</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    Distribute messages from one input channel into multiple output channels.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers>
+func FanOut(src <-chan int, n int) []<-chan int {
+    dests := make([]<-chan int, 0)
+
+    for i := 0; i < n; i++ {
+        dest := make(chan int)
+        dests = append(dests, dest)
+
+        go func() {
+            defer close(dest)
+
+            for v := range src {
+                dest <- v
+            }
+        }()
+    }
+
+    return dests
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Usage (<a href="https://go.dev/play/p/BU1lpfHcu1f" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+    src := source()
+    dests := FanOut(src, 5)
+
+    var wg sync.WaitGroup
+    wg.Add(len(dests))
+
+    for _, dest := range dests {
+        go func(dest <-chan int) {
+            defer wg.Done()
+
+            for v := range dest {
+                fmt.Println(v)
+            }
+        }(dest)
+    }
+
+    wg.Wait()
+}
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Sharding</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    Partition a data structure to localize the effects of read/write locks.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers>
+type Shard[V any] struct {
+    sync.RWMutex
+    m map[string]V
+}
+
+type ShardedMap[V any] []*Shard[V]
+
+func NewShardedMap[V any](nShards int) ShardedMap[V] {
+    shards := make([]*Shard[V], nShards)
+
+    for i := range shards {
+        shards[i] = &Shard[V]{m: make(map[string]V)}
+    }
+
+    return shards
+}
+
+func (m ShardedMap[V]) Get(key string) V {
+    shard := m.shard(key)
+    shard.RLock()
+    defer shard.RUnlock()
+
+    return shard.m[key]
+}
+
+func (m ShardedMap[V]) Set(key string, value V) {
+    shard := m.shard(key)
+    shard.Lock()
+    defer shard.Unlock()
+
+    shard.m[key] = value
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Usage (<a href="https://go.dev/play/p/grvlB1wVPbV" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+    m := NewShardedMap[int](5)
+
+    m.Set("alpha", 1)
+    m.Set("beta", 2)
+    m.Set("gamma", 3)
+
+    fmt.Println(m.Get("alpha"))
+    fmt.Println(m.Get("beta"))
+    fmt.Println(m.Get("gamma"))
+
+    keys := m.Keys()
+    for _, k := range keys {
+        fmt.Println(k)
+    }
+}
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Bounded Parallelism</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    Limit concurrent processing of an unknown number of inputs.
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Example:
+                    <pre><code data-noescape data-trim data-line-numbers>
+func Process(concurrency int, data []int) {
+    sem := make(chan struct{}, concurrency)
+    var wg sync.WaitGroup
+    wg.Add(len(data))
+
+    for _, d := range data {
+        sem <- struct{}{} // blocks until capacity is freed up
+
+        go func(d int) {
+            defer wg.Done()
+
+            doProcess(d)
+            <-sem // free up capacity
+        }(d)
+    }
+
+    wg.Wait()
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    Usage (<a href="https://go.dev/play/p/TUPD33CnSHh" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim data-line-numbers>
+func main() {
+	data := getData()
+
+	Process(3, data)
+}
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Backpressure</h2>
+            <div class="r-stack">
+                <div class="fragment fade-in-then-out">
+                    Limit the amount of concurrent work <em>and reject extra</em>. Example:
+                    <pre><code data-noescape data-trim data-line-numbers>
+type PressureGauge struct {
+    ch chan struct{}
+}
+
+func New(limit int) *PressureGauge {
+    ch := make(chan struct{}, limit)
+
+    for i := 0; i < limit; i++ {
+        ch <- struct{}{}
+    }
+
+    return &PressureGauge{ch: ch}
+}
+
+func (p *PressureGauge) Do(fn func()) error {
+    select {
+    case <-p.ch:
+        fn()
+        p.ch <- struct{}{}
+        return nil
+    default:
+        return errors.New("out of capacity")
+    }
+}
+                    </code></pre>
+                </div>
+                <div class="fragment fade-in-then-out">
+                    <h3>Backpressure</h3>
+                    Usage (<a href="https://go.dev/play/p/VpzfkMV3d1A" target="_blank">playground <i class="fa fa-external-link-alt"></i></a>):
+                    <pre><code data-noescape data-trim data-line-numbers>
+func runServer(pg *PressureGauge) {
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
+        err := pg.Do(func() {
+            w.Write([]byte(expensiveOperation()))
+        })
+        if err != nil {
+            w.WriteHeader(http.StatusTooManyRequests)
+            w.Write([]byte("too many requests"))
+        }
+    })
+    http.ListenAndServe(":8080", nil)
+}
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h2>Questions?</h2>
+        </section>
+    </div>
+</div>
+
+<script src="../assets/reveal.js/dist/reveal.js"></script>
+<script src="../assets/reveal.js/plugin/notes/notes.js"></script>
+<script src="../assets/reveal.js/plugin/markdown/markdown.js"></script>
+<script src="../assets/reveal.js/plugin/highlight/highlight.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+    });
+</script>
+</body>
+</html>

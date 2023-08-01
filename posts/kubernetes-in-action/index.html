@@ -1,0 +1,563 @@
+<!DOCTYPE html><html lang="en-US" ><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><meta name="generator" content="Jekyll v4.2.2" /><meta property="og:title" content="Kubernetes In Action" /><meta name="author" content="George Aristy" /><meta property="og:locale" content="en_US" /><meta name="description" content="Written by Marko Lukša, Kubernetes In Action is a fantastic book covering all operational aspects of Kubernetes. I find it very hard to think of a better book on the subject. This is the first edition of the book, published in December 2017, and although dated around the edges and details, Marko’s in-depth dive into the different components that make up Kubernetes and how they work is timeless. I highly recommend this book to anyone looking for any serious learning of Kubernetes. This book’s shelf life is pretty long despite Kubernetes’ active development - I would think it can only be supplanted by the second edition coming out early next year1. It appears you can use code au35luk to get a 35% discount . &#8617;" /><meta property="og:description" content="Written by Marko Lukša, Kubernetes In Action is a fantastic book covering all operational aspects of Kubernetes. I find it very hard to think of a better book on the subject. This is the first edition of the book, published in December 2017, and although dated around the edges and details, Marko’s in-depth dive into the different components that make up Kubernetes and how they work is timeless. I highly recommend this book to anyone looking for any serious learning of Kubernetes. This book’s shelf life is pretty long despite Kubernetes’ active development - I would think it can only be supplanted by the second edition coming out early next year1. It appears you can use code au35luk to get a 35% discount . &#8617;" /><link rel="canonical" href="https://georgearisty.dev/posts/kubernetes-in-action/" /><meta property="og:url" content="https://georgearisty.dev/posts/kubernetes-in-action/" /><meta property="og:site_name" content="George Aristy" /><meta property="og:type" content="article" /><meta property="article:published_time" content="2022-11-26T09:00:00-05:00" /><meta name="twitter:card" content="summary" /><meta property="twitter:title" content="Kubernetes In Action" /><meta name="twitter:site" content="@twitter_username" /><meta name="twitter:creator" content="@George Aristy" /><meta name="google-site-verification" content="google_meta_tag_verification" /> <script type="application/ld+json"> {"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"George Aristy"},"dateModified":"2022-11-26T09:00:00-05:00","datePublished":"2022-11-26T09:00:00-05:00","description":"Written by Marko Lukša, Kubernetes In Action is a fantastic book covering all operational aspects of Kubernetes. I find it very hard to think of a better book on the subject. This is the first edition of the book, published in December 2017, and although dated around the edges and details, Marko’s in-depth dive into the different components that make up Kubernetes and how they work is timeless. I highly recommend this book to anyone looking for any serious learning of Kubernetes. This book’s shelf life is pretty long despite Kubernetes’ active development - I would think it can only be supplanted by the second edition coming out early next year1. It appears you can use code au35luk to get a 35% discount . &#8617;","headline":"Kubernetes In Action","mainEntityOfPage":{"@type":"WebPage","@id":"https://georgearisty.dev/posts/kubernetes-in-action/"},"url":"https://georgearisty.dev/posts/kubernetes-in-action/"}</script><title>Kubernetes In Action | George Aristy</title><link rel="apple-touch-icon" sizes="180x180" href="/assets/img/favicons/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicons/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicons/favicon-16x16.png"><link rel="manifest" href="/assets/img/favicons/site.webmanifest"><link rel="shortcut icon" href="/assets/img/favicons/favicon.ico"><meta name="apple-mobile-web-app-title" content="George Aristy"><meta name="application-name" content="George Aristy"><meta name="msapplication-TileColor" content="#da532c"><meta name="msapplication-config" content="/assets/img/favicons/browserconfig.xml"><meta name="theme-color" content="#ffffff"><link rel="stylesheet" href="/assets/lib/fonts/main.css"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin="use-credentials"><link rel="dns-prefetch" href="https://www.google-analytics.com"><link rel="preconnect" href="https://www.googletagmanager.com" crossorigin="anonymous"><link rel="dns-prefetch" href="https://www.googletagmanager.com"><link rel="stylesheet" href="/assets/lib/bootstrap-4.6.1/bootstrap.min.css"><link rel="stylesheet" href="/assets/lib/fontawesome-free-5.15.4/css/all.min.css"><link rel="stylesheet" href="/assets/css/style.css"><link rel="stylesheet" href="/assets/lib/bootstrap-toc-1.0.1/bootstrap-toc.min.css"><link rel="stylesheet" href="/assets/lib/magnific-popup-1.1.0/magnific-popup.css"> <script src="/assets/lib/jquery-3.6.0/jquery.min.js"></script> <script type="text/javascript"> class ModeToggle { static get MODE_KEY() { return "mode"; } static get MODE_ATTR() { return "data-mode"; } static get DARK_MODE() { return "dark"; } static get LIGHT_MODE() { return "light"; } static get ID() { return "mode-toggle"; } constructor() { if (this.hasMode) { if (this.isDarkMode) { if (!this.isSysDarkPrefer) { this.setDark(); } } else { if (this.isSysDarkPrefer) { this.setLight(); } } } let self = this; /* always follow the system prefers */ this.sysDarkPrefers.addEventListener("change", () => { if (self.hasMode) { if (self.isDarkMode) { if (!self.isSysDarkPrefer) { self.setDark(); } } else { if (self.isSysDarkPrefer) { self.setLight(); } } self.clearMode(); } self.notify(); }); } /* constructor() */ get sysDarkPrefers() { return window.matchMedia("(prefers-color-scheme: dark)"); } get isSysDarkPrefer() { return this.sysDarkPrefers.matches; } get isDarkMode() { return this.mode === ModeToggle.DARK_MODE; } get isLightMode() { return this.mode === ModeToggle.LIGHT_MODE; } get hasMode() { return this.mode != null; } get mode() { return sessionStorage.getItem(ModeToggle.MODE_KEY); } /* get the current mode on screen */ get modeStatus() { if (this.isDarkMode || (!this.hasMode && this.isSysDarkPrefer)) { return ModeToggle.DARK_MODE; } else { return ModeToggle.LIGHT_MODE; } } setDark() { $('html').attr(ModeToggle.MODE_ATTR, ModeToggle.DARK_MODE); sessionStorage.setItem(ModeToggle.MODE_KEY, ModeToggle.DARK_MODE); } setLight() { $('html').attr(ModeToggle.MODE_ATTR, ModeToggle.LIGHT_MODE); sessionStorage.setItem(ModeToggle.MODE_KEY, ModeToggle.LIGHT_MODE); } clearMode() { $('html').removeAttr(ModeToggle.MODE_ATTR); sessionStorage.removeItem(ModeToggle.MODE_KEY); } /* Notify another plugins that the theme mode has changed */ notify() { window.postMessage({ direction: ModeToggle.ID, message: this.modeStatus }, "*"); } } /* ModeToggle */ const toggle = new ModeToggle(); function flipMode() { if (toggle.hasMode) { if (toggle.isSysDarkPrefer) { if (toggle.isLightMode) { toggle.clearMode(); } else { toggle.setLight(); } } else { if (toggle.isDarkMode) { toggle.clearMode(); } else { toggle.setDark(); } } } else { if (toggle.isSysDarkPrefer) { toggle.setLight(); } else { toggle.setDark(); } } toggle.notify(); } /* flipMode() */ </script><body data-spy="scroll" data-target="#toc" data-topbar-visible="true"><div id="sidebar" class="d-flex flex-column align-items-end"><div class="profile-wrapper text-center"><div id="avatar"> <a href="/" alt="avatar" class="mx-auto"> <img src=" /assets/img/portrait.png " alt="avatar" onerror="this.style.display='none'"> </a></div><div class="site-title mt-3"> <a href="/">George Aristy</a></div><div class="site-subtitle font-italic">Blog about software craftmanship</div></div><ul class="w-100"><li class="nav-item"> <a href="/" class="nav-link"> <i class="fa-fw fas fa-home ml-xl-3 mr-xl-3 unloaded"></i> <span>HOME</span> </a><li class="nav-item"> <a href="/categories/" class="nav-link"> <i class="fa-fw fas fa-stream ml-xl-3 mr-xl-3 unloaded"></i> <span>CATEGORIES</span> </a><li class="nav-item"> <a href="/tags/" class="nav-link"> <i class="fa-fw fas fa-tags ml-xl-3 mr-xl-3 unloaded"></i> <span>TAGS</span> </a><li class="nav-item"> <a href="/archives/" class="nav-link"> <i class="fa-fw fas fa-archive ml-xl-3 mr-xl-3 unloaded"></i> <span>ARCHIVES</span> </a><li class="nav-item"> <a href="/about/" class="nav-link"> <i class="fa-fw fas fa-info-circle ml-xl-3 mr-xl-3 unloaded"></i> <span>ABOUT</span> </a><li class="nav-item"> <a href="/bookshelf/" class="nav-link"> <i class="fa-fw fas fa-book ml-xl-3 mr-xl-3 unloaded"></i> <span>BOOKSHELF</span> </a><li class="nav-item"> <a href="/projects/" class="nav-link"> <i class="fa-fw fas fa-project-diagram ml-xl-3 mr-xl-3 unloaded"></i> <span>PROJECTS</span> </a><li class="nav-item"> <a href="/talks/" class="nav-link"> <i class="fa-fw fas fa-comment ml-xl-3 mr-xl-3 unloaded"></i> <span>TALKS</span> </a></ul><div class="sidebar-bottom mt-auto d-flex flex-wrap justify-content-center align-items-center"> <button class="mode-toggle btn" aria-label="Switch Mode"> <i class="fas fa-adjust"></i> </button> <span class="icon-border"></span> <a href="https://github.com/llorllale" aria-label="github" target="_blank" rel="noopener"> <i class="fab fa-github"></i> </a> <a href=" javascript:location.href = 'mailto:' + ['george.aristy','gmail.com'].join('@')" aria-label="email" > <i class="fas fa-envelope"></i> </a> <a href="/feed.xml" aria-label="rss" > <i class="fas fa-rss"></i> </a> <a href="https://www.linkedin.com/in/georgearisty/" aria-label="linkedin" target="_blank" rel="noopener"> <i class="fab fa-linkedin"></i> </a> <a href="https://stackoverflow.com/users/1623885/george-aristy" aria-label="stack-overflow" target="_blank" rel="noopener"> <i class="fab fa-stack-overflow"></i> </a></div></div><div id="topbar-wrapper" class="row justify-content-center"><div id="topbar" class="col-11 d-flex h-100 align-items-center justify-content-between"> <span id="breadcrumb"> <span> <a href="/"> Home </a> </span> <span>Kubernetes In Action</span> </span> <i id="sidebar-trigger" class="fas fa-bars fa-fw"></i><div id="topbar-title"> Post</div><i id="search-trigger" class="fas fa-search fa-fw"></i> <span id="search-wrapper" class="align-items-center"> <i class="fas fa-search fa-fw"></i> <input class="form-control" id="search-input" type="search" aria-label="search" autocomplete="off" placeholder="Search..."> </span> <span id="search-cancel" >Cancel</span></div></div><div id="main-wrapper"><div id="main"><div class="row"><div id="core-wrapper" class="col-12 col-lg-11 col-xl-8"><div class="post pl-1 pr-1 pl-sm-2 pr-sm-2 pl-md-4 pr-md-4"><h1 data-toc-skip>Kubernetes In Action</h1><div class="post-meta text-muted"><div> By <em> <a href="https://www.linkedin.com/in/georgearisty">George Aristy</a> </em></div><div class="d-flex"><div> <span> Posted <em class="timeago" data-ts="1669471200" data-toggle="tooltip" data-placement="bottom" data-tooltip-df="llll" > 2022-11-26 </em> </span> <span class="readtime" data-toggle="tooltip" data-placement="bottom" title="3222 words"> <em>17 min</em> read</span></div></div></div><div class="post-content"><p><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 300'%3E%3C/svg%3E" data-src="/assets/img/books/k8s-in-action/cover.jpg" alt="cover" class="left" height="300" width="200" data-proofer-ignore> Written by <a href="https://www.linkedin.com/in/marko-luk%C5%A1a-a71205/">Marko Lukša</a>, <a href="https://www.manning.com/books/kubernetes-in-action">Kubernetes In Action</a> is a fantastic book covering all operational aspects of Kubernetes. I find it <em>very</em> hard to think of a better book on the subject. This is the first edition of the book, published in December 2017, and although dated around the edges and details, Marko’s in-depth dive into the different components that make up Kubernetes and how they work is timeless. I highly recommend this book to anyone looking for any serious learning of Kubernetes. This book’s shelf life is pretty long despite Kubernetes’ active development - I would think it can only be supplanted by the <a href="https://www.manning.com/books/kubernetes-in-action-second-edition">second edition coming out early next year</a><sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup>.</p><p><em>Kubernetes In Action</em> provided me with solid a theoretical and practical foundation on Kubernetes, enabling me to earn the <a href="/posts/ckad">Certified Kubernetes Application Developer</a> badge.</p><p><em>Check out some other books I’ve read on the <a href="/bookshelf/">bookshelf</a>.</em></p><h1 id="summary">Summary</h1><p><em>Kubernetes In Action</em>’s roadmap takes us on a journey with the end goal of developing <em>Kubia</em> - a contrived sample application - while exploring the core concepts of Kubernetes in depth. Beyond the basics, some of the things this book explains are Kubernetes’ architecture, how pods communicate with each other, how to secure your K8S cluster, pod affinity and anti-affinity, tolerations, the API service, and how to extend Kubernetes with custom resources. The reader is kept engaged with practical exercises throughout by applying configurations and testing them. These configurations and extra resources can be found in the book’s <a href="https://github.com/luksa/kubernetes-in-action">GitHub repository</a>.</p><h1 id="tools-and-runtimes">Tools and runtimes</h1><p>Kubernetes comes in several flavors. “Vanilla” Kubernetes can be installed using <a href="https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/"><code class="language-plaintext highlighter-rouge">kubeadm</code></a>. Other flavors, such as <a href="https://github.com/kubernetes/minikube">minikube</a>, make it very easy to install a local Kubernetes cluster for development purposes.</p><p>The primary way to interact with a Kubernetes cluster is with <a href="https://kubernetes.io/docs/reference/kubectl/kubectl/"><code class="language-plaintext highlighter-rouge">kubectl</code></a><sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">2</a></sup><sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">3</a></sup>. You can install it directly using the official instructions, but other installation means are available, such as with <a href="https://cloud.google.com/sdk/gcloud/reference/components/install"><code class="language-plaintext highlighter-rouge">gcloud components install kubectl</code></a> if <a href="https://cloud.google.com/kubernetes-engine">GKE</a> is your provider.</p><p>Normally <code class="language-plaintext highlighter-rouge">kubectl</code> is automatically configured by your Kubernetes provisioner with the necessary configuration to interact with the cluster. For example, here is what my configuration looks like after running <a href="https://minikube.sigs.k8s.io/docs/start/"><code class="language-plaintext highlighter-rouge">minikube start</code></a><sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">4</a></sup>:</p><blockquote class="prompt-tip"><div><p><strong>Hands On</strong></p><p>Run <code class="language-plaintext highlighter-rouge">kubectl config view</code> to view your local configuration:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl config view
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /home/llorllale/.minikube/ca.crt
+    extensions:
+    - extension:
+        last-update: Wed, 24 Aug 2022 21:33:37 EDT
+        provider: minikube.sigs.k8s.io
+        version: v1.25.2
+      name: cluster_info
+    server: https://192.168.49.2:8443
+  name: minikube
+contexts:
+- context:
+    cluster: minikube
+    extensions:
+    - extension:
+        last-update: Wed, 24 Aug 2022 21:33:37 EDT
+        provider: minikube.sigs.k8s.io
+        version: v1.25.2
+      name: context_info
+    namespace: default
+    user: minikube
+  name: minikube
+current-context: minikube
+kind: Config
+preferences: <span class="o">{}</span>
+<span class="nb">users</span>:
+- name: minikube
+  user:
+    client-certificate: /home/llorllale/.minikube/profiles/minikube/client.crt
+    client-key: /home/llorllale/.minikube/profiles/minikube/client.key
+</pre></table></code></div></div></div></details></div></blockquote><p><code class="language-plaintext highlighter-rouge">kubectl</code> supports <a href="https://kubernetes.io/docs/tasks/extend-kubectl/kubectl-plugins/">drop-in plugins</a> since <code class="language-plaintext highlighter-rouge">v1.12</code>. The community has provided many plugins, some of which I find immensely useful. I’ll write about these in a future article.</p><h1 id="system-components">System components</h1><p><img data-src="/assets/img/books/k8s-in-action/components-of-k8s.webp" alt="components" data-proofer-ignore> <em>From Chapter 1, section 1.3.3 <strong>Understanding the architecture of a Kubernetes cluster</strong></em></p><p>There are two sets of components:</p><h2 id="control-plane-components"><span class="mr-2">Control Plane components</span><a href="#control-plane-components" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>These components are in charge of monitoring and responding to events in the cluster.</p><ul><li>The <strong>API server</strong> (<a href="https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/apiserver"><code class="language-plaintext highlighter-rouge">kube-apiserver</code></a>) exposes a REST API and is what <code class="language-plaintext highlighter-rouge">kubectl</code> interacts with then you execute its commands. The other components also discover the state of the cluster via the API server.<li>The <strong>Controller Manager</strong> (<a href="https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/controller-manager"><code class="language-plaintext highlighter-rouge">kube-controller-manager</code></a>) is the control loop that reconciles the cluster’s actual state with the desired state.<li>The <strong>Scheduler</strong> (<a href="https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/kube-scheduler"><code class="language-plaintext highlighter-rouge">kube-scheduler</code></a>) assigns Pods unto nodes for them to run. There are many reasons why a pod may not be scheduled unto nodes and some of those reasons can have side effects, such as an automatic scale up of the cluster’s node pool. You will probably spend a lot of time figuring out the scheduler and looking at Pod event logs at some point or another.<li><strong>etcd</strong> is the distributed key-value store used by most Kubernetes clusters.</ul><h2 id="node-components"><span class="mr-2">Node components</span><a href="#node-components" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>These are components that run in each node and are used to realize the configurations sent out by the components in the control plane.</p><ul><li><a href="https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/kubelet"><code class="language-plaintext highlighter-rouge">kubelet</code></a> runs containers specified in Pod specs and monitors their health.<li><a href="https://github.com/kubernetes/kubernetes/tree/master/staging/src/k8s.io/kube-proxy"><code class="language-plaintext highlighter-rouge">kube-proxy</code></a> is a network proxy that implements part of the Kubernetes <em>Service</em> concept. It takes the network rules configured by the control plane components and applies them locally to the node’s IP routing rules. It has different modes of operation; there is a nice explanation <a href="https://kubernetes.io/docs/concepts/services-networking/service/#configuration">here</a> about its modes.<li><code class="language-plaintext highlighter-rouge">Container Runtime</code> are what run the containers (eg. docker, containerd).</ul><h1 id="kubernetes-resources">Kubernetes Resources</h1><p>Kubernetes is a massive beast. Here are (almost) all the resources I am aware of as a developer<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">5</a></sup>:</p><p><img data-src="/assets/img/books/k8s-in-action/k8s-config-components.svg" alt="image" data-proofer-ignore> <em>Arrows indicate references to the target component.</em></p><p><em>Kubernetes In Action</em> covers <strong>all</strong> of these objects and more. I am only going to gloss over a handful of the most important ones.</p><h2 id="namespace"><span class="mr-2">Namespace</span><a href="#namespace" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>Don’t let its distance and disconnection from other nodes in the diagram above mislead you: <em><a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/">namespace</a></em> is one of the most fundamental concepts in Kubernetes, as it lets developers and administrators separate different resources into logical groups. For example, environments such as <em>dev</em>, <em>staging</em>, and <em>prod</em>, can reside in different namespaces within the same K8S cluster. Another popular use of namespaces is to group resources belonging to applications with cross-cutting concerns.</p><p>Adding a connection to <code class="language-plaintext highlighter-rouge">Namespace</code> from every resource that references it would make the diagram unwieldy!</p><p>Beyond grouping user resources into logical units, it is important to understand that some built-in resources are scoped to the namespace they are declared in and others operate across the whole cluster. For those that are <em>namespaced</em>, the <code class="language-plaintext highlighter-rouge">default</code> namespace is the default if none is specified.</p><blockquote class="prompt-tip"><div><p><strong>Hands On</strong></p><p>Declaratively set namespace with <code class="language-plaintext highlighter-rouge">metadata.namespace</code>:</p><details> <summary>Example</summary><div><div class="language-yaml highlighter-rouge"><div class="code-header"> <span data-label-text="YAML"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre><td class="rouge-code"><pre><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">Pod</span>
+<span class="na">metadata</span><span class="pi">:</span>
+  <span class="na">name</span><span class="pi">:</span> <span class="s">myapp</span>
+  <span class="na">namespace</span><span class="pi">:</span> <span class="s">mynamespace</span>
+<span class="na">spec</span><span class="pi">:</span>
+  <span class="na">containers</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">myapp</span>
+      <span class="na">image</span><span class="pi">:</span> <span class="s">nginx</span>
+</pre></table></code></div></div></div></details><p><br /> Set namespace with <code class="language-plaintext highlighter-rouge">kubectl</code>:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl run <span class="nt">-n</span> mynamespace myapp <span class="nt">--image</span> nginx <span class="nt">--dry-run</span><span class="o">=</span>client <span class="nt">-o</span> yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: myapp
+  name: myapp
+  namespace: mynamespace
+spec:
+  containers:
+  - image: nginx
+    name: myapp
+    resources: <span class="o">{}</span>
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: <span class="o">{}</span>
+</pre></table></code></div></div></div></details><p><br /> View all namespaces for a given cluster/context:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl get ns
+NAME              STATUS   AGE
+default           Active   63d
+istio-system      Active   59d
+kube-node-lease   Active   63d
+kube-public       Active   63d
+kube-system       Active   63d
+</pre></table></code></div></div></div></details><p><br /> List all resources and see which are namespaced and which aren’t:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl api-resources
+NAME                              SHORTNAMES   APIVERSION                             NAMESPACED   KIND
+bindings                                       v1                                     <span class="nb">true         </span>Binding
+componentstatuses                 cs           v1                                     <span class="nb">false        </span>ComponentStatus
+configmaps                        cm           v1                                     <span class="nb">true         </span>ConfigMap
+endpoints                         ep           v1                                     <span class="nb">true         </span>Endpoints
+events                            ev           v1                                     <span class="nb">true         </span>Event
+limitranges                       limits       v1                                     <span class="nb">true         </span>LimitRange
+namespaces                        ns           v1                                     <span class="nb">false        </span>Namespace
+nodes                             no           v1                                     <span class="nb">false        </span>Node
+persistentvolumeclaims            pvc          v1                                     <span class="nb">true         </span>PersistentVolumeClaim
+persistentvolumes                 pv           v1                                     <span class="nb">false        </span>PersistentVolume
+...
+</pre></table></code></div></div></div></details></div></blockquote><h2 id="pod"><span class="mr-2">Pod</span><a href="#pod" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><blockquote><p><em>Pods</em> are the smallest deployable units of computing that you can create and manage in Kubernetes. Pods are composed of one or more containers with shared storage and network resources.</p><p>– <a href="https://kubernetes.io/docs/concepts/workloads/pods/">Kubernetes/Pods</a></p></blockquote><p><em>Containers</em> are instances of pre-packaged images (or “snapshots”) of executable software that can be run on any platform, including Kubernetes. Pods are what run your application.</p><p>The <em>Pod</em> resource is centered in the <a href="#kubernetes-resources">diagram above</a> because it is the workhorse of a Kubernetes application deployment. We’ll explore most of those other objects in later sections.</p><blockquote><p><em>All roads lead to Pods</em>.</p><p>– me</p></blockquote><blockquote class="prompt-tip"><div><p><strong>Hands On</strong></p><p>Use <code class="language-plaintext highlighter-rouge">kubectl run</code> to create and run Pods imperatively:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre><td class="rouge-code"><pre><span class="c"># This pod defines a single container named _nginx_ with container image also _nginx_.</span>
+<span class="c"># The pod's name also happens to be _nginx_.</span>
+<span class="nv">$ </span>kubectl run nginx <span class="nt">--image</span><span class="o">=</span>nginx <span class="nt">--dry-run</span><span class="o">=</span>client <span class="nt">-o</span> yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+</pre></table></code></div></div></div></details></div></blockquote><p>Pods are composed of one or more containers; these containers can be divided into three types:</p><ul><li>containers: these are your regular containers that run your application workload.<li><a href="https://kubernetes.io/docs/concepts/workloads/pods/init-containers/">initContainers</a>: similar to regular containers except that <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/">kubelet</a> runs them first before regular containers. All <code class="language-plaintext highlighter-rouge">initContainers</code> must run successfully for regular containers to be started. Their use case is obvious: use them to execute utilities or setup scripts not present in the regular container. Sadly, <code class="language-plaintext highlighter-rouge">kubectl run</code> does not support specifying initContainers, so we have to add them to the Pod’s spec manually.<li><a href="https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container">ephemeralContainers</a>: these containers are added to the pod at runtime when debugging a Pod. They are not part of the Pod’s original manifest.</ul><blockquote class="prompt-tip"><div><p><strong>Hands On</strong></p><p><code class="language-plaintext highlighter-rouge">kubectl run</code> cannot add <code class="language-plaintext highlighter-rouge">initContainers</code> to a Pod. You must add them yourself:</p><details> <summary>Example pod with initContainers</summary><div><div class="language-yaml highlighter-rouge"><div class="code-header"> <span data-label-text="YAML"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+</pre><td class="rouge-code"><pre><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">Pod</span>
+<span class="na">metadata</span><span class="pi">:</span>
+  <span class="na">name</span><span class="pi">:</span> <span class="s">my-pod</span>
+  <span class="na">labels</span><span class="pi">:</span>
+    <span class="na">app</span><span class="pi">:</span> <span class="s">nginx</span>
+<span class="na">spec</span><span class="pi">:</span>
+  <span class="na">initContainers</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">init</span>
+      <span class="na">image</span><span class="pi">:</span> <span class="s">busybox</span>
+      <span class="na">command</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">echo"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">&lt;DOCTYPE</span><span class="nv"> </span><span class="s">!html&gt;&lt;body&gt;&lt;h1&gt;Hello,</span><span class="nv"> </span><span class="s">World!&lt;/h1&lt;/body&gt;"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">&gt;"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">/usr/share/nginx/html/index.html"</span><span class="pi">]</span>
+      <span class="na">volumeMounts</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">content</span>
+          <span class="na">mountPath</span><span class="pi">:</span> <span class="s">/usr/share/nginx/html</span>
+  <span class="na">containers</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">app</span>
+      <span class="na">image</span><span class="pi">:</span> <span class="s">nginx</span>
+      <span class="na">ports</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="na">containerPort</span><span class="pi">:</span> <span class="m">80</span>
+      <span class="na">volumeMounts</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">content</span>
+          <span class="na">mountPath</span><span class="pi">:</span> <span class="s">/usr/share/nginx/html</span>
+  <span class="na">volumes</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">content</span>
+      <span class="na">emptyDir</span><span class="pi">:</span> <span class="pi">{}</span>
+</pre></table></code></div></div></div></details></div></blockquote><h2 id="persistentvolumeclaims-and-persistentvolumes"><span class="mr-2">PersistentVolumeClaims and PersistentVolumes</span><a href="#persistentvolumeclaims-and-persistentvolumes" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>A <code class="language-plaintext highlighter-rouge">PersistentVolume</code> provisions storage for use by Pods. They can be created either statically or dynamically. A <code class="language-plaintext highlighter-rouge">PersistentVolumeClaim</code> is a request for a <code class="language-plaintext highlighter-rouge">PersistentVolume</code>. A PVC specifies the amount of storage requested and, if a suitable PV is found then the PVC is <em>bound</em> to the PV, otherwise a new PV <em>may</em> be provisioned, depending on the PVC’s <code class="language-plaintext highlighter-rouge">StorageClass</code>. A Pod (or a <code class="language-plaintext highlighter-rouge">PodTemplate</code>) can reference a PVC and mount it in one or more of its containers.</p><p>We’ll cover PVs and PVCs in depth in a later article.</p><h2 id="deployment"><span class="mr-2">Deployment</span><a href="#deployment" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Deployments</a> manage the state of a set of one or more pods. This is important for a number of use cases, such as scaling the number of pods or updating the application workload’s version.</p><blockquote><p>You describe a desired state in a Deployment, and the Deployment <em>Controller</em> changes the actual state to the desired state at a controlled rate.</p><p>– <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/">Kubernetes/Deployment</a></p></blockquote><p>Under the hood a <em>deployment</em> uses a <a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/">ReplicaSet</a> to manage a set of pods for a given state. The latter deprecates and replaced the old <a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/">ReplicationController</a>.</p><blockquote><p>A ReplicaSet’s purpose is to maintain a stable set of replica Pods running at any given time. As such, it is often used to guarantee the availability of a specified number of identical Pods.</p><p>– <a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/">Kubernetes/ReplicaSet</a></p></blockquote><blockquote class="prompt-tip"><div><p><strong>Hands On</strong></p><p>Create a deployment with <code class="language-plaintext highlighter-rouge">kubectl create deploy</code>:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl create deploy mydeploy <span class="nt">--image</span><span class="o">=</span>nginx <span class="nt">--replicas</span><span class="o">=</span>2 <span class="nt">--dry-run</span><span class="o">=</span>client <span class="nt">-o</span> yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mydeploy
+    name: mydeploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mydeploy
+template:
+  metadata:
+  labels:
+    app: mydeploy
+  spec:
+    containers:
+    - image: nginx
+      name: nginx
+</pre></table></code></div></div></div></details></div></blockquote><h2 id="statefulset"><span class="mr-2">StatefulSet</span><a href="#statefulset" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSets</a> are very similar to <em>Deployments</em> with a big distinction: each pod managed by a <em>StatefulSet</em> has a unique persistent identity which you can match to specific storage <em>volumes</em> (these are described further down). This makes the <em>StatefulSet</em> particularly useful for distributed applications such as CouchDB, Redis, Hyperledger Fabric, and many others.</p><p><strong>Note:</strong> a <a href="#service">Headless Service</a> is required for <code class="language-plaintext highlighter-rouge">StatefulSet</code>s.</p><blockquote class="prompt-tip"><div><p><strong>Note:</strong> <code class="language-plaintext highlighter-rouge">kubectl</code> does not have a command to create statefulsets.</p></div></blockquote><blockquote class="prompt-tip"><div><p><strong>Hands On</strong></p><p>Here’s a simple example from the <a href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#components">Kubernetes docs</a>:</p><details> <summary>Example</summary><div><div class="language-yaml highlighter-rouge"><div class="code-header"> <span data-label-text="YAML"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+</pre><td class="rouge-code"><pre><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">StatefulSet</span>
+<span class="na">metadata</span><span class="pi">:</span>
+  <span class="na">name</span><span class="pi">:</span> <span class="s">web</span>
+<span class="na">spec</span><span class="pi">:</span>
+  <span class="na">selector</span><span class="pi">:</span>
+    <span class="na">matchLabels</span><span class="pi">:</span>
+      <span class="na">app</span><span class="pi">:</span> <span class="s">nginx</span> <span class="c1"># has to match .spec.template.metadata.labels</span>
+  <span class="na">serviceName</span><span class="pi">:</span> <span class="s2">"</span><span class="s">nginx"</span>
+  <span class="na">replicas</span><span class="pi">:</span> <span class="m">3</span> <span class="c1"># by default is 1</span>
+  <span class="na">minReadySeconds</span><span class="pi">:</span> <span class="m">10</span> <span class="c1"># by default is 0</span>
+  <span class="na">template</span><span class="pi">:</span>
+    <span class="na">metadata</span><span class="pi">:</span>
+      <span class="na">labels</span><span class="pi">:</span>
+        <span class="na">app</span><span class="pi">:</span> <span class="s">nginx</span> <span class="c1"># has to match .spec.selector.matchLabels</span>
+    <span class="na">spec</span><span class="pi">:</span>
+      <span class="na">terminationGracePeriodSeconds</span><span class="pi">:</span> <span class="m">10</span>
+      <span class="na">containers</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">nginx</span>
+        <span class="na">image</span><span class="pi">:</span> <span class="s">registry.k8s.io/nginx-slim:0.8</span>
+        <span class="na">ports</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="na">containerPort</span><span class="pi">:</span> <span class="m">80</span>
+          <span class="na">name</span><span class="pi">:</span> <span class="s">web</span>
+        <span class="na">volumeMounts</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">www</span>
+          <span class="na">mountPath</span><span class="pi">:</span> <span class="s">/usr/share/nginx/html</span>
+  <span class="na">volumeClaimTemplates</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">metadata</span><span class="pi">:</span>
+      <span class="na">name</span><span class="pi">:</span> <span class="s">www</span>
+    <span class="na">spec</span><span class="pi">:</span>
+      <span class="na">accessModes</span><span class="pi">:</span> <span class="pi">[</span> <span class="s2">"</span><span class="s">ReadWriteOnce"</span> <span class="pi">]</span>
+      <span class="na">storageClassName</span><span class="pi">:</span> <span class="s2">"</span><span class="s">my-storage-class"</span>
+      <span class="na">resources</span><span class="pi">:</span>
+        <span class="na">requests</span><span class="pi">:</span>
+          <span class="na">storage</span><span class="pi">:</span> <span class="s">1Gi</span>
+</pre></table></code></div></div></div></details><p>Deploying the above in my local <code class="language-plaintext highlighter-rouge">minikube</code> cluster using <code class="language-plaintext highlighter-rouge">kubectl apply -f &lt;filename&gt;</code> we can see:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl get statefulset web
+NAME   READY   AGE
+web    3/3     80s
+</pre></table></code></div></div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl get po
+NAME    READY   STATUS    RESTARTS   AGE
+web-0   1/1     Running   0          2m53s
+web-1   1/1     Running   0          2m33s
+web-2   1/1     Running   0          2m13s
+</pre></table></code></div></div></div></details><p>If you describe the pods you’ll realize each has an associated <code class="language-plaintext highlighter-rouge">PersistentVolumeClaim</code>:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl describe po web-2
+Name:             web-2
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+...
+Volumes:
+  www:
+    Type:       PersistentVolumeClaim <span class="o">(</span>a reference to a PersistentVolumeClaim <span class="k">in </span>the same namespace<span class="o">)</span>
+    ClaimName:  www-web-2
+    ReadOnly:   <span class="nb">false</span>
+...
+</pre></table></code></div></div></div></details><p>And when describing that PVC you’ll see it’s associated with a unique <code class="language-plaintext highlighter-rouge">PersistentVolume</code>:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl describe pvc www-web-2
+Name:          www-web-2
+Namespace:     default
+...
+Volume:        pvc-33f94fdb-9e17-4ee6-a2e7-0b10d88699e3
+...
+Used By:       web-2
+...
+</pre></table></code></div></div></div></details><p>Scaling the statefulset down does not delete the PVs:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl scale statefulset web <span class="nt">--replicas</span> 1
+statefulset.apps/web scaled
+<span class="nv">$ </span>kubectl get po
+NAME    READY   STATUS    RESTARTS   AGE
+web-0   1/1     Running   0          91m
+<span class="nv">$ </span>kubectl get pvc
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+www-web-0   Bound    pvc-bb53c1eb-de59-477f-b82e-606cdfe234ba   1Mi        RWO            standard       91m
+www-web-1   Bound    pvc-e8ea7850-58da-460f-9fb2-315627708cc3   1Mi        RWO            standard       91m
+www-web-2   Bound    pvc-33f94fdb-9e17-4ee6-a2e7-0b10d88699e3   1Mi        RWO            standard       91m
+<span class="nv">$ </span>kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM               STORAGECLASS   REASON   AGE
+pvc-33f94fdb-9e17-4ee6-a2e7-0b10d88699e3   1Gi        RWO            Delete           Bound    default/www-web-2   standard                91m
+pvc-bb53c1eb-de59-477f-b82e-606cdfe234ba   1Gi        RWO            Delete           Bound    default/www-web-0   standard                92m
+pvc-e8ea7850-58da-460f-9fb2-315627708cc3   1Gi        RWO            Delete           Bound    default/www-web-1   standard                91m
+</pre></table></code></div></div></div></details><p>Scaling the statefulset back up does not create new PVCs; the existing PVCs are assigned to the pods in order:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+</pre><td class="rouge-code"><pre><span class="nv">$ </span>kubectl scale statefuleset web <span class="nt">--replicas</span> 3
+statefulset.apps/web scaled
+ <span class="nv">$ </span>kubectl get po
+NAME    READY   STATUS    RESTARTS   AGE
+web-0   1/1     Running   0          96m
+web-1   1/1     Running   0          47s
+web-2   1/1     Running   0          27s
+<span class="nv">$ </span>kubectl get pvc
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+www-web-0   Bound    pvc-bb53c1eb-de59-477f-b82e-606cdfe234ba   1Mi        RWO            standard       97m
+www-web-1   Bound    pvc-e8ea7850-58da-460f-9fb2-315627708cc3   1Mi        RWO            standard       97m
+www-web-2   Bound    pvc-33f94fdb-9e17-4ee6-a2e7-0b10d88699e3   1Mi        RWO            standard       96m
+</pre></table></code></div></div></div></details></div></blockquote><h2 id="horizontalpodautoscaler"><span class="mr-2">HorizontalPodAutoscaler</span><a href="#horizontalpodautoscaler" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><blockquote><p>Horizontal scaling means that the response to increased load is to deploy more Pods. This is different from vertical scaling, which for Kubernetes would mean assigning more resources (for example: memory or CPU) to the Pods that are already running for the workload.</p><p>– <a href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/">Kubernetes/HorizontalPodAutoscaler Walkthrough</a></p></blockquote><p><em>HPAs</em> will update the <code class="language-plaintext highlighter-rouge">.spec.replicas</code> of <em>Deployments</em> and <em>StatefulSets</em> using metrics collected from the <a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits">Metrics Server</a>, as input. The <em>Metrics Server</em> is the default source of container metrics for autoscaling pipelines.</p><blockquote class="prompt-tip"><div><p><strong>Note:</strong> Kubernetes does not provide vertical pod autoscalers out of the box<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">6</a></sup>. You can install the <a href="https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler">autoscaler</a> developed within the Kubernetes project umbrella, or you may use your K8S provider’s offering, such as <a href="https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler">GKE’s Vertical Pod autoscaling</a>. A vertical pod autoscaler will automatically update the Pod’s resource <a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits">requests and limits</a>.</p></div></blockquote><h2 id="service"><span class="mr-2">Service</span><a href="#service" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><p>Exposing services in Kubernetes both within and without would be more cumbersome if not for <a href="https://kubernetes.io/docs/concepts/services-networking/service/">Service</a> objects. Pods are not permanent resources; <em>Services</em> fill in the gap by providing a stable DNS name for a set of Pods. The target pods are selected by matching labels.</p><p>There are four types of services:</p><ul><li><code class="language-plaintext highlighter-rouge">ClusterIP</code> (default): the service will only be reachable within the cluster.<li><code class="language-plaintext highlighter-rouge">NodePort</code>: allocates a port number on every node (<code class="language-plaintext highlighter-rouge">.spec.ports[*].nodePort</code>) and forwards incoming traffic to the port exposed by the service (<code class="language-plaintext highlighter-rouge">.spec.ports[*].port</code>). <em>NodePort</em> services<li><code class="language-plaintext highlighter-rouge">LoadBalancer</code>: exposes the service to traffic originating from outside the cluster. The machinery used to do this depends on the platform.<li><code class="language-plaintext highlighter-rouge">ExternalName</code>: these map DNS names from within the cluster to external names. In other words, the cluster’s DNS service will return <code class="language-plaintext highlighter-rouge">CNAME</code> records instead of <code class="language-plaintext highlighter-rouge">A</code> records for queries targeting the service’s name.</ul><p>There is a special kind of <code class="language-plaintext highlighter-rouge">Service</code> called a <a href="https://kubernetes.io/docs/concepts/services-networking/service/#headless-services">Headless Service</a> that does not perform load-balancing and does not provide a single address for the backing Pods. Instead, it serves to list IP addresses of all the Pods it selects. This type of <code class="language-plaintext highlighter-rouge">Service</code> are required for <a href="#statefulset"><code class="language-plaintext highlighter-rouge">StatefulSets</code></a>.</p><blockquote class="prompt-tip"><div><p><strong>Hands On</strong></p><p>Use <code class="language-plaintext highlighter-rouge">kubectl create svc</code> to create services imperatively:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre><td class="rouge-code"><pre><span class="c"># Create a service of type `ClusterIP`</span>
+<span class="nv">$ </span>kubectl create svc clusterip mysvc <span class="nt">--tcp</span><span class="o">=</span>8080:7001 <span class="nt">--dry-run</span><span class="o">=</span>client <span class="nt">-o</span> yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mysvc
+    name: mysvc
+spec:
+  ports:
+  - name: 8080-7001
+    port: 8080
+    protocol: TCP
+    targetPort: 7001
+  selector:
+    app: mysvc
+  <span class="nb">type</span>: ClusterIP
+</pre></table></code></div></div></div></details><p>The problem with <code class="language-plaintext highlighter-rouge">kubectl create svc</code> is that you can’t specify a <code class="language-plaintext highlighter-rouge">selector</code>. <a href="https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors">Services without selectors</a> have their uses, but you are more likely to want to point your service to a set of pods in your cluster. For this use case you can either write the spec manually or use <code class="language-plaintext highlighter-rouge">kubectl expose</code>.</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+</pre><td class="rouge-code"><pre><span class="c"># Expose a deployment named `webapp`. Note the `selector` automatically added:</span>
+<span class="nv">$ </span>kubectl expose deploy webapp <span class="nt">--type</span> ClusterIP <span class="nt">--name</span> mysvc <span class="nt">--port</span> 8080 <span class="nt">--dry-run</span><span class="o">=</span>client <span class="nt">-o</span> yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: webapp
+name: mysvc
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: webapp
+  <span class="nb">type</span>: ClusterIP
+</pre></table></code></div></div></div></details></div></blockquote><h2 id="ingress"><span class="mr-2">Ingress</span><a href="#ingress" class="anchor text-muted"><i class="fas fa-hashtag"></i></a></h2></h2><blockquote><p>Ingress exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Traffic routing is controlled by rules defined on the Ingress resource.</p><p>– <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/#what-is-ingress">Kubernetes/What is Ingress?</a></p></blockquote><p>An <code class="language-plaintext highlighter-rouge">Ingress</code> is an L7 proxy tailored for HTTP(S) services, allowing request routing based on simple rules such as path prefixes<sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">7</a></sup>. Note that if you want to expose your services outside your cluster with something other than HTTP, you’d have to use <code class="language-plaintext highlighter-rouge">Service</code>s of type <code class="language-plaintext highlighter-rouge">NodePort</code> or <code class="language-plaintext highlighter-rouge">LoadBalancer</code>.</p><blockquote class="prompt-tip"><div><p><strong>Hands On</strong></p><p>Use <code class="language-plaintext highlighter-rouge">kubectl create ing</code> to create an Ingress imperatively:</p><details> <summary>Example</summary><div><div class="language-shell highlighter-rouge"><div class="code-header"> <span data-label-text="Shell"><i class="fas fa-code small"></i></span> <button aria-label="copy" data-title-succeed="Copied!"><i class="far fa-clipboard"></i></button></div><div class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre><td class="rouge-code"><pre><span class="c"># Create an Ingress that directs incoming traffic on `www.example.com` to a backend service `webapp` on port 8080:</span>
+<span class="nv">$ </span>kubectl create ing myingress <span class="nt">--rule</span><span class="o">=</span><span class="s2">"www.example.com/webapp*=webapp:8080"</span> <span class="nt">--dry-run</span><span class="o">=</span>client <span class="nt">-o</span> yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myingress
+spec:
+  rules:
+  - host: www.example.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: webapp
+            port:
+              number: 8080
+        path: /webapp
+        pathType: Prefix
+</pre></table></code></div></div></div></details></div></blockquote><h1 id="footnotes">Footnotes</h1><div class="footnotes" role="doc-endnotes"><ol><li id="fn:1" role="doc-endnote"><p>It appears you can use code <strong>au35luk</strong> to get a <a target="_blank" href="https://github.com/luksa/kubernetes-in-action-2nd-edition#purchasing-the-book">35% discount <i class="fa fa-external-link-alt"></i></a>. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p><li id="fn:3" role="doc-endnote"><p>Fondly pronounced by many as “cube cuddle”. <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p><li id="fn:4" role="doc-endnote"><p>Other ways include a console offered by your cloud provider in cases where Kubernetes is available as a service. <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p><li id="fn:5" role="doc-endnote"><p>We will explore the configuration in depth in a future article - stay tuned. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p><li id="fn:6" role="doc-endnote"><p><em>As a developer</em> I am not including objects that I’m not likely to encounter in may day-to-day, such as <a href="https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-review-v1/"><code class="language-plaintext highlighter-rouge">TokenReview</code></a> or <a href="https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/"><code class="language-plaintext highlighter-rouge">EndpointSlice</code></a>. These will typically be objects configured by an administrator role, or perhaps are objects managed by the underlying K8S provider, such as GKE. <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p><li id="fn:7" role="doc-endnote"><p>I’ve never used a <em>VPA</em>. That said, they might help size your nodes adequately, or have you consider making your pods more efficient. <a href="#fnref:7" class="reversefootnote" role="doc-backlink">&#8617;</a></p><li id="fn:8" role="doc-endnote"><p>For more advanced routing you should probably make use of a service mesh such as Istio (see <a href="https://istio.io/latest/docs/reference/config/networking/virtual-service/#VirtualService">VirtualService</a>), or you can explore the <a href="https://gateway-api.sigs.k8s.io/">Gateway API</a> that recently <a href="https://kubernetes.io/blog/2022/07/13/gateway-api-graduates-to-beta/">graduated to beta status</a>! <a href="#fnref:8" class="reversefootnote" role="doc-backlink">&#8617;</a></p></ol></div></div><div class="post-tail-wrapper text-muted"><div class="post-meta mb-3"> <i class="far fa-folder-open fa-fw mr-1"></i> <a href='/categories/books/'>books</a>, <a href='/categories/kubernetes/'>kubernetes</a></div><div class="post-tags"> <i class="fa fa-tags fa-fw mr-1"></i> <a href="/tags/kubernetes/" class="post-tag no-text-decoration" >kubernetes</a> <a href="/tags/k8s/" class="post-tag no-text-decoration" >k8s</a> <a href="/tags/devops/" class="post-tag no-text-decoration" >devops</a> <a href="/tags/cloud/" class="post-tag no-text-decoration" >cloud</a> <a href="/tags/containers/" class="post-tag no-text-decoration" >containers</a> <a href="/tags/docker/" class="post-tag no-text-decoration" >docker</a> <a href="/tags/book/" class="post-tag no-text-decoration" >book</a></div><div class="post-tail-bottom d-flex justify-content-between align-items-center mt-3 pt-5 pb-2"><div class="license-wrapper"> This post is licensed under <a href="https://creativecommons.org/licenses/by/4.0/"> CC BY 4.0 </a> by the author.</div><div class="share-wrapper"> <span class="share-label text-muted mr-1">Share</span> <span class="share-icons"> <a href="https://t.me/share/url?url=https://georgearisty.dev/posts/kubernetes-in-action/&amp;text=Kubernetes In Action - George Aristy" data-toggle="tooltip" data-placement="top" title="Telegram" target="_blank" rel="noopener" aria-label="Telegram"> <i class="fa-fw fab fa-telegram"></i> </a> <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://georgearisty.dev/posts/kubernetes-in-action/" data-toggle="tooltip" data-placement="top" title="Linkedin" target="_blank" rel="noopener" aria-label="Linkedin"> <i class="fa-fw fab fa-linkedin"></i> </a> <a href="https://news.ycombinator.com/submitlink?u=https://georgearisty.dev/posts/kubernetes-in-action/&amp;t=Kubernetes In Action - George Aristy" data-toggle="tooltip" data-placement="top" title="Hacker News" target="_blank" rel="noopener" aria-label="Hacker News"> <i class="fa-fw fab fa-hacker-news"></i> </a> <i id="copy-link" class="fa-fw fas fa-link small" data-toggle="tooltip" data-placement="top" title="Copy link" data-title-succeed="Link copied successfully!"> </i> </span></div></div></div></div></div><div id="panel-wrapper" class="col-xl-3 pl-2 text-muted"><div class="access"><div id="access-lastmod" class="post"><div class="panel-heading">Recently Updated</div><ul class="post-content pl-0 pb-1 ml-1 mt-2"><li><a href="/posts/kubectl-plugins/">Plugins I use with kubectl</a><li><a href="/posts/test-driven-development-by-example/">Test-Driven Development By Example</a><li><a href="/posts/ckad/">Certified Kubernetes Application Developer: My Experience</a><li><a href="/posts/clean-architecture/">Clean Architecture: A Craftsman's Guide to Software Structure and Design</a><li><a href="/posts/build-trap/">Escaping the Build Trap: How Effective Product Management Creates Real Value</a></ul></div><div id="access-tags"><div class="panel-heading">Trending Tags</div><div class="d-flex flex-wrap mt-3 mb-1 mr-3"> <a class="post-tag" href="/tags/go/">go</a> <a class="post-tag" href="/tags/golang/">golang</a> <a class="post-tag" href="/tags/java/">java</a> <a class="post-tag" href="/tags/book/">book</a> <a class="post-tag" href="/tags/learning-go/">learning-go</a> <a class="post-tag" href="/tags/k8s/">k8s</a> <a class="post-tag" href="/tags/kubernetes/">kubernetes</a> <a class="post-tag" href="/tags/vim/">vim</a> <a class="post-tag" href="/tags/concurrency/">concurrency</a> <a class="post-tag" href="/tags/elegant-objects/">elegant-objects</a></div></div></div><script src="/assets/lib/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><div id="toc-wrapper" class="pl-0 pr-4 mb-5"><div class="panel-heading pl-3 pt-2 mb-2">Contents</div><nav id="toc" data-toggle="toc"></nav></div></div></div><div class="row"><div class="col-12 col-lg-11 col-xl-8"><div id="tail-wrapper" class="pl-1 pr-1 pl-sm-2 pr-sm-2 pl-md-4 pr-md-4"><div id="related-posts" class="mt-5 mb-2 mb-sm-4"><h3 class="pt-2 mt-1 mb-4 ml-1" data-toc-skip>Further Reading</h3><div class="card-deck mb-4"><div class="card"> <a href="/posts/ckad/"><div class="card-body"> <em class="timeago small" data-ts="1652054400" > 2022-05-08 </em><h3 class="pt-0 mt-1 mb-3" data-toc-skip>Certified Kubernetes Application Developer: My Experience</h3><div class="text-muted small"><p> I recently passed the Certified Kubernetes Application Developer exam1 and thought I’d share my experience leading up to and during the exam. Curriculum This is the newest exam curriculum, eff...</p></div></div></a></div><div class="card"> <a href="/posts/kubectl-plugins/"><div class="card-body"> <em class="timeago small" data-ts="1669668000" > 2022-11-28 </em><h3 class="pt-0 mt-1 mb-3" data-toc-skip>Plugins I use with kubectl</h3><div class="text-muted small"><p> kubectl is the official tool to query and run changes on a Kubernetes cluster and provides a powerful and extensible CLI interface. There are many alternative tools out there that do a similar job ...</p></div></div></a></div><div class="card"> <a href="/posts/k8s-cluster-network/"><div class="card-body"> <em class="timeago small" data-ts="1678456200" > 2023-03-10 </em><h3 class="pt-0 mt-1 mb-3" data-toc-skip>Understanding Kubernetes' Cluster Networking</h3><div class="text-muted small"><p> Kubernetes is a system for automating deployment, scaling, and management of containerized applications. Networking is a central part of Kubernetes, and in this article we will explore how Kuberne...</p></div></div></a></div></div></div><div class="post-navigation d-flex justify-content-between"> <a href="/posts/golang-deadlocks/" class="btn btn-outline-primary" prompt="Older"><p>Golang Guild Session: Deadlocks (and how to break out of them)</p></a> <a href="/posts/kubectl-plugins/" class="btn btn-outline-primary" prompt="Newer"><p>Plugins I use with kubectl</p></a></div><script type="text/javascript"> $(function () { const origin = "https://giscus.app"; const iframe = "iframe.giscus-frame"; const lightTheme = "light"; const darkTheme = "dark_dimmed"; let initTheme = lightTheme; if ($("html[data-mode=dark]").length > 0 || ($("html[data-mode]").length == 0 && window.matchMedia("(prefers-color-scheme: dark)").matches)) { initTheme = darkTheme; } let giscusAttributes = { "src": "https://giscus.app/client.js", "data-repo": "llorllale/llorllale.github.io", "data-repo-id": "MDEwOlJlcG9zaXRvcnk4MDM1Mjk5Ng==", "data-category": "Announcements", "data-category-id": "DIC_kwDOBMoW5M4COm92", "data-mapping": "title", "data-reactions-enabled": "1", "data-emit-metadata": "0", "data-theme": initTheme, "data-input-position": "bottom", "data-lang": "en", "crossorigin": "anonymous", "async": "" }; let giscusScript = document.createElement("script"); Object.entries(giscusAttributes).forEach(([key, value]) => giscusScript.setAttribute(key, value)); document.getElementById("tail-wrapper").appendChild(giscusScript); addEventListener("message", (event) => { if (event.source === window && event.data && event.data.direction === ModeToggle.ID) { /* global theme mode changed */ const mode = event.data.message; const theme = (mode === ModeToggle.DARK_MODE ? darkTheme : lightTheme); const message = { setConfig: { theme: theme } }; const giscus = document.querySelector(iframe).contentWindow; giscus.postMessage({ giscus: message }, origin); } }); }); </script></div></div></div><footer class="d-flex w-100 justify-content-center"><div class="d-flex justify-content-between align-items-center text-muted"><div class="footer-left"><p class="mb-0"> © 2023 <a href="https://www.linkedin.com/in/georgearisty">George Aristy</a>. <span data-toggle="tooltip" data-placement="top" title="Except where otherwise noted, the blog posts on this site are licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) License by the author.">Some rights reserved.</span></p></div><div class="footer-right"><p class="mb-0"> Powered by <a href="https://jekyllrb.com" target="_blank" rel="noopener">Jekyll</a> with <a href="https://github.com/cotes2020/jekyll-theme-chirpy" target="_blank" rel="noopener">Chirpy</a> theme.</p></div></div></footer></div><div id="search-result-wrapper" class="d-flex justify-content-center unloaded"><div class="col-12 col-sm-11 post-content"><div id="search-hints"><div id="access-tags"><div class="panel-heading">Trending Tags</div><div class="d-flex flex-wrap mt-3 mb-1 mr-3"> <a class="post-tag" href="/tags/go/">go</a> <a class="post-tag" href="/tags/golang/">golang</a> <a class="post-tag" href="/tags/java/">java</a> <a class="post-tag" href="/tags/book/">book</a> <a class="post-tag" href="/tags/learning-go/">learning-go</a> <a class="post-tag" href="/tags/k8s/">k8s</a> <a class="post-tag" href="/tags/kubernetes/">kubernetes</a> <a class="post-tag" href="/tags/vim/">vim</a> <a class="post-tag" href="/tags/concurrency/">concurrency</a> <a class="post-tag" href="/tags/elegant-objects/">elegant-objects</a></div></div></div><div id="search-results" class="d-flex flex-wrap justify-content-center text-muted mt-3"></div></div></div></div><div id="mask"></div><a id="back-to-top" href="#" aria-label="back-to-top" class="btn btn-lg btn-box-shadow" role="button"> <i class="fas fa-angle-up"></i> </a> <script src="/assets/lib/simple-jekyll-search-1.10.0/simple-jekyll-search.min.js"></script> <script> SimpleJekyllSearch({ searchInput: document.getElementById('search-input'), resultsContainer: document.getElementById('search-results'), json: '/assets/js/data/search.json', searchResultTemplate: '<div class="pl-1 pr-1 pl-sm-2 pr-sm-2 pl-lg-4 pr-lg-4 pl-xl-0 pr-xl-0"> <a href="{url}">{title}</a><div class="post-meta d-flex flex-column flex-sm-row text-muted mt-1 mb-1"> {categories} {tags}</div><p>{snippet}</p></div>', noResultsText: '<p class="mt-5">Oops! No result founds.</p>', templateMiddleware: function(prop, value, template) { if (prop === 'categories') { if (value === '') { return `${value}`; } else { return `<div class="mr-sm-4"><i class="far fa-folder fa-fw"></i>${value}</div>`; } } if (prop === 'tags') { if (value === '') { return `${value}`; } else { return `<div><i class="fa fa-tag fa-fw"></i>${value}</div>`; } } } }); </script> <script src="/assets/lib/magnific-popup-1.1.0/jquery.magnific-popup.min.js"></script> <script src="/assets/lib/lozad-1.16.0/lozad.min.js"></script> <script src="/assets/lib/clipboard-2.0.9/clipboard.min.js"></script> <script src="/assets/lib/dayjs-1.10.7/dayjs.min.js"></script> <script src="/assets/lib/dayjs-1.10.7/locale/en.min.js"></script> <script src="/assets/lib/dayjs-1.10.7/plugin/relativeTime.min.js"></script> <script src="/assets/lib/dayjs-1.10.7/plugin/localizedFormat.min.js"></script> <script defer src="/assets/js/dist/post.min.js"></script> <script src="/assets/lib/bootstrap-4.6.1/bootstrap.bundle.min.js"></script> <script defer src="/app.js"></script> <script defer src="https://www.googletagmanager.com/gtag/js?id=G-P9Y4YYSCTS"></script> <script> document.addEventListener("DOMContentLoaded", function(event) { window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-P9Y4YYSCTS'); }); </script>
