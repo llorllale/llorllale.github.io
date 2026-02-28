@@ -106,6 +106,10 @@ layout: default
                 <i class="far fa-calendar fa-fw me-1"></i>
                 {% include datetime.html date=post.date lang=lang %}
 
+                <!-- time to read -->
+                <i class="far fa-clock fa-fw"></i>
+                {% include read-time.html content=post.content lang=lang %}
+
                 <!-- categories -->
                 {% if post.categories.size > 0 %}
                   <i class="far fa-folder-open fa-fw me-1"></i>

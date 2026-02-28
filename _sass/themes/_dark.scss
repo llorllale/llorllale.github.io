@@ -34,7 +34,8 @@
   /* Sidebar */
   --site-title-color: #717070;
   --site-subtitle-color: #868686;
-  --sidebar-bg: #1e1e1e;
+  //--sidebar-bg: #1e1e1e;
+  --sidebar-bg: radial-gradient(circle, #242424 0%, #1d1f27 100%);
   --sidebar-border-color: #292929;
   --sidebar-muted-color: #868686;
   --sidebar-active-color: rgb(255 255 255 / 95%);
@@ -44,7 +45,8 @@
   --avatar-border-color: rgb(206 206 206 / 90%);
 
   /* Topbar */
-  --topbar-bg: rgb(27 27 30 / 64%);
+  //--topbar-bg: rgb(27 27 30 / 64%);
+  --topbar-bg: rgb(39, 40, 43);
   --topbar-text-color: var(--text-color);
   --search-border-color: rgb(55 55 55);
   --search-icon-color: rgb(100 102 105);
