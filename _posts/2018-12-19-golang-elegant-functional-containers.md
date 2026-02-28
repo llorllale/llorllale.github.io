@@ -4,6 +4,9 @@ title: Golang - another go at elegant containers
 excerpt: Improvement over initial attempt by adopting a bit of a functional programming paradigm.
 date: 2018-12-19
 author: George Aristy
+categories:
+  - programming
+  - go
 tags:
 - go
 - golang

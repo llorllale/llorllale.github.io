@@ -4,6 +4,9 @@ title: Nominalized Adjectives as Names for Decorators
 excerpt: Use nominalized adjectives as names for your decorators for terser code.
 date: '2018-07-05T10:17:00.001-04:00'
 author: George Aristy
+categories:
+  - programming
+  - java
 tags:
 - decorators
 - oop

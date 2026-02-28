@@ -14,6 +14,7 @@ tags:
 - containers
 - docker
 - book
+- cloud-computing
 ---
 
 ![cover](/assets/img/books/k8s-in-action/cover.jpg){: .left height="300" width="200" }

@@ -7,6 +7,9 @@ author: George Aristy
 image:
   src: /assets/img/gopher_peek.png
   alt: gopher
+categories:
+  - programming
+  - go
 tags:
 - go
 - golang

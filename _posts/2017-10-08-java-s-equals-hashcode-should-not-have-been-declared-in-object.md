@@ -4,9 +4,12 @@ title: Java's equals()/hashCode()
 excerpt: How equals() and hashCode() would've looked like if we had had union of generic types in Java since day one.
 date: 2017-10-08
 author: George Aristy
+categories:
+  - programming
+  - java
 tags:
 - java
-- OOP
+- oop
 - equals
 - hashcode
 comments: true

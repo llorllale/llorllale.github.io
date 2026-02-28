@@ -4,6 +4,9 @@ title: Golang - are Elegant Containers possible?
 excerpt: TLDR doesn't seem like it.
 date: 2018-12-19
 author: George Aristy
+categories:
+  - programming
+  - go
 tags:
 - go
 - golang

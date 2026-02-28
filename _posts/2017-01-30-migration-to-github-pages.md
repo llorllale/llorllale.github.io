@@ -4,6 +4,9 @@ title: Migration to Github Pages
 excerpt: Welcome to the new blog!
 date: '2017-01-30T10:17:00.001-04:00'
 author: George Aristy
+categories:
+  - general
+  - blog
 tags:
 - blog
 ---
