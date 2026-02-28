@@ -5,7 +5,7 @@ excerpt: TLDR - database/sql eases the learning curve for users by providing a s
 date: 2019-04-03
 author: George Aristy
 image:
-  src: /assets/img/gopher_peek.png
+  path: /assets/img/gopher_peek.png
   alt: gopher
 categories:
   - programming

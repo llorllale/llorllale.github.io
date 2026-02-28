@@ -4,7 +4,7 @@ title: Golang - First look at generics
 date: 2021-12-21
 author: George Aristy
 image:
-  src: /assets/img/gopher_peek.png
+  path: /assets/img/gopher_peek.png
 categories:
 - programming
 - go
