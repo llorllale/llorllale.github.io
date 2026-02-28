@@ -11,8 +11,7 @@ comments: false
 My name is **<big>George Aristy</big>**. I am a Software Engineer Consultant and an open-source enthusiast.
 
 <br/>
-
-[![I Code Java](https://www.oracle.com/a/ocom/img/i-code-java-100x117-3854594.png){: .left style="float:inline-start" }](https://www.oracle.com/java/)
+![I Code Java](/assets/img/Duke-Guitar.png){: .left style="float:inline-start; with:100px; height:117px;" }
 **<big>As a Software Engineer Consultant</big>**, I specialize in backends, whether these are on a standard JEE stack or written in
 [Go](https://github.com/golang/go), deployed on-prem or in the cloud. I am an
 [Oracle Certified Java SE 8 Programmer](https://www.youracclaim.com/badges/c54f640a-f752-4f83-aed9-8294739f532b) and a
