@@ -12,9 +12,7 @@ My name is **<big>George Aristy</big>**. I am a Software Engineer Consultant and
 
 <br/>
 
-<a href="https://www.oracle.com/java/">
-  <img src="https://www.oracle.com/a/ocom/img/i-code-java-100x117-3854594.png" alt="I Code Java" border="0" width="100" height="117" align="left"/>
-</a>
+[![I Code Java](https://www.oracle.com/a/ocom/img/i-code-java-100x117-3854594.png){: .left style="float:inline-start" }](https://www.oracle.com/java/)
 **<big>As a Software Engineer Consultant</big>**, I specialize in backends, whether these are on a standard JEE stack or written in
 [Go](https://github.com/golang/go), deployed on-prem or in the cloud. I am an
 [Oracle Certified Java SE 8 Programmer](https://www.youracclaim.com/badges/c54f640a-f752-4f83-aed9-8294739f532b) and a
