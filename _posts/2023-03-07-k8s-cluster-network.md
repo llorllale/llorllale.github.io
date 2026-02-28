@@ -4,6 +4,9 @@ title: "Understanding Kubernetes' Cluster Networking"
 date: 2023-03-10 08:50:00 -0500
 author: George Aristy
 math: on
+categories:
+  - cloud-computing
+  - k8s
 tags:
 - kubernetes
 - k8s

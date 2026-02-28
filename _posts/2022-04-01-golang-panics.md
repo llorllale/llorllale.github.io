@@ -6,6 +6,9 @@ author: George Aristy
 categories:
 - talks
 - golang
+tags:
+  - go
+  - golang
 ---
 
 Slide deck for my presentation on Golang panics on the _Golang Guild Session_ @ VerticalScope.

@@ -4,6 +4,9 @@ title: On the proposal for Data Classes
 excerpt: The proposed "data class" semantics for Java will just promote bad design!
 author: George Aristy
 date: '2017-11-05T11:40:00.000-04:00'
+categories:
+  - programming
+  - java
 tags:
 - software-development
 - design-patterns

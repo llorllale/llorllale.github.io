@@ -4,6 +4,9 @@ title: Java Raw Types
 excerpt: Java generic type erasure on ALL instance fields, not just those tied to the type parameter in the class declaration.
 author: George Aristy
 date: '2017-10-08T13:03:00.000-04:00'
+categories:
+  - programming
+  - java
 tags:
 - bugs
 - software-development

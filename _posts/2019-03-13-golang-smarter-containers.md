@@ -4,6 +4,9 @@ title: Golang - Smarter containers
 excerpt: One riddle solved, but <code>range</code> keeps holding us back.
 date: 2019-03-13
 author: George Aristy
+categories:
+  - programming
+  - go
 tags:
 - go
 - golang

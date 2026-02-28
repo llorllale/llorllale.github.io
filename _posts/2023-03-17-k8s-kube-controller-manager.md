@@ -3,6 +3,9 @@ layout: post
 title: "Kubernetes' Controller Manager"
 date: 2023-03-17 07:10:00 -0400
 author: George Aristy
+categories:
+  - cloud-computing
+  - k8s
 tags:
 - kubernetes
 - k8s

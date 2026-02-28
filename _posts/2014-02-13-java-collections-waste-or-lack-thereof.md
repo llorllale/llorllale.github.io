@@ -4,6 +4,9 @@ title: Java Collections waste (or lack thereof)
 excerpt: If you are a performance freak who makes sure every collection is initialized with the "right" size then don't be.
 date: 2014-02-13
 author: George Aristy
+categories:
+  - programming
+  - java
 tags:
 - collections
 - heap
